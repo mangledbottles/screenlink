@@ -3,6 +3,32 @@ import { contextBridge, ipcRenderer } from 'electron'
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', withPrototype(ipcRenderer))
 
+contextBridge.exposeInMainWorld('electron', {
+  getDesktopCapturerSources: async (): Promise<Electron.DesktopCapturerSource> => {
+    return await ipcRenderer.invoke('get-desktop-capturer-sources')
+  },
+  showSaveDialog: async (options: Electron.SaveDialogOptions): Promise<Electron.SaveDialogReturnValue> => {
+    return await ipcRenderer.invoke('show-save-dialog', options)
+  },
+  saveFile: async (filePath: string, buffer: Buffer): Promise<void> => {
+    return await ipcRenderer.invoke('save-video', filePath, buffer)
+  },
+  blobToBuffer: async (blob: Blob): Promise<Buffer> => {
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const buffer = Buffer.from(reader.result as ArrayBuffer)
+        resolve(buffer)
+      }
+      reader.onerror = reject
+      reader.readAsArrayBuffer(blob)
+    })
+  },
+  uploadVideo: async (buffer: Buffer): Promise<void> => {
+    return await ipcRenderer.invoke('upload-video', buffer)
+  },
+})
+
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.
 function withPrototype(obj: Record<string, any>) {
   const protos = Object.getPrototypeOf(obj)

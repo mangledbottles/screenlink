@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    // "jsx": "react",
 
     /* Linting */
     "strict": true,
@@ -20,6 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "electron"],
+  "include": ["src", "electron", "postcss.config.js", "types.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
