@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import Button from "./Button";
 
+export type Source = {
+  id: string;
+  name: string;
+  thumbnail: string;
+};
+
 async function getScreenSources() {
   try {
     const sources = await window.electron.getDesktopCapturerSources();
@@ -12,14 +18,8 @@ async function getScreenSources() {
   }
 }
 
-type Source = {
-  id: string;
-  name: string;
-  thumbnail: string;
-};
-
 export function ScreenSourcesV1() {
-  const [sources, setSources] = useState<Source[]>([]);
+  const [sources, setSources] = useState<Source[] | any[]>([]);
 
   useEffect(() => {
     getScreenSources().then(setSources);
@@ -48,22 +48,11 @@ export function ScreenSources({
   selectedSource: Source | null;
   setSelectedSource: (source: Source) => void;
 }) {
-  const [sources, setSources] = useState<Source[]>([]);
-  // const [selectedSource, setSelectedSource] = useState<Source | null>(null);
+  const [sources, setSources] = useState<any[]>([]);
 
   useEffect(() => {
     getScreenSources().then(setSources);
   }, []);
-
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     getScreenSources().then(setSources);
-  //   }, 10000); // Refresh every 10 seconds
-
-  //   // Cleanup function to clear the interval when the component unmounts
-  //   return () => clearInterval(interval);
-  // }, []);
-
   return (
     <div className="not-prose my-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
       {sources.map((source) => (
@@ -128,37 +117,6 @@ export function QuickLink({
       />
       <div className="p-2">
         <p className="mt-2 text-sm text-slate-700 dark:text-slate-400">
-          {title}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-export function QuickLinkV1({
-  title,
-  imageUrl,
-}: {
-  title: string;
-  imageUrl: string;
-}) {
-  const handleClick = () => {
-    // Handle the click event here
-    console.log("QuickLink clicked!");
-  };
-
-  return (
-    <div className="group relative rounded-xl border border-slate-200 dark:border-slate-800">
-      <div className="absolute -inset-px rounded-xl border-2 border-transparent opacity-0 [background:linear-gradient(var(--quick-links-hover-bg,theme(colors.sky.50)),var(--quick-links-hover-bg,theme(colors.sky.50)))_padding-box,linear-gradient(to_top,theme(colors.indigo.400),theme(colors.cyan.400),theme(colors.sky.500))_border-box] group-hover:opacity-100 dark:[--quick-links-hover-bg:theme(colors.slate.800)]" />
-      <div className="relative overflow-hidden rounded-xl p-6">
-        {/* <Icon icon={icon} className="h-8 w-8" /> */}
-        {/* <h2 className="mt-4 font-display text-base text-slate-900 dark:text-white"> */}
-        {/* <Link href={href}> */}
-        {/* <span className="absolute -inset-px rounded-xl" /> */}
-        {/* {title} */}
-        {/* </Link> */}
-        {/* </h2> */}
-        <p className="mt-1 text-sm text-slate-700 dark:text-slate-400">
           {title}
         </p>
       </div>
