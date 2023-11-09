@@ -19,7 +19,7 @@ export default function Hero() {
               data-aos-delay="100"
             >
               Create and share screen recording demos for your customers,
-              support team, and more in minutes with ScreenLink.Ì
+              support team, and more in minutes with ScreenLink
             </p>
             <div
               className="max-w-xs mx-auto sm:max-w-none sm:inline-flex sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4"
@@ -42,7 +42,7 @@ export default function Hero() {
                   className="btn text-slate-300 bg-slate-700 hover:bg-slate-600 border-slate-600 w-full shadow-sm"
                   href="#0"
                 >
-                  Read Docs
+                  Download
                 </a>
               </div>
             </div>
