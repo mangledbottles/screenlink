@@ -14,7 +14,7 @@ export const generateMetadata = async ({
   const title = upload?.sourceTitle ?? "ScreenLink Recording";
   return {
     title: `Watch ${title} | ScreenLink`,
-    description: `ScrenLink is a free, open-source screen recording tool. Watch ${title} now!`,
+    description: `Easily capture and share your screen with ScreenLink. Watch "${title}" now for a seamless viewing experience!`,
   };
 };
 
