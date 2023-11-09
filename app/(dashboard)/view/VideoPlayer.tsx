@@ -1,0 +1,18 @@
+"use client";
+import { useRef } from "react";
+import ReactPlayer from "react-player";
+
+export default function VideoPlayer({ src }: { src: string }) {
+  const playerRef = useRef(null);
+
+  return (
+    <ReactPlayer
+      ref={playerRef}
+      url={src}
+      autoPlay={true}
+      controls={true}
+      width="100%"
+      height="auto"
+    />
+  );
+}
