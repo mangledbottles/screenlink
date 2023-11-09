@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import ReactPlayer from "react-player";
 
-export default function VideoPlayer({ src }: { src: string }) {
+export default function Video({ src }: { src: string }) {
   const playerRef = useRef(null);
 
   return (

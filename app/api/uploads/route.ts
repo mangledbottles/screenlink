@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 import Mux, { Upload } from '@mux/mux-node';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
 const { Video } = new Mux(process.env.MUX_ACCESS_TOKEN!, process.env.MUX_SECRET_KEY!);
 
@@ -18,8 +19,12 @@ const createUploadLink = async (): Promise<Upload> => {
     return upload;
 }
 
-export async function GET(req: Request) {
+export async function POST(req: NextApiRequest, res: NextApiResponse) {
     try {
+        const body = await new Response(req.body).json();
+        const { sourceTitle } = body;
+        console.log({ body, sourceTitle })
+
         const upload = await createUploadLink();
         if (upload.error) throw new Error(upload.error.message);
         const payload = {
@@ -27,6 +32,7 @@ export async function GET(req: Request) {
             assetId: upload?.asset_id || '',
             uploadId: upload.id,
             provider: 'mux',
+            sourceTitle,
         }
 
         const video = await prisma.upload.create({
