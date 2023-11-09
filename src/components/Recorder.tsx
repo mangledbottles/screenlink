@@ -1,7 +1,5 @@
-// screenlink-desktop/src/components/Recorder.tsx
 import { useEffect, useState, useRef } from "react";
-// import { writeFile } from "fs";
-import path from "path";
+import RecordRTC from "recordrtc";
 
 type Source = {
   id: string;
@@ -14,172 +12,95 @@ export function Recorder({
 }: {
   selectedSource: Source | null;
 }) {
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
-  const [chunks, setChunks] = useState<BlobPart[]>([]);
-  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [recordRTC, setRecordRTC] = useState<RecordRTC | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const startRecording = async (): Promise<void> => {
-    setIsCompleted(false);
-    setChunks([]);
-
-    if (selectedSource) {
-      try {
-        const constraints = {
-          audio: false,
-          video: {
-            mandatory: {
-              chromeMediaSource: "desktop",
-              chromeMediaSourceId: selectedSource.id,
-              minWidth: 1280,
-              maxWidth: 1280,
-              minHeight: 720,
-              maxHeight: 720,
-            },
+  const startRecording = async () => {
+    if (selectedSource && !isRecording) {
+      const constraints = {
+        audio: false,
+        video: {
+          mandatory: {
+            chromeMediaSource: "desktop",
+            chromeMediaSourceId: selectedSource.id,
+            minWidth: 1920,
+            maxWidth: 1920,
+            minHeight: 1080,
+            maxHeight: 1080,
           },
-        };
+        },
+      };
 
+      try {
+        // @ts-ignore
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-        setStream(stream);
-
-        // Create a MediaRecorder instance after getting the stream
-        const mediaRecorder = new MediaRecorder(stream);
-        setRecorder(mediaRecorder);
-
-        // Event listener for when data is available
-        mediaRecorder.ondataavailable = (e) => {
-          console.log(e);
-          // if (e.data.size > 0) {
-          // setChunks((prev) => [...prev, e.data]);
-          setChunks((prevChunks) => {
-            const newChunks = [...prevChunks, e.data];
-            // console.log(
-            //   "[UPDATING CHUNK STATE] New chunks state:",
-            //   newChunks,
-            //   "e.data:",
-            //   e.data
-            // );
-            return newChunks;
-          });
-
-          // Debugging: Check the chunks
-          // console.log("Chunks state:", chunks, "e.data:", e.data);
-          // }
-        };
-
-        mediaRecorder.onstop = async () => {
-          setIsCompleted(true);
-          // if (!chunks.length) return alert("No chunks recorded");
-          // const blob = new Blob(chunks, { type: "video/webm" });
-          // const buffer: Buffer = await window.electron.blobToBuffer(blob);
-
-          // // Debugging: Check the buffer
-          // console.log("Buffer:", buffer);
-
-          // const link = await window.electron.uploadVideo(buffer);
-          // console.log({ link });
-          //   alert(`Video uploaded to ${link}`);
-
-          //   const { canceled, filePath } = await window.electron.showSaveDialog();
-          //   if (canceled) return;
-
-          //   console.log({ filePath });
-
-          //   await window.electron.saveFile(filePath, buffer);
-        };
-
-        // Start recording
-        mediaRecorder.start();
-      } catch (e) {
-        console.error("Failed to get media stream:", e);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        const recorder = new RecordRTC(stream, {
+          type: "video",
+          mimeType: "video/webm",
+        });
+        recorder.startRecording();
+        setRecordRTC(recorder);
+        setIsRecording(true);
+      } catch (error) {
+        console.error("Failed to get media stream:", error);
       }
     }
   };
 
-  useEffect(() => {
-    if (!isCompleted) return console.log("Not completed yet");
-    else console.log("Completed");
-    const upload = async () => {
-      const blob = new Blob(chunks, { type: "video/webm" });
-      const buffer: Buffer = await window.electron.blobToBuffer(blob);
+  const stopRecording = () => {
+    if (recordRTC && isRecording) {
+      recordRTC.stopRecording(async () => {
+        const blob = recordRTC.getBlob();
+        const buffer: Buffer = await window.electron.blobToBuffer(blob);
+        const sourceTitle = selectedSource?.name || "Screenlink Recording";
+        const link = await window.electron.uploadVideo(buffer, sourceTitle);
+        console.log({ link });
+        if (!link)
+          return alert(
+            "Failed to upload video, contact support if this issue persists"
+          );
+        const isProd = process.env.NODE_ENV === "production";
+        const url = isProd
+          ? `https://screenlink.io/view/${link}`
+          : `http://localhost:3008/view/${link}`;
 
-      // Debugging: Check the buffer
-      console.log("Buffer:", buffer);
+        setIsRecording(false);
 
-      const link = await window.electron.uploadVideo(buffer);
-      console.log({ link });
-    };
-
-    upload();
-  }, [setIsCompleted]);
-
-  // const stopRecording = (): void => {
-  //   recorder?.stop();
-  //   if (stream) {
-  //     stream.getTracks().forEach((track) => {
-  //       if (typeof track.stop === "function") {
-  //         track.stop();
-  //       }
-  //     });
-  //     setStream(null);
-  //   }
-  // };
-
-  const stopRecording = (): void => {
-    recorder?.stop();
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        if (typeof track.stop === "function") {
-          track.stop();
-        }
+        await window.electron.openInBrowser(url);
       });
-      setStream(null);
-    } else {
-      alert("No stream to stop");
+      if (videoRef.current && videoRef.current.srcObject) {
+        // @ts-ignore
+        const tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach((track: MediaStreamTrack) => track.stop());
+      }
+      setRecordRTC(null);
     }
   };
 
-  // const stopRecording = (): void => {
-  //   setTimeout(() => {
-  //     recorder?.stop();
-  //     if (stream) {
-  //       stream.getTracks().forEach((track) => {
-  //         if (typeof track.stop === "function") {
-  //           track.stop();
-  //         }
-  //       });
-  //       setStream(null);
-  //     }
-  //   }, 1000); // Delay stopping the MediaRecorder by 1 second
-  // };
-
   useEffect(() => {
-    if (videoRef.current && stream) {
-      console.log(`Setting video srcObject to stream: ${stream}`);
-      console.log(stream.getTracks());
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream]);
+    // Cleanup function to stop media tracks when component unmounts
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        // @ts-ignore
+        const tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach((track: MediaStreamTrack) => track.stop());
+      }
+    };
+  }, []);
 
   return (
     <div>
-      <button onClick={startRecording} disabled={!!stream}>
+      <button onClick={startRecording} disabled={isRecording}>
         Start Recording
       </button>
-      <button
-        onClick={stopRecording}
-        disabled={!stream || recorder?.state === "inactive"}
-      >
+      <button onClick={stopRecording} disabled={!isRecording}>
         Stop Recording
       </button>
       <video autoPlay ref={videoRef} />
-      <video
-        autoPlay
-        ref={videoRef}
-        onLoadedMetadata={() => console.log("Video loaded")}
-      />
     </div>
   );
 }
