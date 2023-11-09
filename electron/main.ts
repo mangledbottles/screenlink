@@ -1,18 +1,14 @@
-import Mux from '@mux/mux-node';
-import { app, BrowserWindow, ipcMain, desktopCapturer, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell } from 'electron'
+import { Tray, Menu } from 'electron'
+
 import { createReadStream, unlink, writeFile } from 'node:fs'
 import path from 'node:path'
 import got from "got";
-// const { Video } = new Mux(process.env.MUX_TOKEN_ID, process.env.MUX_TOKEN_SECRET);
-const { Video } = new Mux('1fe6f06e-8acb-42e3-bbde-712f3c4d06cf', 'dhKiW6mP9V/Qo5D2x4wPh+MMblSRSb6Htzt7HKNQaZjbVpQhN5g8t7rPiJMGMYcf1a+Q/p2bsep');
+const isProd = process.env.NODE_ENV === "production";
 
-
-// type DesktopCapturerSource = Electron.DesktopCapturerSource
-
-ipcMain.handle('get-desktop-capturer-sources', async (event) => {
+ipcMain.handle('get-desktop-capturer-sources', async () => {
   const sources = await desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
-  // const excludeTitles = ['ScreenLink.io', 'App Icon Window', 'App Icon Screens', 'Gesture Blocking Overlay', 'Touch Bar']
-  const excludeTitles = ['App Icon Window', 'App Icon Screens', 'Gesture Blocking Overlay', 'Touch Bar']
+  const excludeTitles = ['ScreenLink.io', 'App Icon Window', 'App Icon Screens', 'Gesture Blocking Overlay', 'Touch Bar']
   return sources
     .filter(source => !excludeTitles.includes(source.name))
     .map(source => ({
@@ -23,7 +19,7 @@ ipcMain.handle('get-desktop-capturer-sources', async (event) => {
 })
 
 // save video to file; show-save-dialog
-ipcMain.handle('show-save-dialog', async (events, options: Electron.SaveDialogOptions) => {
+ipcMain.handle('show-save-dialog', async (_, options: Electron.SaveDialogOptions) => {
   return await dialog.showSaveDialog({
     ...options,
     buttonLabel: 'Save video',
@@ -32,94 +28,62 @@ ipcMain.handle('show-save-dialog', async (events, options: Electron.SaveDialogOp
 });
 
 // save video
-ipcMain.handle('save-video', async (event, filePath, buffer: Buffer) => {
+ipcMain.handle('save-video', async (_, filePath, buffer: Buffer) => {
   await writeFile(filePath, buffer, () => console.log('video saved successfully!'));
 });
 
 // convert buffer to video file and upload to Mux
-ipcMain.handle('upload-video', async (event, buffer: Buffer) => {
-  console.log('upload-video')
+ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) => {
+  try {
+    // Define a temporary file path for storage
+    const tempFilePath = path.join(app.getPath('home'), `temp-${Date.now()}.webm`);
 
-  // Define a temporary file path for storage
-  // const tempFilePath = path.join(app.getPath('temp'), `temp-${Date.now()}.webm`);
-  const tempFilePath = path.join(app.getPath('home'), `temp-${Date.now()}.webm`);
+    // Convert buffer to video file
+    await writeFile(tempFilePath, buffer, () => console.log('Video file created successfully!'));
 
-  console.log('tempFilePath: ' + tempFilePath)
+    // Make a request to get the upload URL
+    const url = isProd ? 'https://screenlink.io/api/uploads' : 'http://localhost:3008/api/uploads';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sourceTitle })
+    });
+    const data = await response.json();
+    const uploadLink = data.uploadLink;
+    const id = data.id;
 
-  // Convert buffer to video file
-  await writeFile(tempFilePath, buffer, () => console.log('Video file created successfully!'));
+    console.log({ uploadLink, id });
 
-  // Create a new upload
-  const upload = await Video.Uploads.create({
-    cors_origin: '*',
-    new_asset_settings: {
-      playback_policy: 'public',
-      max_resolution_tier: "1080p",
-    },
-    // file_path: tempFilePath
-  });
-  console.log('upload-video: ' + upload);
+    got.put(uploadLink, {
+      body: createReadStream(tempFilePath),
+    }).then(async () => {
+      console.log('Video uploaded successfully!');
 
+      // Delete the temporary file after upload
+      unlink(tempFilePath, (err) => {
+        if (err) {
+          console.error('Error deleting temporary file: ', err);
+        } else {
+          console.log('Temporary file deleted successfully!');
+        }
+      });
+    });
 
-  // const response = await got.put(upload.url, {
-  //   body: createReadStream(tempFilePath),
-  // });
-
-  got.put(upload.url, {
-    body: createReadStream(tempFilePath),
-  });
-
-  // const fileStream = createReadStream(tempFilePath);
-  // await fetch(upload.url, {
-  //   method: 'PUT',
-  //   body: fileStream,
-  //   headers: {
-  //     'Content-Type': 'application/octet-stream',
-  //   },
-  // });
-  // return upload;
-  console.log('Video uploaded successfully!');
-
-  // Delete the temporary file after upload
-  // unlink(tempFilePath, (err) => {
-  //   if (err) {
-  //     console.error('Error deleting temporary file: ', err);
-  //   } else {
-  //     console.log('Temporary file deleted successfully!');
-  //   }
-  // });
-  return upload;
+    return id;
+  } catch (error) {
+    console.log(error)
+  }
 });
 
-
-// screenlink-desktop/electron/main.ts
-// ipcMain.handle('get-source-id', async (event) => {
-//   const sources = await desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
-//   const excludeTitles = ['ScreenLink.io', 'App Icon Window', 'App Icon Screens', 'Gesture Blocking Overlay', 'Touch Bar']
-//   const source = sources.find(source => !excludeTitles.includes(source.name))
-//   return source ? source.id : null
-// })
-
-// ipcMain.handle('get-media-stream', async (event, sourceId) => {
-//   try {
-//     const constraints = {
-//       audio: false,
-//       video: {
-//         mandatory: {
-//           chromeMediaSource: 'desktop',
-//           chromeMediaSourceId: sourceId,
-//           minWidth: 1280,
-//           maxWidth: 1280,
-//           minHeight: 720,
-//           maxHeight: 720
-//         }
-//       }
-//     }
-//     return await navigator.mediaDevices.getUserMedia(constraints);
-//   } catch (e) {
-//     console.log(e)
-//   }
-// })
+ipcMain.handle('open-in-browser', async (_, url: string) => {
+  try {
+    return await shell.openExternal(url);
+  } catch (error) {
+    console.log(error)
+  }
+});
 
 // The built directory structure
 //
@@ -135,6 +99,8 @@ process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(process.
 
 
 let win: BrowserWindow | null
+let tray: Tray | null = null
+
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
@@ -158,6 +124,24 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(process.env.DIST, 'index.html'))
   }
+
+  const iconPath = path.join(process.env.VITE_PUBLIC, 'tray-icon.png');
+  let icon = nativeImage.createFromPath(iconPath);
+  icon = icon.resize({
+    height: 16,
+    width: 16
+  });
+  tray = new Tray(icon);
+
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Item1', type: 'radio' },
+    { label: 'Item2', type: 'radio' },
+    { label: 'Item3', type: 'radio', checked: true },
+    { label: 'Item4', type: 'radio' }
+  ])
+  tray.setToolTip('This is my application.')
+  tray.setContextMenu(contextMenu)
+  console.log(tray)
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

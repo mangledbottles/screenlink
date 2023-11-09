@@ -24,8 +24,11 @@ contextBridge.exposeInMainWorld('electron', {
       reader.readAsArrayBuffer(blob)
     })
   },
-  uploadVideo: async (buffer: Buffer): Promise<void> => {
-    return await ipcRenderer.invoke('upload-video', buffer)
+  uploadVideo: async (buffer: Buffer, sourceTitle: string): Promise<void> => {
+    return await ipcRenderer.invoke('upload-video', buffer, sourceTitle)
+  },
+  openInBrowser: async (url: string): Promise<void> => {
+    return await ipcRenderer.invoke('open-in-browser', url)
   },
 })
 

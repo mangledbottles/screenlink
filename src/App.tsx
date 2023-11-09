@@ -1,12 +1,12 @@
 import { useState } from "react";
 import screenlinkLogo from "./assets/screenlink.svg";
 import "./App.css";
-import { ScreenSources } from "./components/Sources";
+import { ScreenSources, Source } from "./components/Sources";
 import { Recorder } from "./components/Recorder";
 
 function App() {
   const [count, setCount] = useState(0);
-  const [selectedSource, setSelectedSource] = useState<Source | null>(null);
+  const [selectedSource, setSelectedSource] = useState<Source | any | null>(null);
 
   return (
     <>
