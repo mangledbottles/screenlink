@@ -12,9 +12,20 @@ export const generateMetadata = async ({
   const upload = await prisma.upload.findUnique({ where: { id } });
 
   const title = upload?.sourceTitle ?? "ScreenLink Recording";
+  const imageUrl = `https://image.mux.com/${upload?.playbackId}/thumbnail.png?width=214&height=121&time=0`
   return {
     title: `Watch ${title} | ScreenLink`,
     description: `Easily capture and share your screen with ScreenLink. Watch "${title}" now for a seamless viewing experience!`,
+    openGraph: {
+      images: [
+        {
+          url: imageUrl,
+          width: 214,
+          height: 121,
+          alt: title,
+        },
+      ],
+    },
   };
 };
 
