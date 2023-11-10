@@ -3,9 +3,9 @@
  */
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "io.screenlink.desktop",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "ScreenLink",
   "directories": {
     "output": "release/${version}"
   },
@@ -17,7 +17,8 @@
     "target": [
       "dmg"
     ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
+    "icon": "public/icon.icns"
   },
   "win": {
     "target": [
@@ -28,7 +29,8 @@
         ]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "artifactName": "${productName}-Windows-${version}-Setup.${ext}",
+    "icon": "public/icon.png"
   },
   "nsis": {
     "oneClick": false,
@@ -40,6 +42,7 @@
     "target": [
       "AppImage"
     ],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
+    "artifactName": "${productName}-Linux-${version}.${ext}",
+    "icon": "public/icon.png"
   }
 }
