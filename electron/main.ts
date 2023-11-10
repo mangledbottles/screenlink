@@ -5,6 +5,7 @@ import { createReadStream, unlink, writeFile } from 'node:fs'
 import path from 'node:path'
 import got from "got";
 const isProd = process.env.NODE_ENV === "production";
+const baseUrl = isProd ? 'https://screenlink.io' : 'http://localhost:3008';
 
 ipcMain.handle('get-desktop-capturer-sources', async () => {
   const sources = await desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
@@ -84,6 +85,17 @@ ipcMain.handle('open-in-browser', async (_, url: string) => {
     console.log(error)
   }
 });
+
+ipcMain.handle('open-new-device', async (_) => {
+  try {
+    const deviceName = os.hostname();
+    const url = `${baseUrl}/app/devices/new?device=${deviceName}&app=screenlink`;
+    return await shell.openExternal(url);
+  } catch (error) {
+    console.log(error)
+  }
+});
+
 
 // The built directory structure
 //

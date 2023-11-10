@@ -8,6 +8,7 @@ declare global {
             blobToBuffer: (blob: Blob) => Promise<Buffer>;
             uploadVideo: (buffer: Buffer, sourceTitle: string) => Promise<string>;
             openInBrowser: (url: string) => Promise<void>;
+            openNewDevice: () => Promise<void>;
         };
     }
 }
