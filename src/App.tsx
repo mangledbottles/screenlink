@@ -1,29 +1,46 @@
-import { useState } from "react";
-import screenlinkLogo from "./assets/screenlink.svg";
+import { useEffect, useState } from "react";
 import "./App.css";
 import { ScreenSources, Source } from "./components/Sources";
 import { Recorder } from "./components/Recorder";
+import SignIn from "./components/SignIn";
+import screenlinkLogo from "./assets/screenlink.svg";
 
 function App() {
-  const [count, setCount] = useState(0);
-  const [selectedSource, setSelectedSource] = useState<Source | any | null>(null);
+  const [selectedSource, setSelectedSource] = useState<Source | any | null>(
+    null
+  );
+
+  const [deviceCode, setDeviceCode] = useState<string | null>(null);
+
+  // Listen for the device code from the desktop application
+  // @ts-ignore
+  window.electron.on("device-code", (code: string) => {
+    setDeviceCode(code);
+  });
+
+  useEffect(() => {
+    // Get the device code from the desktop application
+    const load = async () => {
+      const newDeviceCode = await window.electron.getDeviceCode();
+      console.log("newDeviceCode", newDeviceCode);
+      setDeviceCode(newDeviceCode);
+    };
+    load();
+  }, []);
+
+  // If the device code is not present, show the sign in component
+  if (!deviceCode) {
+    return <SignIn />;
+  }
 
   return (
     <>
-      <div>
-        <a href="https://screenlink.io" target="_blank">
-          <img src={screenlinkLogo} className="logo react" alt="Screenlink" />
-        </a>
-      </div>
-      <h2 style={{ marginBottom: "0em" }}>Get started with</h2>
-      <h1 style={{ marginTop: "0em" }}>ScreenLink</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <img
+          className="mx-auto h-10 w-auto"
+          src={screenlinkLogo}
+          alt="ScreenLink"
+        />
         <Recorder selectedSource={selectedSource} />
         <ScreenSources
           selectedSource={selectedSource}

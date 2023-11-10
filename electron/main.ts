@@ -1,11 +1,15 @@
 import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell } from 'electron'
 import { Tray, Menu } from 'electron'
+import os from 'os';
 
 import { createReadStream, unlink, writeFile } from 'node:fs'
+import { writeFile as writeFilePromise, readFile as readFilePromise } from 'fs/promises';
 import path from 'node:path'
 import got from "got";
 const isProd = process.env.NODE_ENV === "production";
 const baseUrl = isProd ? 'https://screenlink.io' : 'http://localhost:3008';
+const sessionDataPath = app.getPath('sessionData');
+const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
 
 ipcMain.handle('get-desktop-capturer-sources', async () => {
   const sources = await desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
@@ -43,7 +47,7 @@ ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) =>
     await writeFile(tempFilePath, buffer, () => console.log('Video file created successfully!'));
 
     // Make a request to get the upload URL
-    const url = isProd ? 'https://screenlink.io/api/uploads' : 'http://localhost:3008/api/uploads';
+    const url = `${baseUrl}/api/uploads`
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -51,7 +55,16 @@ ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) =>
       },
       body: JSON.stringify({ sourceTitle })
     });
+    if (response.status !== 200) {
+      console.log(JSON.stringify({ e: "failed to get upload link", url }))
+      throw new Error(response.statusText);
+    }
+    console.log({ response })
     const data = await response.json();
+    if (data.error) {
+      console.log(JSON.stringify({ e: "failed to get upload link", url, error: data.error }))
+      throw new Error(data.error);
+    }
     const uploadLink = data.uploadLink;
     const id = data.id;
 
@@ -70,10 +83,14 @@ ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) =>
           console.log('Temporary file deleted successfully!');
         }
       });
+    }).catch((err) => {
+      console.log(JSON.stringify({ e: "failed to upload video", err, uploadLink }))
+      throw new Error(err);
     });
 
     return id;
   } catch (error) {
+    // console.log(JSON.stringify({ e: "failed to upload video", error, baseUrl }))
     console.log(error)
   }
 });
@@ -96,6 +113,17 @@ ipcMain.handle('open-new-device', async (_) => {
   }
 });
 
+ipcMain.handle('get-device-code', async (_) => {
+  try {
+    // Read the device code from the file (deviceCodeFilePath)
+    // and send it to the renderer process
+    const deviceCodeBuffer = await readFilePromise(deviceCodeFilePath);
+    const deviceCode = deviceCodeBuffer.toString();
+    return deviceCode;
+  } catch (error) {
+    console.log(error)
+  }
+});
 
 // The built directory structure
 //
@@ -117,8 +145,18 @@ let tray: Tray | null = null
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 function createWindow() {
+  // assign the deep link url to a variable
+  app.setAsDefaultProtocolClient('screenlinkDesktop');
+
+  const applicationIconPath = path.join(process.env.VITE_PUBLIC, 'apple.icns');
+  let applicationIcon = nativeImage.createFromPath(applicationIconPath);
+  applicationIcon = applicationIcon.resize({
+    height: 16,
+    width: 16
+  });
+
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: applicationIconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -133,7 +171,6 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
-    // win.loadFile('dist/index.html')
     win.loadFile(path.join(process.env.DIST, 'index.html'))
   }
 
@@ -154,6 +191,19 @@ function createWindow() {
   tray.setToolTip('This is my application.')
   tray.setContextMenu(contextMenu)
   console.log(tray)
+
+  // Read the device code from the file (deviceCodeFilePath)
+  // and send it to the renderer process
+  readFilePromise(deviceCodeFilePath).then((deviceCodeBuffer) => {
+    const deviceCode = deviceCodeBuffer.toString();
+    console.log('Device code on ready: ', deviceCode);
+    if (win) {
+      win.webContents.send('device-code', deviceCode);
+    } else {
+      console.log('No window to send device code to');
+    }
+  });
+
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -173,5 +223,31 @@ app.on('activate', () => {
     createWindow()
   }
 })
+
+// This event will be emitted when your app is opened with a URL that uses your protocol
+app.on('open-url', (event, url) => {
+  // Prevent the default behavior
+  event.preventDefault();
+
+  // Parse the URL
+  const parsedUrl = new URL(url);
+  // deviceCode is in host (    host: 'deviceCode=8cda48126269f9bbc55bef2c7cf0300e8f1cbfe5',)
+  const deviceCode = parsedUrl.host.split('=')[1];
+  // Log the device code
+  console.log(`Device code: ${deviceCode}`);
+  // Send the device code to the renderer process
+  // ipcMain.emit('device-code', deviceCode);
+
+  // Write the device code to a file in the sessionData directory
+  writeFilePromise(deviceCodeFilePath, deviceCode).then(() => {
+    console.log('Device code saved successfully!');
+  });
+
+
+  // Send the device code to the renderer process
+  if (win) {
+    win.webContents.send('device-code', deviceCode);
+  }
+});
 
 app.whenReady().then(createWindow)

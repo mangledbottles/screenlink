@@ -4,6 +4,14 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('ipcRenderer', withPrototype(ipcRenderer))
 
 contextBridge.exposeInMainWorld('electron', {
+  // @ts-ignore
+  on: (channel, func) => {
+    console.log('preload.ts: electron.on', channel, func)
+    ipcRenderer.on(channel, (_, ...args) => func(...args));
+  },
+  getDeviceCode: async (): Promise<string> => {
+    return await ipcRenderer.invoke('get-device-code')
+  },
   getDesktopCapturerSources: async (): Promise<Electron.DesktopCapturerSource> => {
     return await ipcRenderer.invoke('get-desktop-capturer-sources')
   },
@@ -29,6 +37,9 @@ contextBridge.exposeInMainWorld('electron', {
   },
   openInBrowser: async (url: string): Promise<void> => {
     return await ipcRenderer.invoke('open-in-browser', url)
+  },
+  openNewDevice: async (): Promise<void> => {
+    return await ipcRenderer.invoke('open-new-device')
   },
 })
 
