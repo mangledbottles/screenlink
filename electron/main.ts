@@ -6,7 +6,7 @@ import { createReadStream, unlink, writeFile } from 'node:fs'
 import { writeFile as writeFilePromise, readFile as readFilePromise } from 'fs/promises';
 import path from 'node:path'
 import got from "got";
-const isProd = process.env.NODE_ENV === "production";
+const isProd = process.env.NODE_ENV != "development";
 const baseUrl = isProd ? 'https://screenlink.io' : 'http://localhost:3008';
 const sessionDataPath = app.getPath('sessionData');
 const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
