@@ -5,11 +5,23 @@ import crypto from "crypto";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-export default function Devices(query: {
-  searchParams: { device?: string; deviceCode?: string };
+export default async function Devices(query: {
+  searchParams: {
+    device?: string;
+    deviceCode?: string;
+    appVersion?: string;
+    deviceType?: string;
+  };
 }) {
+  const session = await getServerSession(authOptions);
+  // @ts-ignore
+  const userId = session?.user?.id;
+  if (!userId || !session) return redirect("/signin?redirect=/app/devices");
+
   const searchParams = query.searchParams;
   const device = searchParams.device ?? "Device";
+  const appVersion = searchParams.appVersion ?? "Unknown";
+  const deviceType = searchParams.deviceType ?? "Unknown";
 
   if (searchParams.deviceCode) {
     const deviceCode = searchParams.deviceCode;
@@ -36,13 +48,23 @@ export default function Devices(query: {
     // @ts-ignore
     const userId = session?.user?.id;
     const prisma = new PrismaClient();
+    if (!userId) return redirect("/");
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      // Handle the case where the user does not exist
+      console.error(`User with ID ${userId} not found`);
+      return;
+    }
 
     const deviceCode = crypto.randomBytes(20).toString("hex");
     const newDevice = await prisma.devices.create({
       data: {
         name: device,
         code: deviceCode,
-        type: "desktop",
+        appVersion,
+        type: deviceType,
         user: {
           connect: { id: userId },
         },
