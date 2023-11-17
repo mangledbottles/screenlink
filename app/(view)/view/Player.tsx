@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Video from "./Video";
+import { VideoSkeleton } from "./VideoSkeleton";
+import { AiOutlineInfoCircle } from "react-icons/ai";
 
 export default function Player({ id }: { id: string }) {
   const [assetId, setAssetId] = useState<string | null>(null);
@@ -16,31 +18,36 @@ export default function Player({ id }: { id: string }) {
       const res = await fetch(`/api/uploads/${id}`);
       const upload = await res.json();
       setFirstTimeLoading(false);
-      if (!upload) {
-        setError("Video not found");
-        return;
+      if (!upload || res.status == 404) {
+        setError(upload.error ?? "Video not found");
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
       }
 
       if (upload.status === "asset_created") {
         setAssetId(upload.assetId);
         setPlaybackId(upload.playbackId);
         setIsReady(upload.isReady);
+        if (upload.isReady) {
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+        }
       } else if (upload.status === "errored") {
         setError(
           "There was an error processing your video. It could not be uploaded."
         );
-      }
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
       }
     };
-
-    // Call fetchVideo immediately
-    fetchVideo().then(() => {
-      // Then set up the interval
-      intervalId = setInterval(fetchVideo, 2000);
-    });
+    // Set up the interval immediately
+    intervalId = setInterval(fetchVideo, 3000);
 
     return () => {
       if (intervalId) {
@@ -51,24 +58,30 @@ export default function Player({ id }: { id: string }) {
 
   if (error) {
     return (
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-32 md:pt-40">
-        {error}
+      <div className="relative max-w-6xl mx-auto pt-20 md:pt-20">
+        <ErrorBanner message={error} />
       </div>
     );
   }
 
   if (firstTimeLoading) {
     return (
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-32 md:pt-40">
-        Loading...
+      <div className="relative max-w-6xl mx-auto pt-12 md:pt-8">
+        <LoadingBanner message={"Loading video..."} />
+        <VideoSkeleton />
       </div>
     );
   }
 
   if (!assetId || !playbackId || !isReady) {
     return (
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-32 md:pt-40">
-        Video uploading or still processing...
+      <div className="relative max-w-6xl mx-auto pt-12 md:pt-8">
+        <LoadingBanner
+          message={
+            "Video uploading or still processing... The video display when the processing is complete"
+          }
+        />
+        <VideoSkeleton />
       </div>
     );
   }
@@ -80,11 +93,47 @@ export default function Player({ id }: { id: string }) {
 
   return (
     <section className="relative">
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="pt-32 md:pt-40">
+      <div className="relative max-w-6xl mx-auto">
+        <div className="pt-2 md:pt-12">
           <Video src={videoSource} />
         </div>
       </div>
     </section>
   );
 }
+
+const LoadingBanner = ({ message }: { message: string }) => {
+  return (
+    <div className="mb-4 rounded-md bg-blue-50 p-4 bg-indigo-400/10 px-2 font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/30">
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <AiOutlineInfoCircle
+            className="h-5 w-5 text-indigo-400"
+            aria-hidden="true"
+          />
+        </div>
+        <div className="ml-3 flex-1 md:flex md:justify-between">
+          <p className="text-sm text-indigo-400">{message}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ErrorBanner = ({ message }: { message: string }) => {
+  return (
+    <div className="mb-4 rounded-md bg-red-50 p-4 bg-red-400/10 px-2 font-medium text-red-400 ring-1 ring-inset ring-red-400/30 dark:bg-pink-400/10 dark:text-pink-400 dark:ring-pink-400/20">
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <AiOutlineInfoCircle
+            className="h-5 w-5 text-red-400 dark:text-pink-400"
+            aria-hidden="true"
+          />
+        </div>
+        <div className="ml-3 flex-1 md:flex md:justify-between">
+          <p className="text-sm text-red-400 dark:text-pink-400">{message}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
