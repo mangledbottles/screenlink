@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import HeroImage from "@/public/images/hero-image.png";
+import CtaButton from "@components/ui/CtaButton";
 
 export default function Hero() {
   return (
@@ -27,15 +28,7 @@ export default function Hero() {
               data-aos-delay="200"
             >
               <div>
-                <Link
-                  className="btn text-white bg-indigo-500 hover:bg-indigo-600 w-full shadow-sm group"
-                  href="/signup"
-                >
-                  Get Started Free{" "}
-                  <span className="tracking-normal text-sky-300 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
-                    -&gt;
-                  </span>
-                </Link>
+                <CtaButton styles="btn" />
               </div>
               <div>
                 <a
