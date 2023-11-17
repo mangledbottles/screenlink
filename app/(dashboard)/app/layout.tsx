@@ -13,6 +13,7 @@ import Footer from "@/components/ui/footer";
 import { useSession, getSession } from "next-auth/react";
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
 import { redirect } from "next/navigation";
+import DashboardHeader from "@/components/ui/DashboardHeader";
 
 export default function DefaultLayout({
   children,
@@ -43,7 +44,7 @@ export default function DefaultLayout({
 
   return (
     <>
-      <Header />
+      <DashboardHeader />
 
       <main className="grow">
         {/* Illustration */}
