@@ -6,8 +6,13 @@ const prisma = new PrismaClient()
 const { Video } = new Mux(process.env.MUX_ACCESS_TOKEN!, process.env.MUX_SECRET_KEY!);
 
 const getUpload = async (uploadId: string): Promise<Upload> => {
-    const upload = await Video.Uploads.get(uploadId);
-    return upload;
+    try {
+        const upload = await Video.Uploads.get(uploadId);
+        return upload;
+    } catch (error) {
+        console.log(error)
+        throw error;
+    }
 }
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -16,12 +21,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         const upload = await prisma.upload.findUnique({ where: { id } });
 
         if (!upload) {
-            return NextResponse.json({
-                status: 404,
-                body: {
-                    error: 'Upload not found'
-                }
-            });
+            throw { type: 'not_found' };
         }
 
         const muxUpload = await getUpload(upload.uploadId);
@@ -29,8 +29,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
             const video = await Video.Assets.get(muxUpload.asset_id!);
             const playbackId = video?.playback_ids?.[0]?.id;
-
-            console.log({ video, muxUpload })
 
             const updated = await prisma.upload.update({
                 where: { id },
@@ -48,11 +46,16 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         return NextResponse.json(upload);
     } catch (error: any) {
         console.log(error)
+        if (error.type === 'not_found') {
+            return NextResponse.json({
+                error: 'Upload not found. This upload may not exist or may have been deleted.'
+            }, { status: 404 });
+
+        }
         return NextResponse.json({
-            status: 500,
-            body: {
-                error: error?.message || 'Something went wrong'
-            }
+            error: error?.message || 'Something went wrong'
+        }, {
+            status: 500
         });
     }
 }
