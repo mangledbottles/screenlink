@@ -10,6 +10,21 @@ const isProd = process.env.NODE_ENV != "development";
 const baseUrl = isProd ? 'https://screenlink.io' : 'http://localhost:3008';
 const sessionDataPath = app.getPath('sessionData');
 const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
+import cp from 'child_process';
+
+function getComputerName() {
+  switch (process.platform) {
+    case "win32":
+      return process.env.COMPUTERNAME;
+    case "darwin":
+      return cp.execSync("scutil --get ComputerName").toString().trim();
+    case "linux":
+      const prettyname = cp.execSync("hostnamectl --pretty").toString().trim();
+      return prettyname === "" ? os.hostname() : prettyname;
+    default:
+      return os.hostname();
+  }
+}
 
 ipcMain.handle('get-desktop-capturer-sources', async () => {
   const sources = await desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
@@ -59,7 +74,6 @@ ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) =>
       console.log(JSON.stringify({ e: "failed to get upload link", url }))
       throw new Error(response.statusText);
     }
-    console.log({ response })
     const data = await response.json();
     if (data.error) {
       console.log(JSON.stringify({ e: "failed to get upload link", url, error: data.error }))
@@ -90,7 +104,6 @@ ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) =>
 
     return id;
   } catch (error) {
-    // console.log(JSON.stringify({ e: "failed to upload video", error, baseUrl }))
     console.log(error)
   }
 });
@@ -105,8 +118,10 @@ ipcMain.handle('open-in-browser', async (_, url: string) => {
 
 ipcMain.handle('open-new-device', async (_) => {
   try {
-    const deviceName = os.hostname();
-    const url = `${baseUrl}/app/devices/new?device=${deviceName}&app=screenlink`;
+    const deviceName = getComputerName();
+    const appVersion = app.getVersion();
+    const deviceType = os.type();
+    const url = `${baseUrl}/app/devices/new?device=${deviceName}&appVersion=${appVersion}&deviceType=${deviceType}`;
     return await shell.openExternal(url);
   } catch (error) {
     console.log(error)
