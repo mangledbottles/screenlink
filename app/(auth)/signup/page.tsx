@@ -1,6 +1,7 @@
 export const metadata = {
-  title: "Sign Up - Cube",
-  description: "Page description",
+  title: "Sign Up - ScreenLink",
+  description:
+    "Sign up for ScreenLink to start recording your screen and camera.",
 };
 
 import Image from "next/image";
@@ -14,7 +15,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
 import { redirect } from "next/navigation";
 
-export default async function SignUp() {
+export default async function SignUp({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
   const session = await getServerSession(authOptions);
 
   // If the user is already logged in, redirect.
@@ -23,6 +28,9 @@ export default async function SignUp() {
   if (session) {
     redirect("/app");
   }
+
+  // Get redirect from query
+  const redirectTo = String(searchParams?.redirect) || "/app";
 
   return (
     <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -81,7 +89,10 @@ export default async function SignUp() {
               <div className="font-hkgrotesk text-xl font-bold mb-6">
                 Get Started!
               </div>
-              <AuthForm providers={await getProviders()} />
+              <AuthForm
+                providers={await getProviders()}
+                redirect={redirectTo}
+              />
             </div>
           </div>
         </div>

@@ -10,7 +10,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
 import { redirect } from "next/navigation";
 
-export default async function SignIn() {
+export default async function SignIn({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
   const session = await getServerSession(authOptions);
 
   // If the user is already logged in, redirect.
@@ -19,6 +23,10 @@ export default async function SignIn() {
   if (session) {
     redirect("/app");
   }
+
+  // Get redirect from query
+  const redirectTo = String(searchParams?.redirect) || "/app";
+
   return (
     <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
       <div className="pt-32 pb-12 md:pt-40 md:pb-20">
@@ -28,7 +36,7 @@ export default async function SignIn() {
         </div>
         <div className="max-w-sm mx-auto">
           {/* Social logins */}
-          <AuthForm providers={await getProviders()} />
+          <AuthForm providers={await getProviders()} redirect={redirectTo} />
           <div className="text-center mt-6">
             <div className="text-sm text-slate-500">
               Don't you have an account?{" "}

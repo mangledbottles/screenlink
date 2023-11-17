@@ -23,13 +23,19 @@ const ICONS: {
   slack: AiOutlineSlack,
 };
 
-const SocialButton = ({ provider }: { provider: any }) => {
+const SocialButton = ({
+  provider,
+  redirect,
+}: {
+  provider: any;
+  redirect?: string;
+}) => {
   const icon =
     ICONS[provider.id as keyof typeof ICONS] || AiOutlineQuestionCircle;
   return (
     <div className="mb-4 w-full" key={provider.name}>
       <button
-        onClick={() => signIn(provider.id)}
+        onClick={() => signIn(provider.id, { callbackUrl: redirect ?? "/app" })}
         type="button"
         className="inline-flex items-center gap-x-1.5 rounded px-2.5 py-2.5 text-base shadow-sm text-white bg-indigo-500 hover:bg-indigo-600  w-full"
       >
@@ -44,18 +50,26 @@ const SocialButton = ({ provider }: { provider: any }) => {
 
 export default function AuthForm({
   providers,
+  redirect,
 }: {
   providers: Record<
     LiteralUnion<BuiltInProviderType, string>,
     ClientSafeProvider
   > | null;
+  redirect?: string;
 }) {
   if (!providers) return null;
   return (
     <div className="flex flex-col">
       {Object.values(providers).map((provider: ClientSafeProvider) => {
         if (!provider?.name || !provider?.id) return null;
-        return <SocialButton key={provider.name} provider={provider} />;
+        return (
+          <SocialButton
+            key={provider.name}
+            provider={provider}
+            redirect={redirect}
+          />
+        );
       })}
     </div>
   );
