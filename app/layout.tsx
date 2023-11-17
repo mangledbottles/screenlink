@@ -3,6 +3,7 @@ import "./css/style.css";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import AuthProvider from "./authProvider";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -48,6 +49,7 @@ export default function RootLayout({
           <div className="flex flex-col min-h-screen overflow-hidden">
             {children}
           </div>
+          <Toaster />
         </body>
       </html>
     </AuthProvider>
