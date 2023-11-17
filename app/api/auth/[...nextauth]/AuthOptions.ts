@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
             if (session?.user) {
                 // @ts-ignore
                 session.user.id = token.uid;
-                console.log({ session, token, user, userId: token.uid })
+                // console.log({ session, token, user, userId: token.uid })
             }
             return session;
         },
