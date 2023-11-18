@@ -58,7 +58,7 @@ export default function Player({ id }: { id: string }) {
 
   if (error) {
     return (
-      <div className="relative max-w-6xl mx-auto pt-20 md:pt-20">
+      <div className="relative max-w-6xl mx-auto pt-12 md:pt-8">
         <ErrorBanner message={error} />
       </div>
     );
@@ -122,16 +122,16 @@ const LoadingBanner = ({ message }: { message: string }) => {
 
 const ErrorBanner = ({ message }: { message: string }) => {
   return (
-    <div className="mb-4 rounded-md bg-red-50 p-4 bg-red-400/10 px-2 font-medium text-red-400 ring-1 ring-inset ring-red-400/30 dark:bg-pink-400/10 dark:text-pink-400 dark:ring-pink-400/20">
+    <div className="mb-4 rounded-md bg-pink-400/10 p-4 px-2 font-medium text-pink-400 ring-1 ring-inset ring-pink-400/20">
       <div className="flex">
         <div className="flex-shrink-0">
           <AiOutlineInfoCircle
-            className="h-5 w-5 text-red-400 dark:text-pink-400"
+            className="h-5 w-5 text-pink-400"
             aria-hidden="true"
           />
         </div>
         <div className="ml-3 flex-1 md:flex md:justify-between">
-          <p className="text-sm text-red-400 dark:text-pink-400">{message}</p>
+          <p className="text-sm text-pink-400">{message}</p>
         </div>
       </div>
     </div>
