@@ -13,7 +13,7 @@ export const ShareUploadButton = ({ uploadId }: { uploadId: string }) => {
   return (
     <button
       type="button"
-      className="relative inline-flex items-center rounded-md bg-pink-400/10 px-3 py-2 text-sm font-semibold text-pink-400 ring-1 ring-inset ring-pink-400/20 shadow-sm hover:bg-pink-50 dark:hover:bg-pink-900"
+      className="relative inline-flex items-center rounded-md bg-pink-400/10 px-3 py-2 text-sm font-semibold text-pink-400 ring-1 ring-inset ring-pink-400/20 shadow-sm dark:hover:bg-pink-900 hover:bg-pink-900"
       onClick={copyLink}
     >
       <AiOutlineLink

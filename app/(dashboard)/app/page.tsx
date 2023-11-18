@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { AiOutlineDownload, AiOutlineVideoCameraAdd } from "react-icons/ai";
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
@@ -30,17 +31,18 @@ export default async function Dashboard() {
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="pt-32 md:pt-40">
+        <div className="pt-12 md:pt-20 ">
           <div
             key="1"
-            className="flex flex-col bg-slate-800 bg-opacity-60 rounded overflow-hidden"
+            className="flex flex-col rounded overflow-hidden bg-slate-800 bg-opacity-60 "
           >
-            <header className="bg-slate-800 bg-opacity-60 rounded overflow-hidden">
+            <header className="rounded overflow-hidden">
               <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
-                <h1 className="text-lg font-semibold">Video Library</h1>
+                <h1 className="text-md font-semibold">Video Library</h1>
               </div>
             </header>
-            <main className="flex-1 p-4 bg-slate-800 bg-opacity-60 rounded overflow-hidden">
+            <main className="flex-1 p-4 rounded overflow-hidden">
+              {videos.length === 0 && <NoUploads />}
               <div className="grid grid-cols-3 gap-4">
                 {videos.map((video) => {
                   const previewUrl = `https://image.mux.com/${video?.playbackId}/thumbnail.png?width=1080&height=720&time=0`;
@@ -121,3 +123,33 @@ export default async function Dashboard() {
     </section>
   );
 }
+
+const NoUploads = () => {
+  return (
+    <div className="text-center my-6">
+      {/* mx-auto h-12 w-12 text-gray-400 */}
+      <AiOutlineVideoCameraAdd className="mx-auto h-12 w-12 text-gray-400" />
+      <h3 className="mt-2 text-sm font-semibold text-gray-100">
+        No Uploaded Videos
+      </h3>
+      <p className="mt-1 text-sm text-gray-500">
+        You have not recorded any videos yet! Download the desktop app to get
+        started.
+      </p>
+      <div className="mt-6">
+        <Link href="/download">
+          <button
+            type="button"
+            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            <AiOutlineDownload
+              className="-ml-0.5 mr-1.5 h-5 w-5"
+              aria-hidden="true"
+            />
+            Download
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+};

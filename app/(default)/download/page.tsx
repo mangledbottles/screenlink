@@ -2,6 +2,7 @@
 import Link from "next/link";
 
 function getOS() {
+  if (typeof window === "undefined") return;
   const userAgent = window.navigator.userAgent,
     macosPlatforms = ["Macintosh", "MacIntel", "MacPPC", "Mac68K"],
     windowsPlatforms = ["Win32", "Win64", "Windows", "WinCE"];
@@ -38,7 +39,7 @@ export default function Download() {
         <div className="flex justify-center mt-12">
           <Link
             className="inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20"
-            href="#"
+            href={`/download/${os}`}
           >
             Download for {os}
           </Link>

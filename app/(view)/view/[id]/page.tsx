@@ -66,7 +66,7 @@ const ViewHeader = ({ upload }: { upload: UserUpload }) => {
       <div className="mx-auto flex items-center justify-between gap-x-8 lg:mx-0 max-w-none mt-16">
         <div className="flex items-center gap-x-6">
           <h1>
-            <div className="mt-1 text-base font-semibold leading-6 text-gray-900 dark:text-gray-200">
+            <div className="mt-1 text-base font-semibold leading-6 text-gray-200 dark:text-gray-200">
               Watch {upload.sourceTitle}
             </div>
             <div className="text-sm leading-6 text-gray-500 dark:text-gray-300">
