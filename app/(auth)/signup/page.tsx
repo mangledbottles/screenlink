@@ -30,7 +30,9 @@ export default async function SignUp({
   }
 
   // Get redirect from query
-  const redirectTo = String(searchParams?.redirect) || "/app";
+  const redirectTo = searchParams?.redirect
+    ? String(searchParams?.redirect)
+    : "/app";
 
   return (
     <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
