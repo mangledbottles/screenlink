@@ -10,6 +10,7 @@ import {
 } from "react-icons/ai";
 import TeamSwitcher from "@/components/TeamSwitcher";
 import DashboardStatistics from "@/components/DashboardStatistics";
+import { IconShareUploadButton } from "@/app/(view)/view/[id]/ShareUploadButton";
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
@@ -109,26 +110,10 @@ export default async function Dashboard() {
                         <div className="text-xs">
                           {formatDistanceToNow(new Date(video.createdAt))} ago
                         </div>
-                        <div className="text-xs">0 views</div>
-                        <button>
-                          <svg
-                            className=" h-6 w-6"
-                            fill="none"
-                            height="24"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            width="24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                            <polyline points="16 6 12 2 8 6" />
-                            <line x1="12" x2="12" y1="2" y2="15" />
-                          </svg>
-                          <span className="sr-only">Share video</span>
-                        </button>
+                        <div className="text-xs">
+                          {video.views} {video.views === 1 ? "view" : "views"}
+                        </div>
+                        <IconShareUploadButton uploadId={video.id} />
                       </div>
                     </div>
                   );

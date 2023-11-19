@@ -1,16 +1,22 @@
 export const metadata = {
-  title: 'Home - Cube',
-  description: 'Page description',
-}
+  title: "Home - Cube",
+  description: "Page description",
+};
 
-import Hero from '@/components/hero'
-import Testimonials from '@/components/testimonials'
-import Features from '@/components/features'
-import Features02 from '@/components/features-02'
-import Integrations from '@/components/integrations'
-import Pricing from '@/components/pricing'
-import Faqs from '@/components/faqs'
-import Cta from '@/components/cta'
+/* Landing page Stlyes*/
+import "@/app/css/additional-styles/utility-patterns.css";
+import "@/app/css/additional-styles/range-slider.css";
+import "@/app/css/additional-styles/toggle-switch.css";
+import "@/app/css/additional-styles/theme.css";
+
+import Hero from "@/components/hero";
+import Testimonials from "@/components/testimonials";
+import Features from "@/components/features";
+import Features02 from "@/components/features-02";
+import Integrations from "@/components/integrations";
+import Pricing from "@/components/pricing";
+import Faqs from "@/components/faqs";
+import Cta from "@/components/cta";
 
 export default function Home() {
   return (
@@ -24,5 +30,5 @@ export default function Home() {
       <Faqs />
       <Cta />
     </>
-  )
+  );
 }

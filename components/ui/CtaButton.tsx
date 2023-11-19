@@ -1,4 +1,5 @@
 "use client";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -23,9 +24,11 @@ export default function CtaButton({ styles }: { styles?: string }) {
         href="/app"
       >
         Dashboard{" "}
-        <span className="tracking-normal text-sky-300 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
+        {/* <span className="tracking-normal text-sky-300 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
           -&gt;
-        </span>
+        </span> */}
+        <ArrowRightIcon className="tracking-normal text-sky-300 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1" />
+        
       </Link>
     );
 
