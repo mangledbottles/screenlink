@@ -4,7 +4,11 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { AiOutlineDownload, AiOutlineVideoCameraAdd } from "react-icons/ai";
+import {
+  AiOutlineDownload,
+  AiOutlineVideoCameraAdd,
+} from "react-icons/ai";
+import TeamSwitcher from "@/components/TeamSwitcher";
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
@@ -28,10 +32,22 @@ export default async function Dashboard() {
     },
   });
 
+  const projects = await prisma.project.findMany({
+    where: {
+      // @ts-ignore
+      users: {
+        some: {
+          userId,
+        },
+      },
+    },
+  });
+
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         <div className="pt-12 md:pt-20 ">
+          <TeamSwitcher projects={projects} className="mb-3" />
           <div
             key="1"
             className="flex flex-col rounded overflow-hidden bg-slate-800 bg-opacity-60 "
