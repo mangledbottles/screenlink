@@ -10,6 +10,7 @@ export default function Player({ id }: { id: string }) {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [firstTimeLoading, setFirstTimeLoading] = useState(true);
+  const [viewed, setViewed] = useState(false);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
@@ -56,6 +57,16 @@ export default function Player({ id }: { id: string }) {
     };
   }, [id]);
 
+  const trackView = async () => {
+    if (viewed) return;
+    const res = await fetch(`/api/uploads/${id}/view`, {
+      method: "POST",
+    });
+    const json = await res.json();
+    console.log({ json });
+    setViewed(true);
+  };
+
   if (error) {
     return (
       <div className="relative max-w-6xl mx-auto pt-12 md:pt-8">
@@ -94,7 +105,7 @@ export default function Player({ id }: { id: string }) {
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto">
-        <div className="pt-2 md:pt-12">
+        <div className="pt-2 md:pt-12" onClick={trackView}>
           <Video src={videoSource} />
         </div>
       </div>

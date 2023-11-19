@@ -1,9 +1,14 @@
 import { PrismaClient, Upload, User } from "@prisma/client";
 import Player from "../Player";
 import { Metadata } from "next";
-import { AiOutlineLink } from "react-icons/ai";
 import { formatDistanceToNow } from "date-fns";
 import { ShareUploadButton } from "./ShareUploadButton";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { CalendarIcon, PersonIcon } from "@radix-ui/react-icons";
 
 type UserUpload = Upload & {
   User: User | null;
@@ -69,9 +74,49 @@ const ViewHeader = ({ upload }: { upload: UserUpload }) => {
             <div className="mt-1 text-base font-semibold leading-6 text-gray-200 dark:text-gray-200">
               Watch {upload.sourceTitle}
             </div>
-            <div className="text-sm leading-6 text-gray-500 dark:text-gray-300">
-              by {upload.User?.name ?? "Unknown"} |{" "}
-              {formatDistanceToNow(new Date(upload.createdAt))} ago
+            <div className="mt-1 flex flex-col sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
+              <div className="mt-2 flex items-center text-sm text-gray-500">
+                <PersonIcon
+                  className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400"
+                  aria-hidden="true"
+                />
+                by {upload.User?.name ?? "Unknown"}
+              </div>
+              <div className="mt-2 flex items-center text-sm text-gray-500">
+                <CalendarIcon
+                  className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400"
+                  aria-hidden="true"
+                />
+                <HoverCard>
+                  <HoverCardTrigger className="cursor-pointer">
+                    {formatDistanceToNow(new Date(upload.createdAt))} ago
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <div className="flex items-center">
+                      <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />{" "}
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(upload.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          }
+                        )}{" "}
+                        at{" "}
+                        {new Date(upload.createdAt).toLocaleTimeString(
+                          "en-US",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          }
+                        )}
+                      </span>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
             </div>
           </h1>
         </div>
