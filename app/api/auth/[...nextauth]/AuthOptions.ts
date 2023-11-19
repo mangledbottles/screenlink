@@ -3,7 +3,7 @@ import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 // import SlackProvider from "next-auth/providers/slack";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Project } from "@prisma/client";
 const prisma = new PrismaClient();
 
 declare global {
@@ -56,6 +56,78 @@ export const authOptions: NextAuthOptions = {
     },
     events: {
         async signIn(message) {
+            console.log("User sign in started");
+
+            let userHasProject: boolean = false;
+            let existingProject: Project | null = null;
+
+            if (!message.isNewUser) {
+                console.log("Existing user, trying to find associated project");
+                const project = await prisma.project.findFirst({
+                    where: {
+                        users: {
+                            some: {
+                                userId: message.user.id,
+                            },
+                        },
+                    },
+                });
+
+                userHasProject = project !== null;
+                existingProject = project;
+
+                console.log(`User has project: ${userHasProject}`);
+
+                if (userHasProject) {
+                    console.log("User has project, updating user's currentProjectId");
+                    await prisma.user.update({
+                        where: {
+                            id: message.user.id,
+                        },
+                        data: {
+                            currentProjectId: project?.id,
+                        },
+                    });
+                    console.log("User's currentProjectId updated with existing project id");
+                    return;
+                }
+
+            }
+
+            if (message.isNewUser || !userHasProject) {
+                console.log("New user or user without project");
+
+                console.log("No existing project found, creating new project");
+                const projectName = String(`${message.user.name}'s project`);
+                const project = await prisma.project.create({
+                    data: {
+                        name: projectName,
+                        users: {
+                            create: {
+                                role: 'owner',
+                                user: {
+                                    connect: {
+                                        id: message.user.id,
+                                    },
+                                },
+                            },
+                        },
+                    }
+                });
+
+                console.log("New project created, updating user's currentProjectId");
+                await prisma.user.update({
+                    where: {
+                        id: message.user.id,
+                    },
+                    data: {
+                        currentProjectId: project.id,
+                    },
+                });
+                console.log("User's currentProjectId updated with new project id");
+            }
+
+            console.log("User sign in completed");
         },
     },
 };
