@@ -11,6 +11,7 @@ export default function Hero() {
         <div className="pt-32 md:pt-40">
           {/* Hero content */}
           <div className="max-w-3xl mx-auto text-center">
+            {/* <h1 className="font-hkgrotesk mb-6 text-[5rem]" data-aos="fade-up"> */}
             <h1 className="h1 font-hkgrotesk mb-6" data-aos="fade-up">
               The Open Source Loom Alternative
             </h1>
