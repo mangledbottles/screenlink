@@ -32,6 +32,8 @@ export function Recorder({
         },
       };
 
+      
+
       try {
         // @ts-ignore
         const stream = await navigator.mediaDevices.getUserMedia(constraints);

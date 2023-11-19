@@ -5,6 +5,13 @@ import { Recorder } from "./components/Recorder";
 import SignIn from "./components/SignIn";
 import screenlinkLogo from "./assets/screenlink.svg";
 
+// Get the device code from the desktop application
+export const refreshDeviceCode = async () => {
+  const newDeviceCode = await window.electron.getDeviceCode();
+  console.log("newDeviceCode", newDeviceCode);
+  return newDeviceCode;
+};
+
 function App() {
   const [selectedSource, setSelectedSource] = useState<Source | any | null>(
     null
@@ -19,13 +26,9 @@ function App() {
   });
 
   useEffect(() => {
-    // Get the device code from the desktop application
-    const load = async () => {
-      const newDeviceCode = await window.electron.getDeviceCode();
-      console.log("newDeviceCode", newDeviceCode);
+    refreshDeviceCode().then((newDeviceCode) => {
       setDeviceCode(newDeviceCode);
-    };
-    load();
+    });
   }, []);
 
   // If the device code is not present, show the sign in component

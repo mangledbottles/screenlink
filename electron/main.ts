@@ -55,6 +55,9 @@ ipcMain.handle('save-video', async (_, filePath, buffer: Buffer) => {
 // convert buffer to video file and upload to Mux
 ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) => {
   try {
+    const deviceCode = await getDeviceCode();
+    const account = await getAccount();
+
     // Define a temporary file path for storage
     const tempFilePath = path.join(app.getPath('home'), `temp-${Date.now()}.webm`);
 
@@ -66,7 +69,8 @@ ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) =>
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${deviceCode}`
       },
       body: JSON.stringify({ sourceTitle })
     });
@@ -128,15 +132,86 @@ ipcMain.handle('open-new-device', async (_) => {
   }
 });
 
+const verifyDeviceCode = async (deviceCode: string) => {
+  try {
+    const url = `${baseUrl}/api/devices/verify`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ deviceCode })
+    });
+    if (response.status !== 200) {
+      console.log(JSON.stringify({ e: "failed to verify device code", url }))
+      throw new Error(response.statusText);
+    }
+    const data = await response.json();
+    if (data.error) {
+      console.log(JSON.stringify({ e: "failed to verify device code", url, error: data.error }))
+      throw new Error(data.error);
+    }
+    return data;
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const getDeviceCode = async () => {
+  // Read the device code from the file (deviceCodeFilePath)
+  // and send it to the renderer process
+  const deviceCodeBuffer = await readFilePromise(deviceCodeFilePath);
+  const deviceCode = deviceCodeBuffer.toString();
+  return deviceCode;
+}
+
+const getAccount = async () => {
+  try {
+    const deviceCode = await getDeviceCode();
+    console.log('Device code on get: ', deviceCode);
+    if (deviceCode === '') {
+      if (win) {
+        win.webContents.send('device-code', 'Device code not available');
+      }
+      return;
+    }
+
+    // Verify the device code
+    const device = await verifyDeviceCode(deviceCode);
+    if (!device) {
+      if (win) {
+        win.webContents.send('device-code', 'Device code not available');
+      }
+      return;
+    }
+    return device;
+  } catch (error) {
+    console.log(error)
+    if (win) {
+      win.webContents.send('device-code', 'Device code not available');
+    }
+    return;
+  }
+}
+
 ipcMain.handle('get-device-code', async (_) => {
   try {
-    // Read the device code from the file (deviceCodeFilePath)
-    // and send it to the renderer process
-    const deviceCodeBuffer = await readFilePromise(deviceCodeFilePath);
-    const deviceCode = deviceCodeBuffer.toString();
+    const deviceCode = await getDeviceCode();
+    console.log('Device code on get: ', deviceCode);
+    if (deviceCode === '') {
+      return null;
+    }
+
+    // TODO: Update this logic as it does not need to check immediately on open, maybe 5 seconds later (UI purposes)
+    // Verify the device code
+    // const device = await verifyDeviceCode(deviceCode);
+    // if (!device) {
+    //   return null;
+    // }
     return deviceCode;
   } catch (error) {
     console.log(error)
+    return null;
   }
 });
 
