@@ -82,23 +82,27 @@ const DevicesTable = ({
   const revokeDevice = async (formData: FormData) => {
     "use server";
 
-    const deviceId = formData.get("deviceId") as string;
-    if (!deviceId) return;
-    console.log(`Revoke device ${deviceId} for user ${userId}`);
+    try {
+      const deviceId = formData.get("deviceId") as string;
+      if (!deviceId) return;
+      console.log(`Revoke device ${deviceId} for user ${userId}`);
 
-    const prisma = new PrismaClient();
-    await prisma.devices.update({
-      where: {
-        id: deviceId,
-        userId,
-        revoked: false, // Only revoke if it's not already revoked
-      },
-      data: {
-        revoked: true,
-      },
-    });
-    // Marks all device pages for revalidating
-    revalidatePath("/app/devices");
+      const prisma = new PrismaClient();
+      await prisma.devices.update({
+        where: {
+          id: deviceId,
+          userId,
+          revoked: false, // Only revoke if it's not already revoked
+        },
+        data: {
+          revoked: true,
+        },
+      });
+      // Marks all device pages for revalidating
+      revalidatePath("/app/devices");
+    } catch (error) {
+      console.error(error);
+    }
   };
   return (
     <div className="mt-8 flow-root">
@@ -129,7 +133,7 @@ const DevicesTable = ({
                   scope="col"
                   className="px-3 py-3.5 text-left text-sm font-semibold text-white"
                 >
-                  Last Seen
+                  Last Interaction
                 </th>
                 <th
                   scope="col"
@@ -143,51 +147,61 @@ const DevicesTable = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {devices.map((device) => (
-                <tr key={device.id}>
-                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
-                    {device.name}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
-                    {deviceTypeToName(device.type)}
-                  </td>
-                  <td
-                    className="whitespace-nowrap px-3 py-4 text-sm text-gray-300"
-                    title={new Date(device.createdAt).toString()}
-                  >
-                    {formatDistanceToNow(new Date(device.createdAt))} ago
-                  </td>
-                  <td
-                    className="whitespace-nowrap px-3 py-4 text-sm text-gray-300"
-                    title={new Date(device.updatedAt).toString()}
-                  >
-                    {formatDistanceToNow(new Date(device.updatedAt))} ago
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
-                    {device.revoked ? (
-                      <span className="inline-flex items-center rounded-md bg-pink-400/10 px-2 py-1 text-xs font-medium text-pink-400 ring-1 ring-inset ring-pink-400/20">
-                        Revoked
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30">
-                        Active
-                      </span>
-                    )}
-                  </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                    <form action={revokeDevice}>
-                      <input type="hidden" name="deviceId" value={device.id} />
-                      <button
-                        className="text-indigo-400 hover:text-indigo-300 cursor-pointer"
-                        typeof="submit"
-                      >
-                        Revoke
-                        <span className="sr-only">, {device.name}</span>
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
+              {devices.map((device) => {
+                const lastUpdated =
+                  device.lastUploadAt && device.lastUploadAt > device.updatedAt
+                    ? device.lastUploadAt
+                    : device.updatedAt;
+                return (
+                  <tr key={device.id}>
+                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
+                      {device.name}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
+                      {deviceTypeToName(device.type)}
+                    </td>
+                    <td
+                      className="whitespace-nowrap px-3 py-4 text-sm text-gray-300"
+                      title={new Date(device.createdAt).toString()}
+                    >
+                      {formatDistanceToNow(new Date(device.createdAt))} ago
+                    </td>
+                    <td
+                      className="whitespace-nowrap px-3 py-4 text-sm text-gray-300"
+                      title={new Date(lastUpdated).toString()}
+                    >
+                      {formatDistanceToNow(new Date(lastUpdated))} ago
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
+                      {device.revoked ? (
+                        <span className="inline-flex items-center rounded-md bg-pink-400/10 px-2 py-1 text-xs font-medium text-pink-400 ring-1 ring-inset ring-pink-400/20">
+                          Revoked
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30">
+                          Active
+                        </span>
+                      )}
+                    </td>
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                      <form action={revokeDevice}>
+                        <input
+                          type="hidden"
+                          name="deviceId"
+                          value={device.id}
+                        />
+                        <button
+                          className="text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                          typeof="submit"
+                        >
+                          Revoke
+                          <span className="sr-only">, {device.name}</span>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
