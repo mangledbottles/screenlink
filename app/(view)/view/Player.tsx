@@ -3,8 +3,17 @@ import { useEffect, useState } from "react";
 import Video from "./Video";
 import { VideoSkeleton } from "./VideoSkeleton";
 import { AiOutlineInfoCircle } from "react-icons/ai";
+import { Upload, User } from "@prisma/client";
 
-export default function Player({ id }: { id: string }) {
+export default function Player({
+  id,
+  video,
+  isUploadReady,
+}: {
+  id: string;
+  video: Upload & Partial<User>;
+  isUploadReady: boolean;
+}) {
   const [assetId, setAssetId] = useState<string | null>(null);
   const [playbackId, setPlaybackId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -12,43 +21,55 @@ export default function Player({ id }: { id: string }) {
   const [firstTimeLoading, setFirstTimeLoading] = useState(true);
   const [viewed, setViewed] = useState(false);
 
+  let intervalId: NodeJS.Timeout | null = null;
+
+  const fetchVideo = async () => {
+    const res = await fetch(`/api/uploads/${id}`);
+    const upload = await res.json();
+    setFirstTimeLoading(false);
+    if (!upload || res.status == 404) {
+      setError(upload.error ?? "Video not found");
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+
+    if (upload.status === "asset_created") {
+      setAssetId(upload.assetId);
+      setPlaybackId(upload.playbackId);
+      setIsReady(upload.isReady);
+      if (upload.isReady) {
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      }
+    } else if (upload.status === "errored") {
+      setError(
+        "There was an error processing your video. It could not be uploaded."
+      );
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+  };
+
   useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-
-    const fetchVideo = async () => {
-      const res = await fetch(`/api/uploads/${id}`);
-      const upload = await res.json();
+    if (!isUploadReady) {
+      console.log("upload not ready");
+      // Set up the interval immediately
+      intervalId = setInterval(fetchVideo, 3000);
+    } else {
+      console.log(
+        `upload ready: ${isUploadReady} and assetId: ${video.assetId} and playbackId: ${video.playbackId}`
+      );
+      setAssetId(video.assetId);
+      setPlaybackId(video.playbackId);
+      setIsReady(true);
       setFirstTimeLoading(false);
-      if (!upload || res.status == 404) {
-        setError(upload.error ?? "Video not found");
-        if (intervalId) {
-          clearInterval(intervalId);
-          intervalId = null;
-        }
-      }
-
-      if (upload.status === "asset_created") {
-        setAssetId(upload.assetId);
-        setPlaybackId(upload.playbackId);
-        setIsReady(upload.isReady);
-        if (upload.isReady) {
-          if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-          }
-        }
-      } else if (upload.status === "errored") {
-        setError(
-          "There was an error processing your video. It could not be uploaded."
-        );
-        if (intervalId) {
-          clearInterval(intervalId);
-          intervalId = null;
-        }
-      }
-    };
-    // Set up the interval immediately
-    intervalId = setInterval(fetchVideo, 3000);
+    }
 
     return () => {
       if (intervalId) {
@@ -85,6 +106,7 @@ export default function Player({ id }: { id: string }) {
   }
 
   if (!assetId || !playbackId || !isReady) {
+    console.log({ assetId, playbackId, isReady, at: "loding" });
     return (
       <div className="relative max-w-6xl mx-auto pt-12 md:pt-8">
         <LoadingBanner
@@ -101,12 +123,13 @@ export default function Player({ id }: { id: string }) {
   const backupSource =
     "https://stream.mux.com/yb2L3z3Z4IKQH02HYkf9xPToVYkOC85WA.m3u8";
   const videoSource = `${baseUrl}/${playbackId}.m3u8` || backupSource;
+  const animatedPreview = `https://image.mux.com/${playbackId}/animated.gif?fps=15&width=640`;
 
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto">
         <div className="pt-2 md:pt-12" onClick={trackView}>
-          <Video src={videoSource} />
+          <Video src={videoSource} animatedPreview={animatedPreview} />
         </div>
       </div>
     </section>
@@ -131,9 +154,9 @@ const LoadingBanner = ({ message }: { message: string }) => {
   );
 };
 
-const ErrorBanner = ({ message }: { message: string }) => {
+export const ErrorBanner = ({ message }: { message: string }) => {
   return (
-    <div className="mb-4 rounded-md bg-pink-400/10 p-4 px-2 font-medium text-pink-400 ring-1 ring-inset ring-pink-400/20">
+    <div className="mt-4 mb-4 rounded-md bg-pink-400/10 p-4 px-2 font-medium text-pink-400 ring-1 ring-inset ring-pink-400/20">
       <div className="flex">
         <div className="flex-shrink-0">
           <AiOutlineInfoCircle

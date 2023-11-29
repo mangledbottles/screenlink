@@ -1,5 +1,5 @@
 import { PrismaClient, Upload, User } from "@prisma/client";
-import Player from "../Player";
+import Player, { ErrorBanner } from "../Player";
 import { Metadata } from "next";
 import { formatDistanceToNow } from "date-fns";
 import { ShareUploadButton } from "./ShareUploadButton";
@@ -9,6 +9,11 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { CalendarIcon, PersonIcon } from "@radix-ui/react-icons";
+import Mux, { Upload as MuxUpload } from "@mux/mux-node";
+const { Video } = new Mux(
+  process.env.MUX_ACCESS_TOKEN!,
+  process.env.MUX_SECRET_KEY!
+);
 
 type UserUpload = Upload & {
   User: User | null;
@@ -37,28 +42,77 @@ export const generateMetadata = async ({
           alt: title,
         },
       ],
+      type: "video.movie",
     },
   };
 };
 
+const getUpload = async (uploadId: string): Promise<MuxUpload> => {
+  try {
+    const upload = await Video.Uploads.get(uploadId);
+    return upload;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 export default async function View({ params }: { params: { id: string } }) {
   const { id } = params;
-
+  let errorMessage;
   const prisma = new PrismaClient();
-  const upload = await prisma.upload.findUnique({
+  let upload = await prisma.upload.findUnique({
     where: { id },
     include: { User: true },
   });
 
-  // function classNames(...classes) {
-  //   return classes.filter(Boolean).join(" ");
-  // }
+  // If there is no Asset ID, but there is an Upload ID, check Mux for the status of the upload
+  if (!upload?.assetId && upload?.uploadId) {
+    const muxUpload = await getUpload(upload.uploadId);
+    if (muxUpload.status === "asset_created") {
+      const video = await Video.Assets.get(muxUpload.asset_id!);
+      const playbackId = video?.playback_ids?.[0]?.id;
+
+      upload = await prisma.upload.update({
+        where: { id },
+        data: {
+          status: "asset_created",
+          assetId: muxUpload.asset_id,
+          playbackId,
+        },
+        include: { User: true },
+      });
+    }
+  }
+
+  // Get the Mux video asset
+  let muxVideo = null;
+  try {
+    muxVideo = upload?.assetId ? await Video.Assets.get(upload?.assetId) : null;
+  } catch (error) {
+    console.error("Error fetching Mux video asset:", error);
+    errorMessage = "Video file not found. It may have been deleted.";
+  }
+  if (upload?.assetId && !errorMessage && (!upload || !muxVideo)) {
+    console.log({ errorMessage, upload, muxVideo });
+    errorMessage = "Video not found";
+  }
+
+  // Check if the video is ready
+  const isReady = muxVideo?.status === "ready" ?? false;
+
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           {upload && <ViewHeader upload={upload} />}
-          <Player id={id} />
+          {errorMessage || !upload ? (
+            <ErrorBanner
+              message={errorMessage ?? "Video could not be loaded"}
+            />
+          ) : (
+            <Player id={id} video={upload} isUploadReady={isReady} />
+          )}
         </div>
       </div>
     </section>

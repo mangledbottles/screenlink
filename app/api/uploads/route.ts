@@ -11,7 +11,8 @@ const createUploadLink = async (): Promise<Upload> => {
         cors_origin: '*',
         new_asset_settings: {
             playback_policy: 'public',
-            max_resolution_tier: "1080p",
+            max_resolution_tier: "2160p",
+            normalize_audio: true,
         },
         timeout: '3600',
     });
