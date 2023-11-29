@@ -35,9 +35,63 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         session: async ({ session, token, user }) => {
             if (session?.user) {
+                const userId = token.uid as string;
+                if (!userId) throw new Error("No user id found in token");
                 // @ts-ignore
-                session.user.id = token.uid;
-                // console.log({ session, token, user, userId: token.uid })
+                session.user.id = userId;
+                // console.log({ session, token, userId })
+                const user = await prisma.user.findUnique({
+                    where: {
+                        id: userId,
+                    },
+                    select: {
+                        name: true,
+                        currentProjectId: true,
+                    },
+                });
+                if (!user) throw new Error("No user found");
+
+                if (!user.currentProjectId) {
+                    const firstProject = await prisma.project.findFirst({
+                        where: {
+                            users: {
+                                some: {
+                                    userId,
+                                },
+                            },
+                        },
+                    });
+                    if (firstProject) {
+                        console.log("User has no current project, setting to first project");
+                        // @ts-ignore
+                        session.user.currentProjectId = firstProject.id;
+                    }
+                    else {
+                        console.log("User has no current project, creating new project");
+                        const projectName = String(`${user.name}'s project`);
+                        const project = await prisma.project.create({
+                            data: {
+                                name: projectName,
+                                users: {
+                                    create: {
+                                        role: 'owner',
+                                        user: {
+                                            connect: {
+                                                id: userId,
+                                            },
+                                        },
+                                    },
+                                },
+                            }
+                        });
+                        // @ts-ignore
+                        session.user.currentProjectId = project.id;
+                    }
+                } else {
+                    // console.log("User has current project set");
+                    // @ts-ignore
+                    session.user.currentProjectId = user.currentProjectId;
+                }
             }
             return session;
         },
@@ -52,81 +106,10 @@ export const authOptions: NextAuthOptions = {
         strategy: "jwt",
     },
     pages: {
-        signIn: "/auth",
+        signIn: "/signin",
     },
     events: {
         async signIn(message) {
-            console.log("User sign in started");
-
-            let userHasProject: boolean = false;
-            let existingProject: Project | null = null;
-
-            if (!message.isNewUser) {
-                console.log("Existing user, trying to find associated project");
-                const project = await prisma.project.findFirst({
-                    where: {
-                        users: {
-                            some: {
-                                userId: message.user.id,
-                            },
-                        },
-                    },
-                });
-
-                userHasProject = project !== null;
-                existingProject = project;
-
-                console.log(`User has project: ${userHasProject}`);
-
-                if (userHasProject) {
-                    console.log("User has project, updating user's currentProjectId");
-                    await prisma.user.update({
-                        where: {
-                            id: message.user.id,
-                        },
-                        data: {
-                            currentProjectId: project?.id,
-                        },
-                    });
-                    console.log("User's currentProjectId updated with existing project id");
-                    return;
-                }
-
-            }
-
-            if (message.isNewUser || !userHasProject) {
-                console.log("New user or user without project");
-
-                console.log("No existing project found, creating new project");
-                const projectName = String(`${message.user.name}'s project`);
-                const project = await prisma.project.create({
-                    data: {
-                        name: projectName,
-                        users: {
-                            create: {
-                                role: 'owner',
-                                user: {
-                                    connect: {
-                                        id: message.user.id,
-                                    },
-                                },
-                            },
-                        },
-                    }
-                });
-
-                console.log("New project created, updating user's currentProjectId");
-                await prisma.user.update({
-                    where: {
-                        id: message.user.id,
-                    },
-                    data: {
-                        currentProjectId: project.id,
-                    },
-                });
-                console.log("User's currentProjectId updated with new project id");
-            }
-
             console.log("User sign in completed");
         },
     },
