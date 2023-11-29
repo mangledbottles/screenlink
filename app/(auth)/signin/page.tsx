@@ -1,14 +1,16 @@
-import { getProviders, signIn, useSession } from "next-auth/react";
-export const metadata = {
-  title: "Sign In - ScreenLink",
-  description: "Login to ScreenLink to start recording your screen and camera.",
-};
-
+import { getProviders } from "next-auth/react";
 import Link from "next/link";
 import AuthForm from "../AuthForm";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
 import { redirect } from "next/navigation";
+import { constructMetadata } from "@/app/utils";
+
+export const metadata = constructMetadata({
+  description:
+    "Login to ScreenLink to start recording demos with your screen and camera.",
+  title: "Sign In - ScreenLink",
+});
 
 export default async function SignIn({
   searchParams,
@@ -25,7 +27,9 @@ export default async function SignIn({
   }
 
   // Get redirect from query
-  const redirectTo = searchParams?.redirect ? String(searchParams?.redirect) : "/app";
+  const redirectTo = searchParams?.redirect
+    ? String(searchParams?.redirect)
+    : "/app";
 
   return (
     <div className="relative max-w-6xl mx-auto px-4 sm:px-6">

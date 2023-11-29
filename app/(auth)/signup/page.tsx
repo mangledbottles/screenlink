@@ -1,19 +1,15 @@
-export const metadata = {
-  title: "Sign Up - ScreenLink",
-  description:
-    "Sign up for ScreenLink to start recording your screen and camera.",
-};
-
-import Image from "next/image";
-import Avatar01 from "@/public/images/avatar-01.jpg";
-import Avatar02 from "@/public/images/avatar-02.jpg";
-import Avatar03 from "@/public/images/avatar-03.jpg";
-import Avatar04 from "@/public/images/avatar-04.jpg";
 import AuthForm from "../AuthForm";
 import { getProviders } from "next-auth/react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
 import { redirect } from "next/navigation";
+import { constructMetadata } from "@/app/utils";
+
+export const metadata = constructMetadata({
+  description:
+    "Sign up for ScreenLink to start recording demos with your screen and camera.",
+  title: "Sign Up - ScreenLink",
+});
 
 export default async function SignUp({
   searchParams,

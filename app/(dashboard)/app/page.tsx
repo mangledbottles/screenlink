@@ -1,7 +1,7 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+// import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import {
@@ -11,6 +11,7 @@ import {
 import TeamSwitcher from "@/components/TeamSwitcher";
 import DashboardStatistics from "@/components/DashboardStatistics";
 import { IconShareUploadButton } from "@/app/(view)/view/[id]/ShareUploadButton";
+import { redirect } from "next/navigation";
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
