@@ -10,10 +10,11 @@ export default async function DashboardStatistics() {
   const session = await getServerSession(authOptions);
 
   const prisma = new PrismaClient();
+  // @ts-ignore
+  const currentProjectId = session?.user?.currentProjectId;
   const project = await prisma.project.findFirst({
     where: {
-      // @ts-ignore
-      id: session?.user?.currentProjectId,
+      id: currentProjectId,
     },
   });
 
@@ -23,10 +24,20 @@ export default async function DashboardStatistics() {
 
   const totalVideoUploads = await prisma.upload.count({
     where: {
-      projectId: project.id,
+      projectId: currentProjectId,
     },
   });
   const limit = limits[project.plan as Plan];
+
+  // @ts-ignore
+  const userId = session?.user?.id;
+  const email = session?.user?.email;
+  const projectId = project?.id;
+  const projectPlan = project?.plan;
+  const clientReferenceId = `${projectId}-${userId}`;
+
+  if (!userId || !email || !projectId || !projectPlan)
+    return <div>Something went wrong</div>;
 
   return (
     <>
@@ -35,12 +46,6 @@ export default async function DashboardStatistics() {
         <Card className="p-4">
           <Text>Plan</Text>
           <Metric className="text-tremor-content-emphasis">
-            {/* <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-              {project?.plan ?? (
-                <span className="animate-pulse w-10 h-5"></span>
-              )}
-            </span> */}
-
             <span className="inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-sm font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30">
               {project?.plan ?? (
                 <span className="animate-pulse w-10 h-5"></span>
@@ -48,9 +53,13 @@ export default async function DashboardStatistics() {
             </span>
           </Metric>
           <Flex className="mt-4">
-            {project?.plan !== "Growth" && <UpgradeButton />}
-            {/* <UpgradeButton /> */}
-            {/* <UpgradeButton /> */}
+            {projectPlan !== "Growth" && (
+              <UpgradeButton
+                clientReferenceId={clientReferenceId}
+                email={email}
+                plan={projectPlan}
+              />
+            )}
           </Flex>
         </Card>
       </Grid>
