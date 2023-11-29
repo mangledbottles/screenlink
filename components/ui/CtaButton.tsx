@@ -28,9 +28,20 @@ export default function CtaButton({ styles }: { styles?: string }) {
           -&gt;
         </span> */}
         <ArrowRightIcon className="tracking-normal text-sky-300 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1" />
-        
       </Link>
     );
+
+  return (
+    <Link
+      className={`font-medium text-white bg-indigo-500 hover:bg-indigo-600 w-full shadow-sm group px-3 lg:px-4 py-2 flex items-center transition duration-150 ease-in-out rounded-md ${
+        styles ? styles : ``
+      }`}
+      href="/signup"
+    >
+      Get Started{" "}
+      <ArrowRightIcon className="tracking-normal text-sky-300 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1" />
+    </Link>
+  );
 
   return (
     <Link

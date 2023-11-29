@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import HeroImage from "@/public/images/hero-image.png";
 import CtaButton from "@components/ui/CtaButton";
+import DemoLimk from "../public/images/demo-link-2.png";
 
 export default function Hero() {
   return (
@@ -11,7 +12,7 @@ export default function Hero() {
         <div className="pt-32 md:pt-40">
           {/* Hero content */}
           <div className="max-w-3xl mx-auto text-center">
-            {/* <h1 className="font-hkgrotesk mb-6 text-[5rem]" data-aos="fade-up"> */}
+            {/* <h1 className="Dont-hkgrotesk mb-6 text-[5rem]" data-aos="fade-up"> */}
             <h1 className="h1 font-hkgrotesk mb-6" data-aos="fade-up">
               The Open Source Loom Alternative
             </h1>
@@ -32,12 +33,12 @@ export default function Hero() {
                 <CtaButton styles="btn" />
               </div>
               <div>
-                <a
+                <Link
                   className="btn text-slate-300 bg-slate-700 hover:bg-slate-600 border-slate-600 w-full shadow-sm"
-                  href="#0"
+                  href="/download"
                 >
                   Download
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -49,10 +50,11 @@ export default function Hero() {
           >
             <Image
               className="mx-auto"
-              src={HeroImage}
+              // src={HeroImage}
+              src={DemoLimk}
               width={920}
               height={518}
-              alt="Hero"
+              alt="Demo"
             />
           </div>
         </div>
