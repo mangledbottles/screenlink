@@ -2,14 +2,12 @@
 @tailwind components;
 @tailwind utilities; */
 
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 #root {
   max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
@@ -33,6 +31,14 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+body {
+  -webkit-app-region: drag;
+}
+
+button {
+  -webkit-app-region: no-drag;
 }
 
 /* @media (prefers-reduced-motion: no-preference) {

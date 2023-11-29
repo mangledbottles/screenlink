@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld('electron', {
   getDesktopCapturerSources: async (): Promise<Electron.DesktopCapturerSource> => {
     return await ipcRenderer.invoke('get-desktop-capturer-sources')
   },
+  getWebcamSources: async (): Promise<Electron.DesktopCapturerSource> => {
+    return await ipcRenderer.invoke('get-webcam-sources')
+  },
   showSaveDialog: async (options: Electron.SaveDialogOptions): Promise<Electron.SaveDialogReturnValue> => {
     return await ipcRenderer.invoke('show-save-dialog', options)
   },
@@ -31,6 +34,12 @@ contextBridge.exposeInMainWorld('electron', {
       reader.onerror = reject
       reader.readAsArrayBuffer(blob)
     })
+  },
+  startRecording: async (windowTitle: string): Promise<void> => {
+    return await ipcRenderer.invoke('start-recording', windowTitle)
+  },
+  stopRecording: async (): Promise<void> => {
+    return await ipcRenderer.invoke('stop-recording')
   },
   uploadVideo: async (buffer: Buffer, sourceTitle: string): Promise<void> => {
     return await ipcRenderer.invoke('upload-video', buffer, sourceTitle)

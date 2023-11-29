@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import Button from "./Button";
-
-export type Source = {
-  id: string;
-  name: string;
-  thumbnail: string;
-};
+import { Source, SourceType } from "../utils";
 
 async function getScreenSources() {
   try {
@@ -84,7 +79,10 @@ export function QuickLink({
 }) {
   const handleClick = () => {
     console.log("QuickLink clicked!");
-    setSelectedSource(source);
+    // const sourceType , either "window" or "screen"
+    const sourceType = source.id.split(":")[0] as SourceType;
+    console.log(`sourceType: ${sourceType}`);
+    setSelectedSource({ ...source, sourceType });
   };
 
   const [isHovered, setIsHovered] = useState(false);
@@ -100,7 +98,7 @@ export function QuickLink({
   return (
     <div
       className={`group relative rounded-xl border-transparent border-2 -inset-px  ${
-        isHovered || selectedSource === source
+        isHovered || selectedSource?.id === source.id
           ? "[background:linear-gradient(var(--quick-links-hover-bg,theme(colors.sky.50)),var(--quick-links-hover-bg,theme(colors.sky.50)))_padding-box,linear-gradient(to_top,theme(colors.indigo.400),theme(colors.cyan.400),theme(colors.sky.500))_border-box] group-hover:opacity-100 dark:[--quick-links-hover-bg:theme(colors.slate.800)]"
           : ""
       }`}

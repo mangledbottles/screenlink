@@ -7,6 +7,8 @@ declare global {
             showSaveDialog: (options: Electron.SaveDialogOptions) => Promise<Electron.SaveDialogReturnValue>;
             saveFile: (filePath: string, buffer: Buffer) => Promise<void>;
             blobToBuffer: (blob: Blob) => Promise<Buffer>;
+            startRecording: (sourceId: string) => Promise<void>;
+            stopRecording: () => Promise<void>;
             uploadVideo: (buffer: Buffer, sourceTitle: string) => Promise<string>;
             openInBrowser: (url: string) => Promise<void>;
             openNewDevice: () => Promise<void>;

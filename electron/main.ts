@@ -2,6 +2,11 @@ import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shel
 import { Tray, Menu } from 'electron'
 import os from 'os';
 
+let mainWindow: BrowserWindow | null
+let floatingWindow: BrowserWindow | null
+let webcamWindow: BrowserWindow | null
+let tray: Tray | null = null
+
 import { createReadStream, unlink, writeFile } from 'node:fs'
 import { writeFile as writeFilePromise, readFile as readFilePromise } from 'fs/promises';
 import path from 'node:path'
@@ -10,7 +15,7 @@ const isProd = process.env.NODE_ENV != "development";
 const baseUrl = isProd ? 'https://screenlink.io' : 'http://localhost:3008';
 const sessionDataPath = app.getPath('sessionData');
 const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
-import cp from 'child_process';
+import cp, { exec } from 'child_process';
 
 function getComputerName() {
   switch (process.platform) {
@@ -26,17 +31,49 @@ function getComputerName() {
   }
 }
 
+// function openWindow(windowTitle: string) {
+//   console.log(`Opening window with title: ${windowTitle}`)
+//   if (os.platform() === 'win32') {
+//     // Windows command
+//     const command = `powershell -command "$app = Get-Process | Where-Object { $_.MainWindowTitle -eq '${windowTitle}' }; [Microsoft.VisualBasic.Interaction]::AppActivate($app.Id)"`;
+//     exec(command);
+//   } else if (os.platform() === 'darwin') {
+//     // macOS command
+//     const command = `osascript -e 'tell application "${windowTitle}" to activate'`;
+//     exec(command);
+//   } else {
+//     console.log('Unsupported platform');
+//   }
+// }
+
+
 ipcMain.handle('get-desktop-capturer-sources', async () => {
   const sources = await desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
+  // const sources = await desktopCapturer.getSources({ types: ['screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
   const excludeTitles = ['ScreenLink.io', 'App Icon Window', 'App Icon Screens', 'Gesture Blocking Overlay', 'Touch Bar']
+  console.log({ sources })
   return sources
     .filter(source => !excludeTitles.includes(source.name))
     .map(source => ({
       id: source.id,
       name: source.name,
       thumbnail: source.thumbnail.toDataURL() ?? source.appIcon.toDataURL(),
+      dimensions: {
+        width: source.thumbnail.getSize().width,
+        height: source.thumbnail.getSize().height,
+      },
     }))
 })
+
+ipcMain.handle('get-webcam-sources', async () => {
+  const webcam = await navigator.mediaDevices.getUserMedia({
+    audio: true,
+    video: true
+  });
+  return webcam;
+});
+
+
 
 // save video to file; show-save-dialog
 ipcMain.handle('show-save-dialog', async (_, options: Electron.SaveDialogOptions) => {
@@ -50,6 +87,51 @@ ipcMain.handle('show-save-dialog', async (_, options: Electron.SaveDialogOptions
 // save video
 ipcMain.handle('save-video', async (_, filePath, buffer: Buffer) => {
   await writeFile(filePath, buffer, () => console.log('video saved successfully!'));
+});
+
+function focusWindow(windowTitle: string) {
+  console.log(`Focusing window with title: ${windowTitle}`)
+  if (os.platform() === 'win32') {
+    // Windows command
+    const command = `powershell -command "$app = Get-Process | Where-Object { $_.MainWindowTitle -eq '${windowTitle}' }; [Microsoft.VisualBasic.Interaction]::AppActivate($app.Id)"`;
+    exec(command);
+  } else if (os.platform() === 'darwin') {
+    // macOS command
+    exec(`osascript -e 'tell application "System Events" to set frontmost of the first process whose name is "${windowTitle}" to true'`);
+  } else {
+    // Linux command (as an example, actual command will vary)
+    exec(`xdotool search --name "${windowTitle}" windowactivate`);
+  }
+}
+
+ipcMain.handle('start-recording', async (_, windowTitle: string) => {
+  // focusWindow(windowTitle);
+  // if (mainWindow) mainWindow.webContents.send('started-recording', true);
+
+
+  if (mainWindow) mainWindow.minimize();
+  if (webcamWindow) webcamWindow.show();
+  if (floatingWindow) {
+    floatingWindow.show();
+    floatingWindow.webContents.send('started-recording', true);
+  }
+
+
+
+  // open application of sourceId
+  // shell.openExternal()
+  // shell.openPath(sourceId);
+});
+
+ipcMain.handle('stop-recording', async (_) => {
+  if (floatingWindow) floatingWindow.hide();
+  if (webcamWindow) webcamWindow.hide();
+  if (mainWindow) {
+    console.log("finsihed recoridng, opening mainwindow")
+    mainWindow.webContents.send('finished-recording', true);
+    mainWindow.maximize();
+    mainWindow.focus();
+  }
 });
 
 // convert buffer to video file and upload to Mux
@@ -170,8 +252,8 @@ const getAccount = async () => {
     const deviceCode = await getDeviceCode();
     console.log('Device code on get: ', deviceCode);
     if (deviceCode === '') {
-      if (win) {
-        win.webContents.send('device-code', 'Device code not available');
+      if (mainWindow) {
+        mainWindow.webContents.send('device-code', 'Device code not available');
       }
       return;
     }
@@ -179,16 +261,16 @@ const getAccount = async () => {
     // Verify the device code
     const device = await verifyDeviceCode(deviceCode);
     if (!device) {
-      if (win) {
-        win.webContents.send('device-code', 'Device code not available');
+      if (mainWindow) {
+        mainWindow.webContents.send('device-code', 'Device code not available');
       }
       return;
     }
     return device;
   } catch (error) {
     console.log(error)
-    if (win) {
-      win.webContents.send('device-code', 'Device code not available');
+    if (mainWindow) {
+      mainWindow.webContents.send('device-code', 'Device code not available');
     }
     return;
   }
@@ -228,14 +310,61 @@ process.env.DIST = path.join(__dirname, '../dist')
 process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(process.env.DIST, '../public')
 
 
-let win: BrowserWindow | null
-let tray: Tray | null = null
-
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
+function createFloatingWindow() {
+  const floatingWindow = new BrowserWindow({
+    width: 60,
+    height: 150,
+    x: 0,
+    y: 0,
+    resizable: false,
+    movable: true,
+    alwaysOnTop: true,
+    frame: false, // This makes the window frameless
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+    },
+  });
+
+  if (VITE_DEV_SERVER_URL) {
+    floatingWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=floating`);
+
+  } else {
+    floatingWindow.loadFile(path.join(process.env.DIST, 'index.html?window=floating'));
+  }
+  return floatingWindow;
+}
+
+const createWebcamWindow = () => {
+  const webcamWindow = new BrowserWindow({
+    width: 200,
+    height: 150,
+    x: 1920 - 200,
+    y: 1080,
+    resizable: false,
+    movable: true,
+    alwaysOnTop: true,
+    frame: false, // This makes the window frameless
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+    },
+  });
+
+  if (VITE_DEV_SERVER_URL) {
+    webcamWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=webcam`);
+
+  } else {
+    webcamWindow.loadFile(path.join(process.env.DIST, 'index.html?window=webcam'));
+  }
+  return webcamWindow;
+}
+
 function createWindow() {
-  // assign the deep link url to a variable
+  // assign the deep link url to a variable (screenlinkDesktop://xxx)
   app.setAsDefaultProtocolClient('screenlinkDesktop');
 
   const applicationIconPath = path.join(process.env.VITE_PUBLIC, 'apple.icns');
@@ -245,7 +374,7 @@ function createWindow() {
     width: 16
   });
 
-  win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     icon: applicationIconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -254,14 +383,24 @@ function createWindow() {
   })
 
   // Test active push message to Renderer-process.
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', (new Date).toLocaleString())
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
 
+
+  // Create the floating window and hide it
+  floatingWindow = createFloatingWindow();
+  floatingWindow.hide();
+
+  // Create the webcam window and hide it
+  webcamWindow = createWebcamWindow();
+  webcamWindow.hide();
+
+
   if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL)
+    mainWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=main`);
   } else {
-    win.loadFile(path.join(process.env.DIST, 'index.html'))
+    mainWindow.loadFile(path.join(process.env.DIST, 'index.html?window=main'));
   }
 
   const iconPath = path.join(process.env.VITE_PUBLIC, 'tray-icon.png');
@@ -287,8 +426,8 @@ function createWindow() {
   readFilePromise(deviceCodeFilePath).then((deviceCodeBuffer) => {
     const deviceCode = deviceCodeBuffer.toString();
     console.log('Device code on ready: ', deviceCode);
-    if (win) {
-      win.webContents.send('device-code', deviceCode);
+    if (mainWindow) {
+      mainWindow.webContents.send('device-code', deviceCode);
     } else {
       console.log('No window to send device code to');
     }
@@ -302,7 +441,7 @@ function createWindow() {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
-    win = null
+    mainWindow = null
   }
 })
 
@@ -335,8 +474,8 @@ app.on('open-url', (event, url) => {
 
 
   // Send the device code to the renderer process
-  if (win) {
-    win.webContents.send('device-code', deviceCode);
+  if (mainWindow) {
+    mainWindow.webContents.send('device-code', deviceCode);
   }
 });
 

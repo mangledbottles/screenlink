@@ -4,6 +4,8 @@ import { ScreenSources, Source } from "./components/Sources";
 import { Recorder } from "./components/Recorder";
 import SignIn from "./components/SignIn";
 import screenlinkLogo from "./assets/screenlink.svg";
+import { Floating } from "./components/Floating";
+import { Webcam } from "./components/Webcam";
 
 // Get the device code from the desktop application
 export const refreshDeviceCode = async () => {
@@ -16,8 +18,11 @@ function App() {
   const [selectedSource, setSelectedSource] = useState<Source | any | null>(
     null
   );
-
   const [deviceCode, setDeviceCode] = useState<string | null>(null);
+
+  const params = new URLSearchParams(window.location.search);
+  const windowType = params.get("window");
+  console.log({ windowType });
 
   // Listen for the device code from the desktop application
   // @ts-ignore
@@ -35,6 +40,9 @@ function App() {
   if (!deviceCode) {
     return <SignIn />;
   }
+
+  if (windowType === "floating") return <Floating />;
+  if (windowType === "webcam") return <Webcam />;
 
   return (
     <>
