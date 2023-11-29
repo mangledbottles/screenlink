@@ -122,7 +122,7 @@ export default async function View({ params }: { params: { id: string } }) {
 const ViewHeader = ({ upload }: { upload: UserUpload }) => {
   return (
     <header>
-      <div className="mx-auto flex items-center justify-between gap-x-8 lg:mx-0 max-w-none mt-16">
+      <div className="mx-auto flex items-center justify-between gap-x-8 lg:mx-0 max-w-none mt-8">
         <div className="flex items-center gap-x-6">
           <h1>
             <div className="mt-1 text-base font-semibold leading-6 text-gray-200 dark:text-gray-200">

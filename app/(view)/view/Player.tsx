@@ -128,7 +128,7 @@ export default function Player({
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto">
-        <div className="pt-2 md:pt-12" onClick={trackView}>
+        <div className="pt-2 md:pt-6" onClick={trackView}>
           <Video src={videoSource} animatedPreview={animatedPreview} />
         </div>
       </div>
@@ -156,7 +156,7 @@ const LoadingBanner = ({ message }: { message: string }) => {
 
 export const ErrorBanner = ({ message }: { message: string }) => {
   return (
-    <div className="mt-4 mb-4 rounded-md bg-pink-400/10 p-4 px-2 font-medium text-pink-400 ring-1 ring-inset ring-pink-400/20">
+    <div className="mt-8 mb-4 rounded-md bg-pink-400/10 p-4 px-2 font-medium text-pink-400 ring-1 ring-inset ring-pink-400/20">
       <div className="flex">
         <div className="flex-shrink-0">
           <AiOutlineInfoCircle
