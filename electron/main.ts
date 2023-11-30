@@ -257,7 +257,7 @@ const getAccount = async () => {
   try {
     const deviceCode = await getDeviceCode();
     console.log('Device code on get: ', deviceCode);
-    if (deviceCode === '') {
+    if (deviceCode === '' || !deviceCode) {
       if (mainWindow) {
         mainWindow.webContents.send('device-code', 'Device code not available');
       }
