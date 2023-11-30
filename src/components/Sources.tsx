@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Button from "./Button";
 import { Source, SourceType } from "../utils";
 
 async function getScreenSources() {
@@ -9,31 +8,9 @@ async function getScreenSources() {
     return sources;
   } catch (error) {
     console.error("Failed to get screen sources:", error);
+    await window.electron.setPermissionsMissing(true);
     return [];
   }
-}
-
-export function ScreenSourcesV1() {
-  const [sources, setSources] = useState<Source[] | any[]>([]);
-
-  useEffect(() => {
-    getScreenSources().then(setSources);
-  }, []);
-
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Screen Sources</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {sources.map((source) => (
-          <div key={source.id} className="border p-4 rounded shadow">
-            <h2 className="text-xl mb-2">{source.name}</h2>
-            <img src={source.thumbnail} alt={source.name} />
-            <Button variant="primary">Select</Button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export function ScreenSources({
@@ -48,8 +25,11 @@ export function ScreenSources({
   useEffect(() => {
     getScreenSources().then(setSources);
   }, []);
+
+  if (!sources.length) return <SourcesSkeleton />;
+
   return (
-    <div className="not-prose my-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="not-prose my-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
       {sources.map((source) => (
         <QuickLink
           key={source.id}
@@ -63,6 +43,26 @@ export function ScreenSources({
     </div>
   );
 }
+
+const SourcesSkeleton = () => {
+  return (
+    <div className="not-prose my-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="animate-pulse group relative rounded-xl border-transparent border-2 -inset-px bg-gray-100 dark:bg-slate-800"
+        >
+          <div className="w-full h-48 rounded-lg bg-gray-300 dark:bg-slate-900"></div>
+          <div className="p-2">
+            <div className="mt-2 text-sm text-gray-300 dark:text-slate-400">
+              <div className="w-1/4 h-4 rounded bg-gray-300 dark:bg-slate-900"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export function QuickLink({
   title,

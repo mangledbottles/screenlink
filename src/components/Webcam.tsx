@@ -1,33 +1,56 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export const Webcam = () => {
-  const videoRef = useRef(null);
+export const Webcam = ({}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [cameraSource, setCameraSource] = useState<MediaDeviceInfo | null>(
+    null
+  );
+
+  window.electron.on("new-camera-source", (source: any) => {
+    if (!source || source?.deviceId === cameraSource?.deviceId) return;
+    setCameraSource(source);
+  });
+
+  useEffect(() => {
+    stopCam();
+    if (cameraSource) {
+      startCam();
+    }
+  }, [cameraSource]);
 
   const startCam = async () => {
-    const videoSources = await navigator.mediaDevices.enumerateDevices();
-
-    console.log({ videoSources });
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          deviceId:
-            "150fb4461cea54bc0d5a3ae8268f9f11b0edff97bfbbeaf9354ef242654ee490",
-          width: 200,
-          height: 150,
-          echoCancellation: true,
-          noiseSuppression: true,
-          frameRate: 30,
-        },
-      });
-      console.log({ stream });
-      // @ts-ignore
-      if (videoRef.current) videoRef.current.srcObject = stream;
+    if (
+      cameraSource &&
+      navigator.mediaDevices &&
+      navigator.mediaDevices.getUserMedia
+    ) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: cameraSource.deviceId,
+            width: 200,
+            height: 150,
+            echoCancellation: true,
+            noiseSuppression: true,
+            frameRate: 30,
+          },
+        });
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      } catch (error) {
+        alert(`Error accessing the webcam: ${error}`);
+        console.error("Error accessing the webcam", error);
+      }
     }
   };
 
-  useEffect(() => {
-    startCam();
-  }, []);
+  const stopCam = async () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach((track) => track.stop());
+    }
+  };
+
+  if (!cameraSource) return null;
 
   return <video ref={videoRef} autoPlay />;
 };
