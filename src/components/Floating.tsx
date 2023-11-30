@@ -80,28 +80,29 @@ export const Floating = () => {
   // Listen for recording to start
   // @ts-ignore
   window.electron.on("started-recording", (status: boolean) => {
+    setTimer(0);
     setIsRecording(status);
   });
 
   return (
-    <div className="m-0 p-0 w-screen h-screen flex justify-center items-center">
-      <div className="divide-y divide-gray-300 rounded-md md:flex md:divide-y-0">
+    <div className="m-0 p-0 w-screen h-screen flex justify-center items-center bg-white dark:bg-gray-800">
+      <div className="divide-y divide-gray-300 dark:divide-gray-600 rounded-md shadow-md md:flex md:divide-y-0 bg-gray-50 dark:bg-gray-700">
         <button
-          className="group flex w-full items-center justify-center hover:bg-gray-100"
+          className="group flex w-full items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600"
           onClick={() => {
             setTimer(0);
             stopRecording();
           }}
         >
-          <span className="flex items-center px-4 py-4 text-sm font-medium">
+          <span className="flex items-center px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-200">
             <PauseIcon />
           </span>
         </button>
-        <span className="group flex w-full items-center justify-center">
+        <span className="group flex w-full items-center justify-center border-t border-b border-gray-300 dark:border-gray-600">
           <span className="flex items-center justify-center px-6 py-4 text-sm font-medium">
             <span
               className={`text-sm font-medium ${
-                timer >= 60 * 5 ? "text-red-600" : "text-gray-900"
+                timer >= 60 * 5 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-gray-200"
               }`}
             >
               {timer < 60 && timer}
