@@ -1,21 +1,25 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell, systemPreferences } from 'electron'
 import { Tray, Menu } from 'electron'
 import os from 'os';
+import axios from 'axios';
+
 
 let mainWindow: BrowserWindow | null
 let floatingWindow: BrowserWindow | null
 let webcamWindow: BrowserWindow | null
 let tray: Tray | null = null
 
+// recording state
+let showCameraWindow = false;
+
 import { createReadStream, unlink, writeFile } from 'node:fs'
 import { writeFile as writeFilePromise, readFile as readFilePromise } from 'fs/promises';
 import path from 'node:path'
 import got from "got";
-const isProd = process.env.NODE_ENV != "development";
-const baseUrl = isProd ? 'https://screenlink.io' : 'http://localhost:3008';
 const sessionDataPath = app.getPath('sessionData');
 const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
-import cp, { exec } from 'child_process';
+import cp from 'child_process';
+import { baseUrl } from '../src/utils';
 
 function getComputerName() {
   switch (process.platform) {
@@ -31,27 +35,10 @@ function getComputerName() {
   }
 }
 
-// function openWindow(windowTitle: string) {
-//   console.log(`Opening window with title: ${windowTitle}`)
-//   if (os.platform() === 'win32') {
-//     // Windows command
-//     const command = `powershell -command "$app = Get-Process | Where-Object { $_.MainWindowTitle -eq '${windowTitle}' }; [Microsoft.VisualBasic.Interaction]::AppActivate($app.Id)"`;
-//     exec(command);
-//   } else if (os.platform() === 'darwin') {
-//     // macOS command
-//     const command = `osascript -e 'tell application "${windowTitle}" to activate'`;
-//     exec(command);
-//   } else {
-//     console.log('Unsupported platform');
-//   }
-// }
-
-
 ipcMain.handle('get-desktop-capturer-sources', async () => {
   const sources = await desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
   // const sources = await desktopCapturer.getSources({ types: ['screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
   const excludeTitles = ['ScreenLink.io', 'App Icon Window', 'App Icon Screens', 'Gesture Blocking Overlay', 'Touch Bar']
-  console.log({ sources })
   return sources
     .filter(source => !excludeTitles.includes(source.name))
     .map(source => ({
@@ -89,43 +76,31 @@ ipcMain.handle('save-video', async (_, filePath, buffer: Buffer) => {
   await writeFile(filePath, buffer, () => console.log('video saved successfully!'));
 });
 
-function focusWindow(windowTitle: string) {
-  console.log(`Focusing window with title: ${windowTitle}`)
-  if (os.platform() === 'win32') {
-    // Windows command
-    const command = `powershell -command "$app = Get-Process | Where-Object { $_.MainWindowTitle -eq '${windowTitle}' }; [Microsoft.VisualBasic.Interaction]::AppActivate($app.Id)"`;
-    exec(command);
-  } else if (os.platform() === 'darwin') {
-    // macOS command
-    exec(`osascript -e 'tell application "System Events" to set frontmost of the first process whose name is "${windowTitle}" to true'`);
-  } else {
-    // Linux command (as an example, actual command will vary)
-    exec(`xdotool search --name "${windowTitle}" windowactivate`);
+
+ipcMain.handle('set-camera-source', async (_, source: Partial<MediaDeviceInfo> | null) => {
+  if (webcamWindow) {
+    webcamWindow.webContents.send('new-camera-source', source);
   }
-}
+});
 
-ipcMain.handle('start-recording', async (_, windowTitle: string) => {
-  // focusWindow(windowTitle);
-  // if (mainWindow) mainWindow.webContents.send('started-recording', true);
-
-
+ipcMain.handle('start-recording', async (_) => {
   if (mainWindow) mainWindow.minimize();
-  if (webcamWindow) webcamWindow.show();
+  if (webcamWindow && showCameraWindow) {
+    toggleCameraWindow(true);
+    webcamWindow.setAlwaysOnTop(true);
+  }
   if (floatingWindow) {
     floatingWindow.show();
     floatingWindow.webContents.send('started-recording', true);
   }
-
-
-
-  // open application of sourceId
-  // shell.openExternal()
-  // shell.openPath(sourceId);
 });
 
 ipcMain.handle('stop-recording', async (_) => {
   if (floatingWindow) floatingWindow.hide();
-  if (webcamWindow) webcamWindow.hide();
+  if (webcamWindow) {
+    toggleCameraWindow(true);
+    webcamWindow.setAlwaysOnTop(false);
+  }
   if (mainWindow) {
     console.log("finsihed recoridng, opening mainwindow")
     mainWindow.webContents.send('finished-recording', true);
@@ -134,11 +109,37 @@ ipcMain.handle('stop-recording', async (_) => {
   }
 });
 
+const getUploadLink = async (sourceTitle: string) => {
+  try {
+    const deviceCode = await getDeviceCode();
+    const url = `${baseUrl}/api/uploads`
+    console.log({ url, sourceTitle, deviceCode })
+    const response = await axios.post(url,
+      { sourceTitle: sourceTitle ?? 'Recording' },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${deviceCode}`
+        }
+      }
+    );
+    if (response.status !== 200) {
+      console.log(response.data);
+      throw new Error(response.statusText);
+    }
+    const data = response.data;
+
+    return data;
+  } catch (error) {
+    console.log(error)
+    throw new Error(JSON.stringify({ e: "failed to get upload link", error }))
+  }
+}
+
 // convert buffer to video file and upload to Mux
 ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) => {
   try {
-    const deviceCode = await getDeviceCode();
-    const account = await getAccount();
+    await getAccount();
 
     // Define a temporary file path for storage
     const tempFilePath = path.join(app.getPath('home'), `temp-${Date.now()}.webm`);
@@ -147,28 +148,9 @@ ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) =>
     await writeFile(tempFilePath, buffer, () => console.log('Video file created successfully!'));
 
     // Make a request to get the upload URL
-    const url = `${baseUrl}/api/uploads`
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${deviceCode}`
-      },
-      body: JSON.stringify({ sourceTitle })
-    });
-    if (response.status !== 200) {
-      console.log(JSON.stringify({ e: "failed to get upload link", url }))
-      throw new Error(response.statusText);
-    }
-    const data = await response.json();
-    if (data.error) {
-      console.log(JSON.stringify({ e: "failed to get upload link", url, error: data.error }))
-      throw new Error(data.error);
-    }
-    const uploadLink = data.uploadLink;
-    const id = data.id;
-
-    console.log({ uploadLink, id });
+    const upload = await getUploadLink(sourceTitle);
+    const uploadLink = upload.uploadLink;
+    const id = upload.id;
 
     got.put(uploadLink, {
       body: createReadStream(tempFilePath),
@@ -178,7 +160,7 @@ ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) =>
       // Delete the temporary file after upload
       unlink(tempFilePath, (err) => {
         if (err) {
-          console.error('Error deleting temporary file: ', err);
+          throw new Error(JSON.stringify({ e: "failed to delete temporary file", err, tempFilePath }));
         } else {
           console.log('Temporary file deleted successfully!');
         }
@@ -214,6 +196,22 @@ ipcMain.handle('open-new-device', async (_) => {
   }
 });
 
+ipcMain.handle('show-camera-window', async (_, show: boolean) => {
+  try {
+    toggleCameraWindow(show);
+  } catch (error) {
+    console.log(error)
+  }
+});
+
+const toggleCameraWindow = (show: boolean) => {
+  if (webcamWindow) {
+    showCameraWindow = show;
+    if (show) webcamWindow.show();
+    else webcamWindow.hide();
+  }
+}
+
 const verifyDeviceCode = async (deviceCode: string) => {
   try {
     const url = `${baseUrl}/api/devices/verify`;
@@ -236,6 +234,7 @@ const verifyDeviceCode = async (deviceCode: string) => {
     return data;
   } catch (error) {
     console.log(error)
+    throw new Error(JSON.stringify({ e: "failed to verify device code", error }))
   }
 }
 
@@ -244,6 +243,13 @@ const getDeviceCode = async () => {
   // and send it to the renderer process
   const deviceCodeBuffer = await readFilePromise(deviceCodeFilePath);
   const deviceCode = deviceCodeBuffer.toString();
+
+  if (!deviceCode) {
+    if (mainWindow) {
+      mainWindow.webContents.send('device-code', '');
+    }
+    return;
+  }
   return deviceCode;
 }
 
@@ -297,6 +303,16 @@ ipcMain.handle('get-device-code', async (_) => {
   }
 });
 
+ipcMain.handle('permissions-missing', async (_) => {
+  try {
+    if (mainWindow) {
+      mainWindow.webContents.send('set-window', 'permissions');
+    }
+  } catch (error) {
+    console.log(error)
+  }
+});
+
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -312,6 +328,55 @@ process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(process.
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+
+const missingPermissions = async () => {
+  const screenStatus = await systemPreferences.getMediaAccessStatus('screen')
+  const cameraStatus = await systemPreferences.getMediaAccessStatus('camera')
+  const microphoneStatus = await systemPreferences.getMediaAccessStatus('microphone')
+
+  let missingList = [];
+  if (cameraStatus != 'granted') missingList.push('camera');
+  if (microphoneStatus != 'granted') missingList.push('microphone');
+  if (screenStatus != 'granted') missingList.push('screen');
+
+  return missingList;
+}
+
+const requestPermissions = async (permission: string): Promise<boolean> => {
+  try {
+    if (permission === 'camera' || permission === 'microphone') {
+      const status = await systemPreferences.askForMediaAccess(permission);
+      return status;
+    } else if (permission === 'screen') {
+      if (process.platform === 'darwin') {
+        const screenAccessStatus = systemPreferences.getMediaAccessStatus('screen');
+        if (screenAccessStatus !== 'granted') {
+          dialog.showMessageBox({
+            type: 'info',
+            message: 'Please grant screen recording permissions in System Preferences.',
+            buttons: ['Open System Preferences', 'Cancel']
+          }).then(({ response }) => {
+            if (response === 0) {
+              // Open the Security & Privacy section of System Preferences
+              shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture');
+            }
+          });
+        } else {
+          // already granted
+          return true;
+        }
+      } else {
+        // return true if other than macOS for screen
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.log(error)
+    return false;
+  }
+
+}
 
 function createFloatingWindow() {
   const floatingWindow = new BrowserWindow({
@@ -330,13 +395,24 @@ function createFloatingWindow() {
   });
 
   if (VITE_DEV_SERVER_URL) {
-    floatingWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=floating`);
+    // floatingWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=floating`);
+    floatingWindow.loadURL(`${VITE_DEV_SERVER_URL}`).then(() => {
+      // Once the file is loaded, send a message to the renderer with the parameter
+      if (!floatingWindow) return console.log('No floating window to send set-window to');
+      floatingWindow?.webContents.send('set-window', 'floating');
+    });
 
   } else {
-    floatingWindow.loadFile(path.join(process.env.DIST, 'index.html?window=floating'));
+    // floatingWindow.loadFile(path.join(process.env.DIST, 'index.html?window=floating')).then(() => {
+    floatingWindow.loadFile(path.join(process.env.DIST, 'index.html')).then(() => {
+      // Once the file is loaded, send a message to the renderer with the parameter
+      if (!floatingWindow) return console.log('No floating window to send set-window to');
+      floatingWindow?.webContents.send('set-window', 'floating');
+    });
   }
   return floatingWindow;
 }
+
 
 const createWebcamWindow = () => {
   const webcamWindow = new BrowserWindow({
@@ -346,7 +422,7 @@ const createWebcamWindow = () => {
     y: 1080,
     resizable: false,
     movable: true,
-    alwaysOnTop: true,
+    // alwaysOnTop: true,
     frame: false, // This makes the window frameless
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -355,10 +431,20 @@ const createWebcamWindow = () => {
   });
 
   if (VITE_DEV_SERVER_URL) {
-    webcamWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=webcam`);
+    // webcamWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=webcam`);
+    webcamWindow.loadURL(`${VITE_DEV_SERVER_URL}`).then(() => {
+      // Once the file is loaded, send a message to the renderer with the parameter
+      if (!webcamWindow) return console.log('No webcam window to send set-window to');
+      webcamWindow?.webContents.send('set-window', 'webcam');
+    });
 
   } else {
-    webcamWindow.loadFile(path.join(process.env.DIST, 'index.html?window=webcam'));
+    // webcamWindow.loadFile(path.join(process.env.DIST, 'index.html?window=webcam'));
+    webcamWindow.loadFile(path.join(process.env.DIST, 'index.html')).then(() => {
+      // Once the file is loaded, send a message to the renderer with the parameter
+      if (!webcamWindow) return console.log('No webcam window to send set-window to');
+      webcamWindow?.webContents.send('set-window', 'webcam');
+    });
   }
   return webcamWindow;
 }
@@ -396,12 +482,48 @@ function createWindow() {
   webcamWindow = createWebcamWindow();
   webcamWindow.hide();
 
-
   if (VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=main`);
+    // mainWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=main`);
+    mainWindow.loadURL(`${VITE_DEV_SERVER_URL}`).then(async () => {
+      const permissionsMissing = await missingPermissions();
+      if (permissionsMissing.length > 0) {
+        mainWindow?.webContents.send('set-window', 'permissions');
+        console.log({ permissionsMissing })
+        permissionsMissing.forEach(async (permission: string) => {
+          const wasApproved = await requestPermissions(permission);
+          if (wasApproved) permissionsMissing.splice(permissionsMissing.indexOf(permission), 1);
+        });
+
+      } else {
+        // Once the file is loaded, send a message to the renderer with the parameter
+        if (!mainWindow) return console.log('No main window to send set-window to');
+        mainWindow?.webContents.send('set-window', 'main');
+      }
+    })
+      .catch(e => console.error('Failed to load index.html', e));
   } else {
-    mainWindow.loadFile(path.join(process.env.DIST, 'index.html?window=main'));
+    // mainWindow.loadFile(path.join(process.env.DIST, 'index.html?window=main'));
+    // Load the file directly without URL parameters
+    mainWindow.loadFile(path.join(process.env.DIST, 'index.html'))
+      .then(async () => {
+        const permissionsMissing = await missingPermissions();
+        if (permissionsMissing.length > 0) {
+          mainWindow?.webContents.send('set-window', 'permissions');
+          console.log({ permissionsMissing })
+          permissionsMissing.forEach(async (permission: string) => {
+            const wasApproved = await requestPermissions(permission);
+            if (wasApproved) permissionsMissing.splice(permissionsMissing.indexOf(permission), 1);
+          });
+
+        } else {
+          // Once the file is loaded, send a message to the renderer with the parameter
+          if (!mainWindow) return console.log('No main window to send set-window to');
+          mainWindow?.webContents.send('set-window', 'main');
+        }
+      })
+      .catch(e => console.error('Failed to load index.html', e));
   }
+
 
   const iconPath = path.join(process.env.VITE_PUBLIC, 'tray-icon.png');
   let icon = nativeImage.createFromPath(iconPath);
@@ -444,6 +566,7 @@ app.on('window-all-closed', () => {
     mainWindow = null
   }
 })
+
 
 app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
