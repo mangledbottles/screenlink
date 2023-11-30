@@ -2,47 +2,46 @@
  * @see https://www.electron.build/configuration/configuration
  */
 {
-  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "io.screenlink.desktop",
-  "asar": true,
-  "productName": "ScreenLink",
-  "directories": {
-    "output": "release/${version}"
+  $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  appId: "io.screenlink.deskton",
+  asar: true,
+  productName: "ScreenLinks",
+  directories: {
+    output: "release/${version}",
   },
-  "files": [
-    "dist",
-    "dist-electron"
-  ],
-  "mac": {
-    "target": [
-      "dmg"
-    ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
-    "icon": "public/icon.icns"
+  files: ["dist", "dist-electron"],
+  mac: {
+    target: ["dmg"],
+    artifactName: "${productName}-Mac-${version}-Installer.${ext}",
+    icon: "public/icon.icns",
+    hardenedRuntime: true,
+    entitlements: "build/entitlements.mac.plist",
+    extendInfo: {
+      NSMicrophoneUsageDescription: "ScreenLink requires microphone access to record audio.",
+      NSCameraUsageDescription: "ScreenLink requires camera access to record video.",
+      "com.apple.security.device.audio-input": true,
+      "com.apple.security.device.camera": true,
+    },
   },
-  "win": {
-    "target": [
+  win: {
+    target: [
       {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      }
+        target: "nsis",
+        arch: ["x64"],
+      },
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}",
-    "icon": "public/icon.png"
+    artifactName: "${productName}-Windows-${version}-Setup.${ext}",
+    icon: "public/icon.png",
   },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+  nsis: {
+    oneClick: false,
+    perMachine: false,
+    allowToChangeInstallationDirectory: true,
+    deleteAppDataOnUninstall: false,
   },
-  "linux": {
-    "target": [
-      "AppImage"
-    ],
-    "artifactName": "${productName}-Linux-${version}.${ext}",
-    "icon": "public/icon.png"
-  }
+  linux: {
+    target: ["AppImage"],
+    artifactName: "${productName}-Linux-${version}.${ext}",
+    icon: "public/icon.png",
+  },
 }
