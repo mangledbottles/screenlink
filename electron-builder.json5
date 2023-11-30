@@ -3,9 +3,9 @@
  */
 {
   $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  appId: "io.screenlink.deskton",
+  appId: "io.screenlink.desktop",
   asar: true,
-  productName: "ScreenLinks",
+  productName: "ScreenLink",
   directories: {
     output: "release/${version}",
   },
