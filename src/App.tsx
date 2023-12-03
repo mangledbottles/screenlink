@@ -14,7 +14,6 @@ import { Permissions } from "./components/Permissions";
 // Get the device code from the desktop application
 export const refreshDeviceCode = async () => {
   const newDeviceCode = await window.electron.getDeviceCode();
-  console.log("newDeviceCode", newDeviceCode);
   return newDeviceCode;
 };
 
@@ -52,7 +51,6 @@ function App() {
     // When cameraSource changes, notify the desktop application
     (async () => {
       if (cameraSource) {
-        console.log("cameraSource changed", cameraSource);
         // Assuming cameraSource is a MediaDeviceInfo object
         const cameraSourceInfo = {
           deviceId: cameraSource.deviceId,
@@ -120,7 +118,7 @@ function App() {
       </div>
       <p className="read-the-docs mb-4">
         Screenlink is an open-source video capture tool that lets you record
-        your screen and camera to share with your team, customers, and friends.
+        your screen and camera to share your ideas with your anyone.
       </p>
     </>
   );
