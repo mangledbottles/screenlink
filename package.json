@@ -11,11 +11,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@headlessui/react": "^1.7.17",
     "@mux/mux-node": "^7.3.2",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@types/recordrtc": "^5.6.14",
     "axios": "^1.6.2",
+    "extendable-media-recorder": "^9.1.4",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.2",
     "got": "^13.0.0",
     "lucide-react": "^0.293.0",
     "react": "^18.2.0",
@@ -23,6 +27,8 @@
     "recordrtc": "^5.6.2"
   },
   "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.0",
+    "@types/fluent-ffmpeg": "^2.1.24",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.6.0",

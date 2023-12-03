@@ -3,6 +3,13 @@ import { Tray, Menu } from 'electron'
 import os from 'os';
 import axios from 'axios';
 
+import ffmpeg from 'fluent-ffmpeg';
+const ffmpegPath = require('ffmpeg-static').replace(
+  'app.asar',
+  'app.asar.unpacked'
+)
+ffmpeg.setFfmpegPath(ffmpegPath)
+
 
 let mainWindow: BrowserWindow | null
 let floatingWindow: BrowserWindow | null
