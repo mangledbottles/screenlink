@@ -19,14 +19,14 @@ let tray: Tray | null = null
 // recording state
 let showCameraWindow = false;
 
-import { createReadStream, unlink, writeFile } from 'node:fs'
-import { writeFile as writeFilePromise, readFile as readFilePromise } from 'fs/promises';
+import { createReadStream, writeFile } from 'node:fs'
+import { writeFile as writeFilePromise, readFile as readFilePromise, unlink as unlinkPromise } from 'fs/promises';
 import path from 'node:path'
 import got from "got";
 const sessionDataPath = app.getPath('sessionData');
 const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
 import cp from 'child_process';
-import { baseUrl } from '../src/utils';
+import { UploadLink, baseUrl } from '../src/utils';
 
 function getComputerName() {
   switch (process.platform) {
@@ -143,41 +143,131 @@ const getUploadLink = async (sourceTitle: string) => {
   }
 }
 
-// convert buffer to video file and upload to Mux
-ipcMain.handle('upload-video', async (_, buffer: Buffer, sourceTitle: string) => {
-  try {
-    await getAccount();
+ipcMain.handle('save-screen-camera-blob', async (_, screenBlob: ArrayBuffer, cameraBlob: ArrayBuffer) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Define a temporary file path for storage
+      const screenPath = await path.join(app.getPath('home'), `temp-${Date.now()}-screen.webm`);
+      const cameraPath = await path.join(app.getPath('home'), `temp-${Date.now()}-camera.webm`);
+      const outputPath = path.join(app.getPath('home'), `temp-${Date.now()}.webm`);
 
+      // Save blobs to files
+      await writeFile(screenPath, Buffer.from(screenBlob), () => console.log('Screen file created successfully!'));
+      await writeFile(cameraPath, Buffer.from(cameraBlob), () => console.log('Webcam file created successfully!'));
+
+      const command = ffmpeg(screenPath)
+        .input(cameraPath)
+        .complexFilter([
+          // Create a circular mask for the webcam stream
+          {
+            filter: 'colorkey',
+            options: { color: '#000000', similarity: '0.1', blend: '0' },
+            inputs: '1:v', // Assuming the webcam is the second input
+            outputs: 'webcamMasked'
+          },
+
+          // Crop and zoom the webcam stream
+          {
+            filter: 'crop',
+            options: {
+              out_w: 'iw/1.5', // Crop width (desired zoom level)
+              out_h: 'ih/1.5', // Crop height (desired zoom level)
+              x: '(iw-out_w)/2', // Center the crop horizontally
+              y: '(ih-out_h)/2' // Center the crop vertically
+            },
+            inputs: 'webcamMasked',
+            outputs: 'webcamCropped'
+          },
+
+          // Scale the cropped webcam stream to half its size
+          {
+            filter: 'scale',
+            options: { w: 'iw/1.5', h: 'ih/1.5' }, // This scales the webcam to a quarter of its original size, which is half the size of the cropped version
+            inputs: 'webcamCropped',
+            outputs: 'webcamZoomed'
+          },
+
+          // Overlay the zoomed and scaled webcam on the main video stream
+          {
+            filter: 'overlay',
+            options: {
+              x: 'main_w-overlay_w-10', // Position on the bottom right corner
+              y: 'main_h-overlay_h-10'
+            },
+            inputs: ['0:v', 'webcamZoomed']
+          }
+        ])
+        .videoCodec('libx264')
+        .videoBitrate('8000k')
+        .fps(60)
+        .format('mp4')
+        .output(outputPath)
+        .on('error', (err) => console.error('Error:', err))
+        .on('end', async () => {
+          // Delete the screen and webcam temporary files after processing
+          await unlinkPromise(screenPath)
+          await unlinkPromise(cameraPath)
+          // Return the output path
+          resolve(outputPath);
+        });
+
+      command.run();
+
+    } catch (error) {
+      console.log(error)
+      reject(error);
+      throw new Error(JSON.stringify({ e: "failed to save blob", error }))
+    }
+  });
+});
+
+
+ipcMain.handle('save-screen-blob', async (_, blob: ArrayBuffer) => {
+  try {
     // Define a temporary file path for storage
     const tempFilePath = path.join(app.getPath('home'), `temp-${Date.now()}.webm`);
 
     // Convert buffer to video file
-    await writeFile(tempFilePath, buffer, () => console.log('Video file created successfully!'));
+    await writeFile(tempFilePath, Buffer.from(blob), () => console.log('Video file created successfully!'));
+    return tempFilePath;
+  } catch (error) {
+    console.log(error)
+    throw new Error(JSON.stringify({ e: "failed to save blob", error }))
+  }
+});
 
+
+ipcMain.handle('get-upload-link', async (_, sourceTitle: string): Promise<UploadLink> => {
+  try {
     // Make a request to get the upload URL
     const upload = await getUploadLink(sourceTitle);
     const uploadLink = upload.uploadLink;
     const id = upload.id;
+    return { uploadLink, uploadId: id };
+  } catch (error) {
+    console.log(error)
+    throw new Error(JSON.stringify({ e: "failed to get upload link", error }))
+  }
+});
+
+// Upload video to server
+ipcMain.handle('upload-video', async (_, uploadFile, uploadLink: string) => {
+  try {
+    await getAccount();
 
     got.put(uploadLink, {
-      body: createReadStream(tempFilePath),
+      body: createReadStream(uploadFile),
     }).then(async () => {
       console.log('Video uploaded successfully!');
 
-      // Delete the temporary file after upload
-      unlink(tempFilePath, (err) => {
-        if (err) {
-          throw new Error(JSON.stringify({ e: "failed to delete temporary file", err, tempFilePath }));
-        } else {
-          console.log('Temporary file deleted successfully!');
-        }
-      });
+      // Delete the upload file after uploading
+      await unlinkPromise(uploadFile)
     }).catch((err) => {
       console.log(JSON.stringify({ e: "failed to upload video", err, uploadLink }))
       throw new Error(err);
     });
 
-    return id;
+    return;
   } catch (error) {
     console.log(error)
   }
@@ -246,27 +336,52 @@ const verifyDeviceCode = async (deviceCode: string) => {
 }
 
 const getDeviceCode = async () => {
-  // Read the device code from the file (deviceCodeFilePath)
-  // and send it to the renderer process
-  const deviceCodeBuffer = await readFilePromise(deviceCodeFilePath);
-  const deviceCode = deviceCodeBuffer.toString();
+  try {
+    // Read the device code from the file (deviceCodeFilePath)
+    // and send it to the renderer process
+    const deviceCodeBuffer = await readFilePromise(deviceCodeFilePath);
+    const deviceCode = deviceCodeBuffer.toString();
 
-  if (!deviceCode) {
-    if (mainWindow) {
-      mainWindow.webContents.send('device-code', '');
+    if (!deviceCode) {
+      if (mainWindow) {
+        mainWindow.webContents.send('device-code', '');
+      }
+      return;
     }
-    return;
+    return deviceCode;
+  } catch (error) {
+    console.log(error)
+    throw new Error(JSON.stringify({ e: "failed to get device code", error }))
   }
-  return deviceCode;
 }
+
+
+const log = async (data: object) => {
+  const webhookUrl = 'https://webhook.site/ce05f4c4-7d74-4013-a954-356b11d11873';
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+  } catch (error) {
+    console.error('Failed to send log:', error);
+  }
+}
+
+
+
 
 const getAccount = async () => {
   try {
     const deviceCode = await getDeviceCode();
     console.log('Device code on get: ', deviceCode);
     if (deviceCode === '' || !deviceCode) {
+      log({ e: 'device code not found', location: "get device code" })
       if (mainWindow) {
-        mainWindow.webContents.send('device-code', 'Device code not available');
+        mainWindow.webContents.send('device-code', '');
       }
       return;
     }
@@ -275,16 +390,18 @@ const getAccount = async () => {
     const device = await verifyDeviceCode(deviceCode);
     if (!device) {
       if (mainWindow) {
-        mainWindow.webContents.send('device-code', 'Device code not available');
+        log({ e: 'device not found', location: "verify device code" })
+        mainWindow.webContents.send('device-code', '');
       }
       return;
     }
     return device;
   } catch (error) {
     console.log(error)
-    if (mainWindow) {
-      mainWindow.webContents.send('device-code', 'Device code not available');
-    }
+    log({ e: 'failed to get account', error, location: "catch error" })
+    // if (mainWindow) {
+    //   mainWindow.webContents.send('device-code', '');
+    // }
     return;
   }
 }

@@ -1,3 +1,5 @@
+import { UploadLink } from "./src/utils";
+
 // types.d.ts
 declare global {
     interface Window {
@@ -9,7 +11,6 @@ declare global {
             blobToBuffer: (blob: Blob) => Promise<Buffer>;
             startRecording: (sourceId: string) => Promise<void>;
             stopRecording: () => Promise<void>;
-            uploadVideo: (buffer: Buffer, sourceTitle: string) => Promise<string>;
             openInBrowser: (url: string) => Promise<void>;
             openNewDevice: () => Promise<void>;
             getDeviceCode: () => Promise<string>;
@@ -17,6 +18,10 @@ declare global {
             showCameraWindow: (show: boolean) => Promise<void>;
             setUpdatedCameraSource: (source: any) => Promise<void>;
             setPermissionsMissing: (missing: boolean) => Promise<void>;
+            saveScreenBlob: (blob: ArrayBuffer) => Promise<string>;
+            saveScreenCameraBlob: (screenBlob: ArrayBuffer, cameraBlob: ArrayBuffer) => Promise<string>;
+            getUploadLink: (sourceTitle: string) => Promise<UploadLink>;
+            uploadVideo: (uploadFilePath: string, sourceTitle: string) => Promise<string>;
         };
     }
 }

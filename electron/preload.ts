@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import { UploadLink } from '../src/utils';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', withPrototype(ipcRenderer))
@@ -24,6 +25,12 @@ contextBridge.exposeInMainWorld('electron', {
   saveFile: async (filePath: string, buffer: Buffer): Promise<void> => {
     return await ipcRenderer.invoke('save-video', filePath, buffer)
   },
+  saveScreenBlob: async (blob: ArrayBuffer): Promise<string> => {
+    return await ipcRenderer.invoke('save-screen-blob', blob)
+  },
+  saveScreenCameraBlob: async (screenBlob: ArrayBuffer, cameraBlob: ArrayBuffer): Promise<string> => {
+    return await ipcRenderer.invoke('save-screen-camera-blob', screenBlob, cameraBlob)
+  },
   blobToBuffer: async (blob: Blob): Promise<Buffer> => {
     return await new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -41,8 +48,11 @@ contextBridge.exposeInMainWorld('electron', {
   stopRecording: async (): Promise<void> => {
     return await ipcRenderer.invoke('stop-recording')
   },
-  uploadVideo: async (buffer: Buffer, sourceTitle: string): Promise<void> => {
-    return await ipcRenderer.invoke('upload-video', buffer, sourceTitle)
+  getUploadLink: async (sourceTitle: string): Promise<UploadLink> => {
+    return await ipcRenderer.invoke('get-upload-link', sourceTitle)
+  },
+  uploadVideo: async (uploadFilePath: string, uploadLink: string): Promise<void> => {
+    return await ipcRenderer.invoke('upload-video', uploadFilePath, uploadLink)
   },
   openInBrowser: async (url: string): Promise<void> => {
     return await ipcRenderer.invoke('open-in-browser', url)

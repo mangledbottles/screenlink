@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { MultiStreamRecorder } from "recordrtc";
-import { Source, baseUrl, isProd } from "../utils";
+import { Source, UploadLink, baseUrl, isProd } from "../utils";
 import { Video } from "lucide-react";
 
 export function Recorder({
@@ -12,17 +11,122 @@ export function Recorder({
   cameraSource: MediaDeviceInfo | null;
   audioSource: MediaDeviceInfo | null;
 }) {
-  const [recordRTC, setRecordRTC] = useState<MultiStreamRecorder | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [screenMedia, setScreenMedia] = useState<MediaRecorder | null>(null);
+  const [cameraMedia, setCameraMedia] = useState<MediaRecorder | null>(null);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+
+  const uploadFile = async (
+    uploadFilePath: string,
+    uploadLink: string,
+    uploadId: string
+  ) => {
+    try {
+      if (!uploadLink || !uploadId) {
+        console.log({
+          note: "uploadLink or uploadId is null",
+          uploadLink,
+          uploadId,
+        });
+        return alert("Failed to upload file, contact support if this persists");
+      }
+      await window.electron.uploadVideo(uploadFilePath, uploadLink);
+      const uploadUrl = `${baseUrl}/view/${uploadId}`;
+      await window.electron.openInBrowser(uploadUrl);
+    } catch (error) {
+      console.error("Failed to upload file:", error);
+      alert("Failed to upload file, contact support if this persists");
+    }
+  };
+
+  const handleStartRecording = async (): Promise<UploadLink> => {
+    try {
+      const sourceTitle = selectedSource?.name || "Screenlink Recording";
+      const newUpload = await window.electron.getUploadLink(sourceTitle);
+      const uploadLink = newUpload.uploadLink;
+      const uploadId = newUpload.uploadId;
+      setIsRecording(true);
+      return { uploadLink, uploadId };
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      alert("Failed to start recording, contact support if this persists");
+      throw error;
+    }
+  };
 
   const startRecording = async () => {
+    const screenChunks: Blob[] = [];
+    const cameraChunks: Blob[] = [];
+
+    // Handles window recording when a camera is selected
+    // Requirements: [Window, Camera]
+    const processWindowRecord = async (
+      uploadLink: string,
+      uploadId: string
+    ) => {
+      if (screenChunks.length > 0 && cameraChunks.length > 0) {
+        const screenBlob = new Blob(screenChunks, {
+          type: `video/webm; codecs=vp9,opus`,
+        });
+        const cameraBlob = new Blob(cameraChunks, {
+          type: `video/webm; codecs=vp9,opus`,
+        });
+
+        const screenConverted = await screenBlob.arrayBuffer();
+        const cameraConverted = await cameraBlob.arrayBuffer();
+
+        // Reset chunks and states
+        screenChunks.length = 0;
+        cameraChunks.length = 0;
+
+        // Process the data
+        const outputFile = await window.electron.saveScreenCameraBlob(
+          screenConverted,
+          cameraConverted
+        );
+        console.log({ outputFile });
+        await uploadFile(outputFile, uploadLink, uploadId);
+      }
+    };
+
+    // Handles full screen recording and window recording when no camera is selected
+    // Requirements: [Screen] or [Window, Camera]
+    const processScreenRecord = async (
+      uploadLink: string,
+      uploadId: string
+    ) => {
+      if (screenChunks.length > 0) {
+        const screenBlob = new Blob(screenChunks, {
+          type: `video/webm; codecs=vp9,opus`,
+        });
+
+        const screenConverted = await screenBlob.arrayBuffer();
+
+        // Reset chunks and states
+        screenChunks.length = 0;
+
+        // Process the data
+        const outputFile = await window.electron.saveScreenBlob(
+          screenConverted
+        );
+        console.log({ outputFile });
+        await uploadFile(outputFile, uploadLink, uploadId);
+      }
+    };
+
     if (!selectedSource) return alert("Select a screen to record");
     if (selectedSource && !isRecording) {
       try {
         // Notify the desktop application to start recording
         await window.electron.startRecording(selectedSource.id);
 
+        // Create a new upload link
+        const { uploadId, uploadLink } = await handleStartRecording();
+
+        // Capture the screen stream
         const screenStream = await navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {
@@ -33,10 +137,7 @@ export function Recorder({
             },
           },
         });
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = screenStream;
-        }
+        setScreenStream(screenStream);
 
         const audioStream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -45,69 +146,86 @@ export function Recorder({
             noiseSuppression: true,
           },
         });
+        setAudioStream(audioStream);
 
+        // Capture the camera stream
         const cameraStream = await navigator.mediaDevices.getUserMedia({
           video: {
             deviceId: cameraSource?.deviceId,
-            width: 100,
-            height: 100,
+            width: 240,
+            height: 180,
             aspectRatio: 1,
             facingMode: "user",
             frameRate: 60,
           },
           audio: false,
         });
+        setCameraStream(cameraStream);
 
-        let recorder: MultiStreamRecorder;
-
-        if (selectedSource.sourceType === "window") {
-          // Set the screenStream to the full screen
-          (screenStream as any).width = window.screen.width;
-          (screenStream as any).height = window.screen.height;
-          (screenStream as any).fullcanvas = true;
-
-          // Set the cameraStream to the bottom right corner
-          (cameraStream as any).width = 240;
-          (cameraStream as any).height = 180;
-          (cameraStream as any).top =
-            screen.height - (cameraStream as any).height;
-          (cameraStream as any).left =
-            screen.width - (cameraStream as any).width;
-
-          const streamsToRecord = [screenStream, audioStream];
-          // Only record the camera stream if it exists (if the user has selected a camera)
-          if (cameraSource) streamsToRecord.push(cameraStream);
-          // Only record the audio stream if it exists (if the user has selected a microphone)
-          if (audioSource) streamsToRecord.push(audioStream);
-
-          recorder = new MultiStreamRecorder(streamsToRecord, {
-            mimeType: "video/webm",
-            type: "video",
-          });
-        } else {
-          const maxWidth = selectedSource.dimensions.width;
-          const maxHeight = selectedSource.dimensions.height;
-
-          (screenStream as any).width = maxWidth;
-          (screenStream as any).height = maxHeight;
-          (screenStream as any).fullcanvas = true;
-
-          const streamsToRecord = [screenStream];
-          if (audioSource) streamsToRecord.push(audioStream);
-
-          recorder = new MultiStreamRecorder(streamsToRecord, {
-            mimeType: "video/webm",
-            type: "video",
-          });
+        const combinedStream = new MediaStream([
+          screenStream.getVideoTracks()[0],
+        ]);
+        if (audioSource) {
+          combinedStream.addTrack(audioStream.getAudioTracks()[0]);
         }
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = screenStream;
-        }
+        // Set up the recorder with the combined stream
+        const screenRecorder = new MediaRecorder(combinedStream, {
+          mimeType: "video/webm; codecs=vp9,opus",
+        });
 
-        recorder.record();
-        setRecordRTC(recorder);
-        setIsRecording(true);
+        // Development Environment: Set the video source to the screen stream
+        if (!isProd) videoRef.current!.srcObject = screenStream;
+
+        // Entire screen and a camera is selected
+        if (selectedSource.sourceType === "window" && cameraSource) {
+          const cameraRecorder = new MediaRecorder(cameraStream, {
+            mimeType: "video/webm; codecs=vp9,opus",
+          });
+
+          setScreenMedia(screenRecorder);
+          if (cameraSource) setCameraMedia(cameraRecorder);
+
+          screenRecorder.start();
+          if (cameraSource) cameraRecorder.start();
+
+          // For screen recorder
+          // screenRecorder.onstart = handleStartRecording;
+          screenRecorder.onstop = () =>
+            processWindowRecord(uploadLink, uploadId);
+
+          // When the screen recorder has data available, push it to the chunks array
+          screenRecorder.ondataavailable = ({ data }: BlobEvent) => {
+            screenChunks.push(data);
+          };
+
+          // For camera recorder
+          cameraRecorder.onstop = () =>
+            processWindowRecord(uploadLink, uploadId);
+
+          // When the camera recorder has data available, push it to the chunks array
+          cameraRecorder.ondataavailable = ({ data }: BlobEvent) => {
+            cameraChunks.push(data);
+          };
+        } else if (
+          // Entire screen is selected
+          selectedSource.sourceType === "screen" ||
+          // Specific window is selected, but no camera
+          (selectedSource.sourceType === "window" && !cameraSource)
+        ) {
+          setScreenMedia(screenRecorder);
+          screenRecorder.start();
+
+          // For screen recorder
+          // screenRecorder.onstart = handleStartRecording;
+          screenRecorder.onstop = () =>
+            processScreenRecord(uploadLink, uploadId);
+
+          // When the screen recorder has data available, push it to the chunks array
+          screenRecorder.ondataavailable = ({ data }: BlobEvent) => {
+            screenChunks.push(data);
+          };
+        }
       } catch (error) {
         console.error("Failed to get media stream:", error);
         alert("Failed to get media stream, contact support if this persists");
@@ -116,27 +234,28 @@ export function Recorder({
   };
 
   const stopRecording = () => {
-    if (recordRTC && isRecording) {
-      recordRTC.stop(async (blob) => {
-        const buffer: Buffer = await window.electron.blobToBuffer(blob);
-        const sourceTitle = selectedSource?.name || "Screenlink Recording";
-        const link = await window.electron.uploadVideo(buffer, sourceTitle);
-        if (!link)
-          return alert(
-            "Failed to upload video, contact support if this issue persists"
-          );
-        const url = `${baseUrl}/view/${link}`;
+    setIsRecording(false);
 
-        setIsRecording(false);
+    if (screenMedia) {
+      screenMedia.stop();
+      setScreenMedia(null);
+    }
+    if (cameraMedia) {
+      cameraMedia.stop();
+      setCameraMedia(null);
+    }
 
-        await window.electron.openInBrowser(url);
-      });
-      if (videoRef.current && videoRef.current.srcObject) {
-        // @ts-ignore
-        const tracks = videoRef.current.srcObject.getTracks();
-        tracks.forEach((track: MediaStreamTrack) => track.stop());
-      }
-      setRecordRTC(null);
+    if (screenStream) {
+      screenStream.getTracks().forEach((track) => track.stop());
+      setScreenStream(null);
+    }
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+    }
+    if (audioStream) {
+      audioStream.getTracks().forEach((track) => track.stop());
+      setAudioStream(null);
     }
   };
 
