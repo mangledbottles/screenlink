@@ -15,9 +15,6 @@ export default function CameraSources({
   useMemo(() => {
     const getDevices = async () => {
       try {
-        // Request access to the video devices
-        await navigator.mediaDevices.getUserMedia({ video: true });
-
         // Get the list of video devices
         const mediaDevices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = mediaDevices

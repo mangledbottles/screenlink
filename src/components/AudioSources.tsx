@@ -14,9 +14,6 @@ export default function AudioSources({
   useMemo(() => {
     const getDevices = async () => {
       try {
-        // Request access to the audio devices
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-
         // Get the list of audio devices
         const mediaDevices = await navigator.mediaDevices.enumerateDevices();
         const audioDevices = mediaDevices
