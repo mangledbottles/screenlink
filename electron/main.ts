@@ -3,6 +3,11 @@ import { Tray, Menu } from 'electron'
 import os from 'os';
 import axios from 'axios';
 
+const logger = require('electron-log');
+import { autoUpdater } from "electron-updater"
+autoUpdater.logger = logger
+
+logger.info('App starting...');
 import ffmpeg from 'fluent-ffmpeg';
 const ffmpegPath = require('ffmpeg-static').replace(
   'app.asar',
@@ -66,8 +71,6 @@ ipcMain.handle('get-webcam-sources', async () => {
   });
   return webcam;
 });
-
-
 
 // save video to file; show-save-dialog
 ipcMain.handle('show-save-dialog', async (_, options: Electron.SaveDialogOptions) => {
@@ -221,7 +224,6 @@ ipcMain.handle('save-screen-camera-blob', async (_, screenBlob: ArrayBuffer, cam
   });
 });
 
-
 ipcMain.handle('save-screen-blob', async (_, blob: ArrayBuffer) => {
   try {
     // Define a temporary file path for storage
@@ -235,7 +237,6 @@ ipcMain.handle('save-screen-blob', async (_, blob: ArrayBuffer) => {
     throw new Error(JSON.stringify({ e: "failed to save blob", error }))
   }
 });
-
 
 ipcMain.handle('get-upload-link', async (_, sourceTitle: string): Promise<UploadLink> => {
   try {
@@ -355,7 +356,6 @@ const getDeviceCode = async () => {
   }
 }
 
-
 const log = async (data: object) => {
   const webhookUrl = 'https://webhook.site/ce05f4c4-7d74-4013-a954-356b11d11873';
   try {
@@ -370,9 +370,6 @@ const log = async (data: object) => {
     console.error('Failed to send log:', error);
   }
 }
-
-
-
 
 const getAccount = async () => {
   try {
@@ -576,6 +573,8 @@ const createWebcamWindow = () => {
 function createWindow() {
   // assign the deep link url to a variable (screenlinkDesktop://xxx)
   app.setAsDefaultProtocolClient('screenlinkDesktop');
+  autoUpdater.forceDevUpdateConfig = true;
+  autoUpdater.checkForUpdates();
 
   const applicationIconPath = path.join(process.env.VITE_PUBLIC, 'apple.icns');
   let applicationIcon = nativeImage.createFromPath(applicationIconPath);
@@ -647,6 +646,24 @@ function createWindow() {
       })
       .catch(e => console.error('Failed to load index.html', e));
   }
+
+  // Auto Updater
+  autoUpdater.on('update-available', () => {
+    mainWindow?.webContents.send('set-window', 'update', 'Update available.');
+  })
+  autoUpdater.on('error', (err) => {
+    mainWindow?.webContents.send('set-window', 'update', 'Error in auto-updater. Contact support if this continues. ' + err);
+  })
+  autoUpdater.on('download-progress', (progressObj) => {
+    let log_message = "Download speed: " + progressObj.bytesPerSecond;
+    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    mainWindow?.webContents.send('set-window', 'update', log_message);
+  })
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow?.webContents.send('set-window', 'main');
+  });
+
 
 
   const iconPath = path.join(process.env.VITE_PUBLIC, 'tray-icon.png');

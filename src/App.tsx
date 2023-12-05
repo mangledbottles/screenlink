@@ -10,6 +10,7 @@ import CameraSources from "./components/CameraSources";
 import { Source } from "./utils";
 import AudioSources from "./components/AudioSources";
 import { Permissions } from "./components/Permissions";
+import Update from "./components/Update";
 
 // Get the device code from the desktop application
 export const refreshDeviceCode = async () => {
@@ -28,6 +29,7 @@ function App() {
   );
   const [audioSource, setAudioSource] = useState<MediaDeviceInfo | null>(null);
   const [windowType, setWindowType] = useState<string | null>(null);
+  const [windowMessage, setWindowMessage] = useState<string | null>(null);
 
   // Listen for the device code from the desktop application
   // @ts-ignore
@@ -36,9 +38,10 @@ function App() {
   });
 
   // @ts-ignore
-  window.electron.on("set-window", (window: string) => {
+  window.electron.on("set-window", (window: string, message: string) => {
     // alert("set-window to " + window)
     setWindowType(window);
+    setWindowMessage(message);
   });
 
   useEffect(() => {
@@ -69,6 +72,16 @@ function App() {
 
   if (!windowType) {
     return <div></div>;
+  }
+
+  if (windowType === "update") {
+    return (
+      <Update
+        updateMessage={
+          windowMessage || "There is an update available for ScreenLink"
+        }
+      />
+    );
   }
 
   if (windowType === "permissions") {
