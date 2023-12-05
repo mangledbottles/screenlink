@@ -21,9 +21,7 @@ export default function Download() {
           </p>
         </div>
         <div className="flex justify-center mt-12">
-          <Link href="/download">
-            <DownloadButton />
-          </Link>
+          <DownloadButton />
         </div>
       </div>
     </section>
