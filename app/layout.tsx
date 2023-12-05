@@ -60,11 +60,6 @@ export default function RootLayout({
         <Suspense>
           <PostHogPageview />
         </Suspense>
-        <script
-          defer
-          data-domain="screenlink.io"
-          src="https://analytics.dermot.email/js/script.js"
-        ></script>
         <body
           className={`${inter.variable} ${hkgrotesk.variable} font-inter antialiased bg-slate-900 text-slate-200 tracking-tight overflow-x-hidden`}
         >
@@ -83,6 +78,11 @@ export default function RootLayout({
             async
             src="https://js.stripe.com/v3/pricing-table.js"
             defer={true}
+          ></script>
+          <script
+            defer={true}
+            data-domain="screenlink.io"
+            src="https://analytics.dermot.email/js/script.js"
           ></script>
         </body>
       </html>
