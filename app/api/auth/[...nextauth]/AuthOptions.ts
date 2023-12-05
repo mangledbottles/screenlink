@@ -4,6 +4,8 @@ import GoogleProvider from "next-auth/providers/google";
 // import SlackProvider from "next-auth/providers/slack";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient, Project } from "@prisma/client";
+import posthog from "posthog-js";
+import { posthog_serverside } from "@/app/utils";
 const prisma = new PrismaClient();
 
 declare global {
@@ -111,6 +113,35 @@ export const authOptions: NextAuthOptions = {
     events: {
         async signIn(message) {
             console.log("User sign in completed");
+            if (message.isNewUser) {
+                posthog_serverside.capture({
+                    distinctId: message.user.id || message.user.email || "unknown",
+                    event: 'Registered',
+                    groups: {
+                        // @ts-ignore
+                        projectId: message.user.currentProjectId ?? null,
+                    },
+                    properties: {
+                        ...message.user,
+                        ...message.account,
+                        ...message.profile,
+                    },
+                });
+            } else {
+                posthog_serverside.capture({
+                    distinctId: message.user.id || message.user.email || "unknown",
+                    event: 'Logged In',
+                    groups: {
+                        // @ts-ignore
+                        projectId: message.user.currentProjectId ?? null,
+                    },
+                    properties: {
+                        ...message.user,
+                        ...message.account,
+                        ...message.profile,
+                    },
+                });
+            }
         },
     },
 };

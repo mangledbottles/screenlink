@@ -5,6 +5,8 @@ import localFont from "next/font/local";
 import AuthProvider from "./authProvider";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Suspense } from "react";
+import { PHProvider, PostHogPageview } from "./posthogProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -55,6 +57,14 @@ export default function RootLayout({
   return (
     <AuthProvider>
       <html lang="en">
+        <Suspense>
+          <PostHogPageview />
+        </Suspense>
+        <script
+          defer
+          data-domain="screenlink.io"
+          src="https://analytics.dermot.email/js/script.js"
+        ></script>
         <body
           className={`${inter.variable} ${hkgrotesk.variable} font-inter antialiased bg-slate-900 text-slate-200 tracking-tight overflow-x-hidden`}
         >
@@ -65,7 +75,7 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              {children}
+              <PHProvider>{children}</PHProvider>
             </ThemeProvider>
           </div>
           <Toaster />

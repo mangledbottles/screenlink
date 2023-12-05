@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/hover-card";
 import { CalendarIcon, PersonIcon } from "@radix-ui/react-icons";
 import Mux, { Upload as MuxUpload } from "@mux/mux-node";
+import { posthog_serverside } from "@/app/utils";
 const { Video } = new Mux(
   process.env.MUX_ACCESS_TOKEN!,
   process.env.MUX_SECRET_KEY!
@@ -27,6 +28,18 @@ export const generateMetadata = async ({
   const { id } = params;
   const prisma = new PrismaClient();
   const upload = await prisma.upload.findUnique({ where: { id } });
+
+  posthog_serverside.capture({
+    // distinctId: upload?.uploadId!,
+    distinctId: upload?.userId!,
+    event: "Video Metadata Viewed",
+    properties: {
+      ...upload,
+    },
+    groups: {
+      projectId: upload?.projectId!,
+    },
+  });
 
   const title = upload?.sourceTitle ?? "ScreenLink Recording";
   const imageUrl = `https://image.mux.com/${upload?.playbackId}/thumbnail.png?width=1080&height=720&time=0`;
@@ -64,6 +77,17 @@ export default async function View({ params }: { params: { id: string } }) {
   let upload = await prisma.upload.findUnique({
     where: { id },
     include: { User: true },
+  });
+
+  posthog_serverside.capture({
+    distinctId: upload?.userId!,
+    event: "Video Viewed",
+    properties: {
+      ...upload,
+    },
+    groups: {
+      projectId: upload?.projectId!,
+    },
   });
 
   // If there is no Asset ID, but there is an Upload ID, check Mux for the status of the upload
