@@ -50,9 +50,7 @@ export const HeaderAction = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Nope</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-
+              onClick={() => {
                 if (!email)
                   return toast.error("Please enter a valid email address");
 
@@ -73,7 +71,7 @@ export const HeaderAction = () => {
                         spread: 70,
                         origin: { y: 0.6 },
                       });
-                      toast.success("Subscribed successfully!");
+                      toast.success("Subscribed successfully!");                      
                     }
                   })
                   .catch((error) => {
