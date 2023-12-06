@@ -42,8 +42,8 @@ contextBridge.exposeInMainWorld('electron', {
       reader.readAsArrayBuffer(blob)
     })
   },
-  startRecording: async (windowTitle: string): Promise<void> => {
-    return await ipcRenderer.invoke('start-recording', windowTitle)
+  startRecording: async (applicationName?: string): Promise<void> => {
+    return await ipcRenderer.invoke('start-recording', applicationName)
   },
   stopRecording: async (): Promise<void> => {
     return await ipcRenderer.invoke('stop-recording')

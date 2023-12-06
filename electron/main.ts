@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shel
 import { Tray, Menu } from 'electron'
 import os from 'os';
 import axios from 'axios';
+const { getWindows, activateWindow } = require('mac-windows');
 
 const logger = require('electron-log');
 import { autoUpdater } from "electron-updater"
@@ -32,6 +33,7 @@ const sessionDataPath = app.getPath('sessionData');
 const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
 import cp from 'child_process';
 import { UploadLink, baseUrl } from '../src/utils';
+import { platform } from 'process';
 
 function getComputerName() {
   switch (process.platform) {
@@ -47,21 +49,71 @@ function getComputerName() {
   }
 }
 
+export interface MacWindow {
+  pid: number;
+  ownerName: string;
+  name: string;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  number: number;
+}
+
+
 ipcMain.handle('get-desktop-capturer-sources', async () => {
-  const sources = await desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
-  // const sources = await desktopCapturer.getSources({ types: ['screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
-  const excludeTitles = ['ScreenLink.io', 'App Icon Window', 'App Icon Screens', 'Gesture Blocking Overlay', 'Touch Bar']
-  return sources
-    .filter(source => !excludeTitles.includes(source.name))
-    .map(source => ({
-      id: source.id,
-      name: source.name,
-      thumbnail: source.thumbnail.toDataURL() ?? source.appIcon.toDataURL(),
-      dimensions: {
-        width: source.thumbnail.getSize().width,
-        height: source.thumbnail.getSize().height,
-      },
-    }))
+  const screenSources = await desktopCapturer.getSources({ types: ['screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
+  const windowSources = await desktopCapturer.getSources({ types: ['window',], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
+
+  const screenSourcesList = screenSources.map(source => ({
+    id: source.id,
+    name: source.name,
+    thumbnail: source.thumbnail.toDataURL() ?? source.appIcon.toDataURL(),
+    dimensions: {
+      width: source.thumbnail.getSize().width,
+      height: source.thumbnail.getSize().height,
+    },
+  }));
+
+  if (platform === 'darwin') {
+    console.log('mac')
+    const macWindows = await getWindows() as MacWindow[];
+    const macWindowSources = macWindows.map(window => {
+      const sourceMatched = windowSources.find(source => source.name === window.name);
+      if (!sourceMatched) return;
+      const sourceThumbnail = sourceMatched?.thumbnail.toDataURL() ?? '';
+      const sourceId = sourceMatched?.id ?? '';
+      if (!sourceThumbnail || !sourceId || !window.ownerName) return;
+
+      return {
+        id: sourceId,
+        thumbnail: sourceThumbnail,
+        dimensions: {
+          width: window.width,
+          height: window.height,
+        },
+        ...window,
+        name: `[${window.ownerName}] - ${window.name}`,
+        applicationName: window.ownerName,
+      };
+    }).filter(source => source !== undefined); // Filter out undefined entries
+
+    return [...screenSourcesList, ...macWindowSources];
+
+  } else {
+    const excludeTitles = ['ScreenLink.io', 'App Icon Window', 'App Icon Screens', 'Gesture Blocking Overlay', 'Touch Bar']
+    return [...screenSourcesList, ...windowSources
+      .filter(source => !excludeTitles.includes(source.name))
+      .map(source => ({
+        id: source.id,
+        name: source.name,
+        thumbnail: source.thumbnail.toDataURL() ?? source.appIcon.toDataURL(),
+        dimensions: {
+          width: source.thumbnail.getSize().width,
+          height: source.thumbnail.getSize().height,
+        },
+      }))]
+  }
 })
 
 ipcMain.handle('get-webcam-sources', async () => {
@@ -93,15 +145,20 @@ ipcMain.handle('set-camera-source', async (_, source: Partial<MediaDeviceInfo> |
   }
 });
 
-ipcMain.handle('start-recording', async (_) => {
-  if (mainWindow) mainWindow.minimize();
-  if (webcamWindow && showCameraWindow) {
-    toggleCameraWindow(true);
-    webcamWindow.setAlwaysOnTop(true);
-  }
-  if (floatingWindow) {
-    floatingWindow.show();
-    floatingWindow.webContents.send('started-recording', true);
+ipcMain.handle('start-recording', async (_, applicationName?: string) => {
+  try {
+    if (applicationName && platform === 'darwin') activateWindow(applicationName);
+    if (mainWindow) mainWindow.minimize();
+    if (webcamWindow && showCameraWindow) {
+      toggleCameraWindow(true);
+      webcamWindow.setAlwaysOnTop(true);
+    }
+    if (floatingWindow) {
+      floatingWindow.show();
+      floatingWindow.webContents.send('started-recording', true);
+    }
+  } catch (error) {
+    console.error(error)
   }
 });
 
@@ -153,6 +210,9 @@ ipcMain.handle('save-screen-camera-blob', async (_, screenBlob: ArrayBuffer, cam
       const screenPath = await path.join(app.getPath('home'), `temp-${Date.now()}-screen.webm`);
       const cameraPath = await path.join(app.getPath('home'), `temp-${Date.now()}-camera.webm`);
       const outputPath = path.join(app.getPath('home'), `temp-${Date.now()}.webm`);
+
+      // Send a message to the renderer process to update the UI
+      mainWindow?.webContents.send('set-window', 'loading', 'Processing video...');
 
       // Save blobs to files
       await writeFile(screenPath, Buffer.from(screenBlob), () => console.log('Screen file created successfully!'));
@@ -254,6 +314,9 @@ ipcMain.handle('get-upload-link', async (_, sourceTitle: string): Promise<Upload
 // Upload video to server
 ipcMain.handle('upload-video', async (_, uploadFile, uploadLink: string) => {
   try {
+    // Send a message to the renderer process to update the UI
+    mainWindow?.webContents.send('set-window', 'loading', 'Uploading video...');
+
     await getAccount();
 
     got.put(uploadLink, {
@@ -263,6 +326,12 @@ ipcMain.handle('upload-video', async (_, uploadFile, uploadLink: string) => {
 
       // Delete the upload file after uploading
       await unlinkPromise(uploadFile)
+
+      // When the upload is complete, send a message to the renderer process to update the UI
+      mainWindow?.webContents.send('set-window', 'main');
+      webcamWindow?.hide();
+      floatingWindow?.hide();
+
     }).catch((err) => {
       console.log(JSON.stringify({ e: "failed to upload video", err, uploadLink }))
       throw new Error(err);
