@@ -120,9 +120,6 @@ export function Recorder({
     if (!selectedSource) return alert("Select a screen to record");
     if (selectedSource && !isRecording) {
       try {
-        // Notify the desktop application to start recording
-        await window.electron.startRecording(selectedSource.id);
-
         // Create a new upload link
         const { uploadId, uploadLink } = await handleStartRecording();
 
@@ -230,6 +227,10 @@ export function Recorder({
         console.error("Failed to get media stream:", error);
         alert("Failed to get media stream, contact support if this persists");
       }
+
+      // Notify the desktop application to start recording
+      // await window.electron.startRecording(selectedSource.id);
+      await window.electron.startRecording(selectedSource?.applicationName);
     }
   };
 

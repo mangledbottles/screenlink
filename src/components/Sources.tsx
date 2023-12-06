@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Source, SourceType } from "../utils";
 
 async function getScreenSources() {
@@ -22,8 +22,13 @@ export function ScreenSources({
 }) {
   const [sources, setSources] = useState<any[]>([]);
 
-  useEffect(() => {
-    getScreenSources().then(setSources);
+  useMemo(() => {
+    getScreenSources().then((newSources) => {
+      const uniqueSources = Array.from(
+        new Set(newSources.map((source) => JSON.stringify(source)))
+      ).map((source) => JSON.parse(source));
+      setSources(uniqueSources);
+    });
   }, []);
 
   if (!sources.length) return <SourcesSkeleton />;
@@ -97,7 +102,7 @@ export function QuickLink({
 
   return (
     <div
-      className={`group relative rounded-xl border-transparent border-2 -inset-px  ${
+      className={`group relative rounded-xl border-transparent border-2 -inset-px overflow-hidden ${
         isHovered || selectedSource?.id === source.id
           ? "[background:linear-gradient(var(--quick-links-hover-bg,theme(colors.sky.50)),var(--quick-links-hover-bg,theme(colors.sky.50)))_padding-box,linear-gradient(to_top,theme(colors.indigo.400),theme(colors.cyan.400),theme(colors.sky.500))_border-box] group-hover:opacity-100 dark:[--quick-links-hover-bg:theme(colors.slate.800)]"
           : ""
@@ -110,7 +115,7 @@ export function QuickLink({
       <img
         src={imageUrl}
         alt={title}
-        className="w-full h-auto object-cover rounded-lg"
+        className="w-full h-auto object-cover rounded-lg hover:scale-105"
         style={{ aspectRatio: "1920 / 1080" }}
       />
       <div className="p-2">

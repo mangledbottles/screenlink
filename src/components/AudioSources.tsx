@@ -16,9 +16,9 @@ export default function AudioSources({
       try {
         // Get the list of audio devices
         const mediaDevices = await navigator.mediaDevices.enumerateDevices();
-        const audioDevices = mediaDevices
-          .reverse()
-          .filter((device) => device.kind === "audioinput");
+        const audioDevices = mediaDevices.filter(
+          (device) => device.kind === "audioinput"
+        );
 
         setDevices(audioDevices);
         setAudioSource(audioDevices[0] || null);

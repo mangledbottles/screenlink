@@ -11,6 +11,7 @@ import { Source } from "./utils";
 import AudioSources from "./components/AudioSources";
 import { Permissions } from "./components/Permissions";
 import Update from "./components/Update";
+import { Loading } from "./components/Loading";
 
 // Get the device code from the desktop application
 export const refreshDeviceCode = async () => {
@@ -86,6 +87,10 @@ function App() {
 
   if (windowType === "permissions") {
     return <Permissions />;
+  }
+
+  if (windowType === "loading") {
+    return <Loading loadingMessage={windowMessage} />;
   }
 
   // If the device code is not present, show the sign in component

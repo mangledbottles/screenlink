@@ -11,6 +11,7 @@ export type Source = {
         height: number;
     };
     sourceType: SourceType;
+    applicationName?: string;
 };
 
 export interface UploadLink {
