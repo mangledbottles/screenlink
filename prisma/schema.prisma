@@ -144,3 +144,12 @@ model Devices {
   @@index([id])
   @@index([userId])
 }
+
+model NotificationSubscription {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  ipAddress String?
+
+  @@index([email])
+}

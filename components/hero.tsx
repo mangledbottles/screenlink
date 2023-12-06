@@ -4,16 +4,17 @@ import Link from "next/link";
 import HeroImage from "@/public/images/hero-image.png";
 import CtaButton from "@components/ui/CtaButton";
 import DemoLimk from "../public/images/demo-link-2.png";
+import { HeaderAction } from "./HeaderAction";
 
 export default function Hero() {
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="pt-32 md:pt-40">
+        <div className="pt-20">
           {/* Hero content */}
           <div className="max-w-3xl mx-auto text-center">
-            {/* <h1 className="Dont-hkgrotesk mb-6 text-[5rem]" data-aos="fade-up"> */}
-            <h1 className="h1 font-hkgrotesk mb-6" data-aos="fade-up">
+            <HeaderAction />
+            <h1 className="h1 font-hkgrotesk mb-6 mt-12" data-aos="fade-up">
               The Open Source Loom Alternative
             </h1>
             <p
