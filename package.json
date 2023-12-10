@@ -26,6 +26,7 @@
     "@types/node": "^20.8.2",
     "@types/react": "^18.2.24",
     "@types/react-dom": "^18.2.9",
+    "@vercel/analytics": "^1.1.1",
     "aos": "^3.0.0-beta.6",
     "canvas-confetti": "^1.9.2",
     "class-variance-authority": "^0.7.0",

@@ -1,5 +1,6 @@
 import "./css/style.css";
 
+import { Analytics } from "@vercel/analytics/react";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import AuthProvider from "./authProvider";
@@ -74,6 +75,7 @@ export default function RootLayout({
             </ThemeProvider>
           </div>
           <Toaster />
+          <Analytics />
           <script
             async
             src="https://js.stripe.com/v3/pricing-table.js"
