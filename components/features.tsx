@@ -91,11 +91,10 @@ export default function Features() {
                   </div>
                   <div className="text-slate-500 mb-3">
                     Effortlessly capture your screen with a few clicks. Perfect
-                    for creating tutorials, presentations, or sharing your
-                    ideas
+                    for creating tutorials, presentations, or sharing your ideas
                   </div>
                 </div>
-                <div className="text-right">
+                {/* <div className="text-right">
                   <a
                     className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
                     href="#0"
@@ -105,7 +104,7 @@ export default function Features() {
                       -&gt;
                     </span>
                   </a>
-                </div>
+                </div> */}
               </div>
 
               <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
@@ -125,7 +124,7 @@ export default function Features() {
                     and personable demonstrations and guides.
                   </div>
                 </div>
-                <div className="text-right">
+                {/* <div className="text-right">
                   <a
                     className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
                     href="#0"
@@ -135,7 +134,7 @@ export default function Features() {
                       -&gt;
                     </span>
                   </a>
-                </div>
+                </div> */}
               </div>
 
               <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
@@ -151,10 +150,11 @@ export default function Features() {
                     Open Source
                   </div>
                   <div className="text-slate-500 mb-3">
-                    ScreenLink is an open source project. Contribute to the codebase, report issues, or suggest new features.
+                    ScreenLink is an open source project. Contribute to the
+                    codebase, report issues, or suggest new features.
                   </div>
                 </div>
-                <div className="text-right">
+                {/* <div className="text-right">
                   <a
                     className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
                     href="#0"
@@ -164,9 +164,8 @@ export default function Features() {
                       -&gt;
                     </span>
                   </a>
-                </div>
+                </div>  */}
               </div>
-              
 
               <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
                 <Image
@@ -185,7 +184,7 @@ export default function Features() {
                     more informative and engaging.
                   </div>
                 </div>
-                <div className="text-right">
+                {/* <div className="text-right">
                   <a
                     className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
                     href="#0"
@@ -195,7 +194,7 @@ export default function Features() {
                       -&gt;
                     </span>
                   </a>
-                </div>
+                </div> */}
               </div>
 
               <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
@@ -215,7 +214,7 @@ export default function Features() {
                     versatile and accessible no matter your platform of choice.
                   </div>
                 </div>
-                <div className="text-right">
+                {/* <div className="text-right">
                   <a
                     className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
                     href="#0"
@@ -225,7 +224,7 @@ export default function Features() {
                       -&gt;
                     </span>
                   </a>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
