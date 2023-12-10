@@ -34,9 +34,7 @@ export default function Pricing() {
         <div className="pt-10 pb-12 md:pb-20">
           {/* Section header */}
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-            <h2 className="h2 font-hkgrotesk mb-4">
-              The right plan for you
-            </h2>
+            <h2 className="h2 font-hkgrotesk mb-4">The right plan for you</h2>
             <p className="text-xl text-slate-500">
               Simple pricing, for every size. Pay for what you need!
             </p>
@@ -77,7 +75,9 @@ export default function Pricing() {
                 <span className="text-2xl font-semibold">
                   {annual ? "0" : "0"}
                 </span>
-                <span className="text-sm text-slate-500 font-medium">/mo per seat</span>
+                <span className="text-sm text-slate-500 font-medium">
+                  /mo per seat
+                </span>
               </div>
             </div>
             {/* Pro price */}
@@ -88,9 +88,11 @@ export default function Pricing() {
               <div>
                 <span className="text-xl font-semibold">€</span>
                 <span className="text-2xl font-semibold">
-                  {annual ? "10" : "13"}
+                  {annual ? "80" : "10"}
                 </span>
-                <span className="text-sm text-slate-500 font-medium">/mo per seat</span>
+                <span className="text-sm text-slate-500 font-medium">
+                  {annual ? "/yr" : "/mo"} per seat
+                </span>
               </div>
             </div>
             {/* Growth price */}
@@ -101,9 +103,11 @@ export default function Pricing() {
               <div>
                 <span className="text-xl font-semibold">€</span>
                 <span className="text-2xl font-semibold">
-                  {annual ? "16" : "20"}
+                  {annual ? "130" : "13"}
                 </span>
-                <span className="text-sm text-slate-500 font-medium">/mo per seat</span>
+                <span className="text-sm text-slate-500 font-medium">
+                  {annual ? "/yr" : "/mo"} per seat
+                </span>
               </div>
             </div>
             {/* Usage label */}
@@ -140,7 +144,7 @@ export default function Pricing() {
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-2 md:order-none">
               <div className="md:hidden text-slate-200">{usage[0]}</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                200
+                300
               </div>
             </div>
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-3 md:order-none">
@@ -162,13 +166,13 @@ export default function Pricing() {
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 bg-opacity-70 md:border-l border-slate-700 order-2 md:order-none">
               <div className="md:hidden text-slate-200">File Storage</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                30 minutes
+                15 minutes
               </div>
             </div>
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 bg-opacity-70 md:border-l border-slate-700 order-3 md:order-none">
               <div className="md:hidden text-slate-200">File Storage</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                1 hour
+                30 minutes
               </div>
             </div>
             {/* Active Users */}
