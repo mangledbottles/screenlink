@@ -1,5 +1,6 @@
 "use client";
 
+import { HeaderAction } from "@/components/HeaderAction";
 import { Link } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -59,6 +60,7 @@ function getOS(): string {
 export const DownloadButton = () => {
   const [os, setOs] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [githubRequestFinished, setGithubRequestFinished] = useState(false);
 
   useEffect(() => {
     const updatedOs = getOS();
@@ -74,11 +76,26 @@ export const DownloadButton = () => {
         const latestRelease = releases[0];
         const url = getDownloadUrl(updatedOs, releases);
         setDownloadUrl(url);
+        setGithubRequestFinished(true);
       })
       .catch((error) => {
         console.error("Error fetching releases:", error);
+        setGithubRequestFinished(true);
       });
   }, []);
+
+  if (githubRequestFinished && !downloadUrl) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <p className="max-w-[800px] mb-4 text-white text-center md:text-sm/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-white">
+          ScreenLink is being built for MacOS, Windows and Linux. Its still in
+          development {os ? `but its not yet available for ${os}!` : "."} Get
+          notified when it is available
+        </p>
+        <HeaderAction />
+      </div>
+    );
+  }
 
   if (!os || os === "Unknown")
     return (
@@ -89,7 +106,6 @@ export const DownloadButton = () => {
     return (
       <span className="animate-pulse inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20 w-44 h-16 cursor-pointer"></span>
     );
-
   return (
     <a
       href={downloadUrl ?? "#"}
