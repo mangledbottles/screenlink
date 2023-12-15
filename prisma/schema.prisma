@@ -150,6 +150,7 @@ model NotificationSubscription {
   email     String   @unique
   createdAt DateTime @default(now())
   ipAddress String?
+  os        String?
 
   @@index([email])
 }

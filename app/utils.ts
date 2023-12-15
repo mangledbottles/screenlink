@@ -95,3 +95,23 @@ export const withSession =
             const searchParams = getSearchParams(req.url);
             return handler({ req, params, searchParams, session });
         };
+
+export function getOS(): string {
+    if (typeof window === "undefined") return "Unknown";
+    const userAgent = window.navigator.userAgent,
+        macosPlatforms = ["Macintosh", "MacIntel", "MacPPC", "Mac68K"],
+        windowsPlatforms = ["Win32", "Win64", "Windows", "WinCE"];
+    let os = "Unknown";
+
+    if (macosPlatforms.some((platform) => userAgent.includes(platform))) {
+        os = "macOS";
+    } else if (
+        windowsPlatforms.some((platform) => userAgent.includes(platform))
+    ) {
+        os = "Windows";
+    } else if (/Linux/.test(userAgent)) {
+        os = "Linux";
+    }
+
+    return os;
+}

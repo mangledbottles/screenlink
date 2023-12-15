@@ -7,7 +7,7 @@ const prisma = new PrismaClient()
 export async function POST(req: NextRequest, res: NextApiResponse) {
     try {
         const body = await new Response(req.body).json();
-        const { email } = body;
+        const { email, os } = body;
         if (!email) return NextResponse.json({ error: "Email is required" }, {
             status: 400
         });
@@ -30,7 +30,8 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
         await prisma.notificationSubscription.create({
             data: {
                 email,
-                ipAddress
+                ipAddress,
+                os
             }
         });
 
@@ -41,5 +42,6 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
 
     } catch (err) {
         console.log(err)
+        return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
     }
 }

@@ -16,6 +16,7 @@ import { Label } from "./ui/label";
 import conffetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useState } from "react";
+import { getOS } from "@/app/utils";
 
 export const HeaderAction = () => {
   const [email, setEmail] = useState("");
@@ -54,12 +55,14 @@ export const HeaderAction = () => {
                 if (!email)
                   return toast.error("Please enter a valid email address");
 
+                const os = getOS();
+
                 fetch("/api/subscribe", {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
                   },
-                  body: JSON.stringify({ email }),
+                  body: JSON.stringify({ email, os }),
                 })
                   .then((response) => response.json())
                   .then((data) => {
@@ -71,7 +74,7 @@ export const HeaderAction = () => {
                         spread: 70,
                         origin: { y: 0.6 },
                       });
-                      toast.success("Subscribed successfully!");                      
+                      toast.success("Subscribed successfully!");
                     }
                   })
                   .catch((error) => {
