@@ -12,17 +12,10 @@
   },
   files: ["dist", "dist-electron"],
   mac: {
-    target: [
-      {
-        target: "dmg",
-        arch: ["x64", "arm64"],
-      },
-      {
-        target: "zip",
-        arch: ["x64", "arm64"],
-      },
-    ],
-    artifactName: "${productName}-Mac-${version}-Installer.${ext}",
+    target: {
+      target: "default",
+      arch: ["x64", "arm64"],
+    },
     icon: "public/icon.icns",
     hardenedRuntime: true,
     entitlements: "build/entitlements.mac.plist",
