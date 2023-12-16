@@ -1,4 +1,4 @@
-import { UploadLink } from "./src/utils";
+import { Account, Preference, UploadLink } from "./src/utils";
 
 // types.d.ts
 declare global {
@@ -22,6 +22,10 @@ declare global {
             saveScreenCameraBlob: (screenBlob: ArrayBuffer, cameraBlob: ArrayBuffer) => Promise<string>;
             getUploadLink: (sourceTitle: string) => Promise<UploadLink>;
             uploadVideo: (uploadFilePath: string, sourceTitle: string) => Promise<string>;
+            logout: () => Promise<void>;
+            getAccount: () => Promise<Account>;
+            getPreferences: () => Promise<Preference[]>;
+            updatePreferences: (preferences: Preference[]) => Promise<void>;
         };
     }
 }

@@ -28,8 +28,35 @@ export interface MacWindow {
     x: number;
     y: number;
     number: number;
-  }
+}
+
+export interface Account {
+    isVerified: boolean;
+    id: string;
+    name: string;
+    code: string;
+    createdAt: string;
+    updatedAt: string;
+    user: {
+        id: string;
+        name: string;
+        email: string;
+        emailVerified: boolean | null;
+        image: string;
+        currentProjectId: string;
+    };
+    lastUpdated: string;
+}
+
+export interface Preference {
+    name: string;
+    value: string | boolean;
+}
 
 export const isProd = process.env.NODE_ENV != "development";
 // export const isProd = true;
 export const baseUrl = isProd ? "https://screenlink.io" : "http://localhost:3008";
+
+export const logout = async () => {
+    await window.electron.logout();
+}

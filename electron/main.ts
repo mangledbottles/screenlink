@@ -10,14 +10,61 @@ import { writeFile as writeFilePromise, readFile as readFilePromise, unlink as u
 import path from 'node:path'
 import got from "got";
 import cp from 'child_process';
-import { MacWindow, UploadLink, baseUrl } from '../src/utils';
+import { MacWindow, UploadLink, baseUrl, Account, Preference } from '../src/utils';
 import { platform } from 'process';
 
+const sessionDataPath = app.getPath('sessionData');
+const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
+const userAccountFilePath = path.join(sessionDataPath, 'userAccount.txt');
+const userPreferencesFilePath = path.join(sessionDataPath, 'userPreferences.txt');
+
+
 autoUpdater.logger = logger
-console.log(`dsn: ${process.env.SENTRY_DSN}`)
 Sentry.init({
   dsn: 'https://d9c49d59e5554239ac977e3a7c409cda@glitchtip.dermot.email/2'
 });
+
+const getPreferences = async (): Promise<Preference[] | null> => {
+  try {
+    const preferences = await readFilePromise(userPreferencesFilePath, 'utf-8');
+    let parsed = JSON.parse(preferences) as Preference[] ?? [];
+    if (!Array.isArray(parsed)) return [];
+
+    // Remove duplicates based on Preference.name
+    const uniquePreferences = Array.from(new Map(parsed.map(preference => [preference.name, preference])).values());
+    return uniquePreferences;
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to get preferences: ${error?.message}`), {
+      tags: { module: "getPreferences" },
+      extra: { error }
+    });
+    return null;
+  }
+};
+
+const getPreference = async (key: string): Promise<Preference['value'] | null> => {
+  try {
+    const preferences = await getPreferences();
+    console.log({ preferences })
+    return preferences?.find(preference => preference.name === key)?.value ?? null
+  } catch (error: any) {
+    console.log(error);
+    return null
+  }
+};
+
+getPreference('errorLoggingEnabled').then((errorLoggingEnabled: string | boolean | null) => {
+  // Disable error logging if the preference is set to false
+  if (errorLoggingEnabled !== null && errorLoggingEnabled === false) {
+    const client = Sentry.getCurrentHub().getClient();
+    const options = client?.getOptions();
+    if (options) {
+      options.enabled = false;
+    }
+  }
+});
+
 logger.info('App starting...');
 
 import ffmpeg from 'fluent-ffmpeg';
@@ -35,11 +82,6 @@ let tray: Tray | null = null
 // recording state
 let showCameraWindow = false;
 
-const sessionDataPath = app.getPath('sessionData');
-const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
-
-// myUndefinedFunction();
-
 function getComputerName() {
   switch (process.platform) {
     case "win32":
@@ -53,6 +95,20 @@ function getComputerName() {
       return os.hostname();
   }
 }
+
+const refreshWindows = () => {
+  try {
+    if (mainWindow) mainWindow?.webContents.send('set-window', 'main')
+    if (floatingWindow) floatingWindow?.webContents.send('set-window', 'floating')
+    if (webcamWindow) webcamWindow?.webContents.send('set-window', 'webcam')
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to refresh: ${error?.message}`), {
+      tags: { module: "refreshWindows" },
+      extra: { error }
+    });
+  }
+};
 
 ipcMain.handle('get-desktop-capturer-sources', async () => {
   const screenSources = await desktopCapturer.getSources({ types: ['screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
@@ -164,6 +220,7 @@ ipcMain.handle('stop-recording', async (_) => {
   if (webcamWindow) {
     toggleCameraWindow(true);
     webcamWindow.setAlwaysOnTop(false);
+    webcamWindow.minimize();
     webcamWindow.hide();
   }
   if (mainWindow) {
@@ -412,18 +469,12 @@ const toggleCameraWindow = (show: boolean) => {
 const verifyDeviceCode = async (deviceCode: string) => {
   try {
     const url = `${baseUrl}/api/devices/verify`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ deviceCode })
-    });
+    const response = await axios.post(url, { deviceCode });
     if (response.status !== 200) {
       console.log(JSON.stringify({ e: "failed to verify device code", url }))
       throw new Error(response.statusText);
     }
-    const data = await response.json();
+    const data = response.data;
     Sentry.setUser({ userId: data?.id, deviceName: data?.name, projectId: data?.user?.currentProjectId, name: data?.user?.name, email: data?.user?.email })
 
     if (data.error) {
@@ -466,47 +517,44 @@ const getDeviceCode = async () => {
   }
 }
 
-const log = async (data: object) => {
-  const webhookUrl = 'https://webhook.site/ce05f4c4-7d74-4013-a954-356b11d11873';
+const getAccount = async (): Promise<Account | null> => {
   try {
-    await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-  } catch (error: any) {
-    console.error('Failed to send log:', error);
-    Sentry.captureException(new Error(`Failed to send log: ${error?.message}`), {
-      tags: { module: "log" },
-      extra: { error }
-    });
-  }
-}
-
-const getAccount = async () => {
-  try {
+    // Check if user has a device code (login status)
     const deviceCode = await getDeviceCode();
     if (deviceCode === '' || !deviceCode) {
       if (mainWindow) {
         mainWindow.webContents.send('device-code', '');
       }
-      return;
+      return null;
     }
 
+    // Auth cache stored for 5 minutes
+    const userAccountFileBuffer = await readFilePromise(userAccountFilePath);
+    const userAccount: Account = JSON.parse(userAccountFileBuffer.toString());
+    // Check if the user account was updated less than 5 minutes ago
+    const currentTime = new Date().getTime();
+    const lastUpdatedTime = new Date(userAccount.lastUpdated).getTime();
+    const timeDifferenceInMinutes = (currentTime - lastUpdatedTime) / (1000 * 60);
+    if (timeDifferenceInMinutes < 5) {
+      return userAccount;
+    }
+
+
     // Verify the device code
-    const device = await verifyDeviceCode(deviceCode);
+    const device: Account = await verifyDeviceCode(deviceCode);
     if (!device) {
       if (mainWindow) {
         mainWindow.webContents.send('device-code', '');
         Sentry.captureException(new Error(`Failed to get account: device not found`), {
-          tags: { module: "getAccount" },
-          extra: { deviceCode }
+          tags: { module: "getAccount", deviceCode },
         });
       }
-      return;
+      return null;
     }
+
+    // Write the response to userAccountFilePath
+    await writeFilePromise(userAccountFilePath, JSON.stringify({ ...device, lastUpdated: new Date() }));
+
     return device;
   } catch (error: any) {
     console.log(error)
@@ -514,9 +562,69 @@ const getAccount = async () => {
       tags: { module: "getAccount" },
       extra: { error }
     });
-    return;
+    return null;
   }
 }
+
+ipcMain.handle('get-account', async (_) => {
+  try {
+    const account = await getAccount();
+    return account;
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to get account: ${error?.message}`), {
+      tags: { module: "getAccount" },
+      extra: { error }
+    });
+    return null;
+  }
+});
+
+
+const updatePreferences = async (newPreferences: Preference[]): Promise<boolean> => {
+  try {
+    // Write upserted preferences back to file
+    await writeFilePromise(userPreferencesFilePath, JSON.stringify(newPreferences));
+    return true;
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to upsert preferences: ${error?.message}`), {
+      tags: { module: "upsertPreferences" },
+      extra: { error }
+    });
+    return false;
+  }
+};
+
+ipcMain.handle('get-preferences', async (_) => {
+  try {
+    const preferences = await getPreferences();
+    return preferences;
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to get preferences: ${error?.message}`), {
+      tags: { module: "getPreferences" },
+      extra: { error }
+    });
+    return null;
+  }
+});
+
+ipcMain.handle('update-preferences', async (_event, newPreferences: Preference[]) => {
+  try {
+    await updatePreferences(newPreferences);
+    return true;
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to set preferences: ${error?.message}`), {
+      tags: { module: "setPreferences" },
+      extra: { error }
+    });
+    return false;
+  }
+});
+
+
 
 ipcMain.handle('get-device-code', async (_) => {
   try {
@@ -542,6 +650,25 @@ ipcMain.handle('get-device-code', async (_) => {
     return null;
   }
 });
+
+ipcMain.handle('logout', async (_) => {
+  try {
+    // Clear the user account and device code
+    await writeFilePromise(userAccountFilePath, JSON.stringify({}));
+    await writeFilePromise(deviceCodeFilePath, JSON.stringify({}));
+    // Send a logout event to the renderer process
+    if (mainWindow) mainWindow.webContents.send('device-code', '');
+    if (floatingWindow) floatingWindow.hide();
+    if (webcamWindow) webcamWindow.hide();
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to logout: ${error?.message}`), {
+      tags: { module: "logout" },
+      extra: { error }
+    });
+  }
+});
+
 
 ipcMain.handle('permissions-missing', async (_) => {
   try {
@@ -585,6 +712,10 @@ const missingPermissions = async () => {
 
   return missingList;
 }
+
+setTimeout(() => {
+  Sentry.captureException(new Error(`Testing sentry`));
+});
 
 const requestPermissions = async (permission: string): Promise<boolean> => {
   try {
@@ -822,6 +953,7 @@ function createWindow() {
     console.log('Device code on ready: ', deviceCode);
     if (mainWindow) {
       mainWindow.webContents.send('device-code', deviceCode);
+      refreshWindows();
     } else {
       console.log('No window to send device code to');
     }

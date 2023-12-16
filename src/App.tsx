@@ -1,7 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import * as Sentry from "@sentry/react";
-import screenlinkLogo from "./assets/screenlink.svg";
-
 import { ScreenSources } from "./components/Sources";
 import { Recorder } from "./components/Recorder";
 import SignIn from "./components/SignIn";
@@ -13,34 +10,11 @@ import { Permissions } from "./components/Permissions";
 import Update from "./components/Update";
 import { Loading } from "./components/Loading";
 
-import { Source } from "./utils";
+import { Account, Source } from "./utils";
 
 import "./App.css";
-
-Sentry.init({
-  dsn: "https://03f0433ebb331913be9a44008d1bc6f8@o4506405451464704.ingest.sentry.io/4506405764530176",
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.5,
-  // If the entire session is not sampled, use the below sample rate to sample
-  // sessions when an error occurs.
-  replaysOnErrorSampleRate: 1.0,
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-
-  integrations: [
-    new Sentry.BrowserTracing({
-      // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-      tracePropagationTargets: ["localhost", /^https:\/\/screenlink\.io/],
-    }),
-  ],
-  beforeSend(event, hint) {
-    // Check if it is an exception, and if so, show the report dialog
-    if (event.exception) {
-      Sentry.showReportDialog({ eventId: event.event_id });
-    }
-    return event;
-  },
-});
+import { NavBar } from "./components/NavBar";
+import { Replay, getCurrentHub, setContext, setUser } from "@sentry/react";
 
 // Get the device code from the desktop application
 export const refreshDeviceCode = async () => {
@@ -60,6 +34,7 @@ function App() {
   const [audioSource, setAudioSource] = useState<MediaDeviceInfo | null>(null);
   const [windowType, setWindowType] = useState<string | null>(null);
   const [windowMessage, setWindowMessage] = useState<string | null>(null);
+  const [_, setAccount] = useState<Account | null>(null);
 
   // Listen for the device code from the desktop application
   // @ts-ignore
@@ -69,7 +44,6 @@ function App() {
 
   // @ts-ignore
   window.electron.on("set-window", (window: string, message: string) => {
-    // alert("set-window to " + window)
     setWindowType(window);
     setWindowMessage(message);
   });
@@ -78,6 +52,39 @@ function App() {
     refreshDeviceCode().then((newDeviceCode) => {
       setDeviceCode(newDeviceCode);
     });
+
+    const getAccount = async () => {
+      const account = await window.electron.getAccount();
+      setAccount(account);
+      // Set user context in Sentry
+      setUser({
+        email: account?.user?.email,
+        name: account?.user?.name,
+        id: account?.id,
+
+      });
+    };
+    getAccount();
+
+    const getPreferences = async () => {
+      const preferences = await window.electron.getPreferences();
+      // Set user context in Sentry
+      setContext("Preferences", {
+        preferences,
+      });
+
+      if (
+        preferences?.find((preference) => preference.name === "error-logging")
+          ?.value === false
+      ) {
+        const client = getCurrentHub().getClient();
+        const options = client?.getOptions();
+        if (options) {
+          options.enabled = false;
+        }
+      }
+    };
+    getPreferences();
   }, []);
 
   useMemo(() => {
@@ -102,11 +109,11 @@ function App() {
 
   useEffect(() => {
     if (windowType === "main") {
-      const client = Sentry.getCurrentHub().getClient();
+      const client = getCurrentHub().getClient();
       if (!client || !client.addIntegration) return;
-      if (client.getIntegration(Sentry.Replay)) return;
+      if (client.getIntegration(Replay)) return;
       client?.addIntegration(
-        new Sentry.Replay({
+        new Replay({
           maskAllText: false,
           blockAllMedia: false,
         })
@@ -147,16 +154,7 @@ function App() {
   return (
     <>
       <div className="card">
-        <div className="flex justify-center">
-          <img
-            className="h-10 w-auto mb-2 -mt-4 cursor-pointer"
-            src={screenlinkLogo}
-            alt="ScreenLink"
-            onClick={() => {
-              window.electron.openInBrowser("https://screenlink.io/app");
-            }}
-          />
-        </div>
+        <NavBar />
         <div className="flex flex-col space-y-4 w-4/6 mx-auto">
           <CameraSources
             cameraSource={cameraSource}

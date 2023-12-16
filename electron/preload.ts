@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { UploadLink } from '../src/utils';
+import { Preference, UploadLink } from '../src/utils';
 
 
 // --------- Expose some API to the Renderer process ---------
@@ -13,6 +13,18 @@ contextBridge.exposeInMainWorld('electron', {
   },
   getDeviceCode: async (): Promise<string> => {
     return await ipcRenderer.invoke('get-device-code')
+  },
+  logout: async (): Promise<void> => {
+    return await ipcRenderer.invoke('logout')
+  },
+  getAccount: async (): Promise<any> => {
+    return await ipcRenderer.invoke('get-account')
+  },
+  getPreferences: async (): Promise<Preference[]> => {
+    return await ipcRenderer.invoke('get-preferences')
+  },
+  updatePreferences: async (preferences: Preference[]): Promise<void> => {
+    return await ipcRenderer.invoke('update-preferences', preferences)
   },
   getDesktopCapturerSources: async (): Promise<Electron.DesktopCapturerSource> => {
     return await ipcRenderer.invoke('get-desktop-capturer-sources')

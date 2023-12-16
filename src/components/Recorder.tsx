@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Source, UploadLink, baseUrl, isProd } from "../utils";
 import { Video } from "lucide-react";
+import { captureException } from "@sentry/react";
 
 export function Recorder({
   selectedSource,
@@ -31,6 +32,14 @@ export function Recorder({
           uploadLink,
           uploadId,
         });
+        captureException(new Error("uploadLink or uploadId is null"), {
+          tags: {
+            source: "recorder",
+            uploadLink,
+            uploadId,
+            uploadFilePath,
+          },
+        });
         return alert("Failed to upload file, contact support if this persists");
       }
       await window.electron.uploadVideo(uploadFilePath, uploadLink);
@@ -38,6 +47,14 @@ export function Recorder({
       await window.electron.openInBrowser(uploadUrl);
     } catch (error) {
       console.error("Failed to upload file:", error);
+      captureException(error, {
+        tags: {
+          source: "recorder",
+          uploadLink,
+          uploadId,
+          uploadFilePath,
+        },
+      });
       alert("Failed to upload file, contact support if this persists");
     }
   };
@@ -52,6 +69,11 @@ export function Recorder({
       return { uploadLink, uploadId };
     } catch (error) {
       console.error("Failed to start recording:", error);
+      captureException(error, {
+        tags: {
+          source: "recorder",
+        },
+      });
       alert("Failed to start recording, contact support if this persists");
       throw error;
     }
@@ -67,28 +89,37 @@ export function Recorder({
       uploadLink: string,
       uploadId: string
     ) => {
-      if (screenChunks.length > 0 && cameraChunks.length > 0) {
-        const screenBlob = new Blob(screenChunks, {
-          type: `video/webm; codecs=vp9,opus`,
+      try {
+        if (screenChunks.length > 0 && cameraChunks.length > 0) {
+          const screenBlob = new Blob(screenChunks, {
+            type: `video/webm; codecs=vp9,opus`,
+          });
+          const cameraBlob = new Blob(cameraChunks, {
+            type: `video/webm; codecs=vp9,opus`,
+          });
+
+          const screenConverted = await screenBlob.arrayBuffer();
+          const cameraConverted = await cameraBlob.arrayBuffer();
+
+          // Reset chunks and states
+          screenChunks.length = 0;
+          cameraChunks.length = 0;
+
+          // Process the data
+          const outputFile = await window.electron.saveScreenCameraBlob(
+            screenConverted,
+            cameraConverted
+          );
+          console.log({ outputFile });
+          await uploadFile(outputFile, uploadLink, uploadId);
+        }
+      } catch (error) {
+        console.error("Failed to process window record:", error);
+        captureException(error, {
+          tags: {
+            source: "recorder",
+          },
         });
-        const cameraBlob = new Blob(cameraChunks, {
-          type: `video/webm; codecs=vp9,opus`,
-        });
-
-        const screenConverted = await screenBlob.arrayBuffer();
-        const cameraConverted = await cameraBlob.arrayBuffer();
-
-        // Reset chunks and states
-        screenChunks.length = 0;
-        cameraChunks.length = 0;
-
-        // Process the data
-        const outputFile = await window.electron.saveScreenCameraBlob(
-          screenConverted,
-          cameraConverted
-        );
-        console.log({ outputFile });
-        await uploadFile(outputFile, uploadLink, uploadId);
       }
     };
 
@@ -98,22 +129,31 @@ export function Recorder({
       uploadLink: string,
       uploadId: string
     ) => {
-      if (screenChunks.length > 0) {
-        const screenBlob = new Blob(screenChunks, {
-          type: `video/webm; codecs=vp9,opus`,
+      try {
+        if (screenChunks.length > 0) {
+          const screenBlob = new Blob(screenChunks, {
+            type: `video/webm; codecs=vp9,opus`,
+          });
+
+          const screenConverted = await screenBlob.arrayBuffer();
+
+          // Reset chunks and states
+          screenChunks.length = 0;
+
+          // Process the data
+          const outputFile = await window.electron.saveScreenBlob(
+            screenConverted
+          );
+          console.log({ outputFile });
+          await uploadFile(outputFile, uploadLink, uploadId);
+        }
+      } catch (error) {
+        console.error("Failed to process screen record:", error);
+        captureException(error, {
+          tags: {
+            source: "recorder",
+          },
         });
-
-        const screenConverted = await screenBlob.arrayBuffer();
-
-        // Reset chunks and states
-        screenChunks.length = 0;
-
-        // Process the data
-        const outputFile = await window.electron.saveScreenBlob(
-          screenConverted
-        );
-        console.log({ outputFile });
-        await uploadFile(outputFile, uploadLink, uploadId);
       }
     };
 
@@ -225,6 +265,11 @@ export function Recorder({
         }
       } catch (error) {
         console.error("Failed to get media stream:", error);
+        captureException(error, {
+          tags: {
+            source: "recorder",
+          },
+        });
         alert("Failed to get media stream, contact support if this persists");
       }
 
@@ -235,28 +280,37 @@ export function Recorder({
   };
 
   const stopRecording = () => {
-    setIsRecording(false);
+    try {
+      setIsRecording(false);
 
-    if (screenMedia) {
-      screenMedia.stop();
-      setScreenMedia(null);
-    }
-    if (cameraMedia) {
-      cameraMedia.stop();
-      setCameraMedia(null);
-    }
+      if (screenMedia) {
+        screenMedia.stop();
+        setScreenMedia(null);
+      }
+      if (cameraMedia) {
+        cameraMedia.stop();
+        setCameraMedia(null);
+      }
 
-    if (screenStream) {
-      screenStream.getTracks().forEach((track) => track.stop());
-      setScreenStream(null);
-    }
-    if (cameraStream) {
-      cameraStream.getTracks().forEach((track) => track.stop());
-      setCameraStream(null);
-    }
-    if (audioStream) {
-      audioStream.getTracks().forEach((track) => track.stop());
-      setAudioStream(null);
+      if (screenStream) {
+        screenStream.getTracks().forEach((track) => track.stop());
+        setScreenStream(null);
+      }
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        setCameraStream(null);
+      }
+      if (audioStream) {
+        audioStream.getTracks().forEach((track) => track.stop());
+        setAudioStream(null);
+      }
+    } catch (error) {
+      console.error("Failed to stop recording:", error);
+      captureException(error, {
+        tags: {
+          source: "recorder",
+        },
+      });
     }
   };
 
@@ -284,7 +338,7 @@ export function Recorder({
       <button
         onClick={startRecording}
         disabled={isRecording}
-        className={`w-full group relative justify-center gap-2 transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2 bg-sky-700 text-white hover:bg-sky-900 border border-transparent hover:border-sky-900 focus:border-sky-500 focus:ring focus:ring-sky-500 ${
+        className={`w-full h-10 group relative justify-center gap-2 transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2 bg-sky-700 text-white hover:bg-sky-900 border border-transparent hover:border-sky-900 focus:border-sky-500 focus:ring focus:ring-sky-500 rounded-lg ${
           isRecording &&
           "bg-red-500 hover:bg-red-600 focus:border-red-400 focus:ring-red-400"
         }`}

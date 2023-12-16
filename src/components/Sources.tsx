@@ -84,7 +84,6 @@ export function QuickLink({
 }) {
   const handleClick = () => {
     console.log("QuickLink clicked!");
-    // const sourceType , either "window" or "screen"
     const sourceType = source.id.split(":")[0] as SourceType;
     console.log(`sourceType: ${sourceType}`);
     setSelectedSource({ ...source, sourceType });
