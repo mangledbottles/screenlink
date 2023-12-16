@@ -57,18 +57,12 @@ export const Floating = () => {
     let interval: NodeJS.Timeout | null = null;
 
     if (isRecording) {
-      // alert("Recording started");
       interval = setInterval(() => {
-        //   alert(`Timer: ${timer} seconds`);
         setTimer((prevTimer) => prevTimer + 1);
       }, 1000);
     } else if (!isRecording && timer !== 0) {
       clearInterval(interval!);
     }
-
-    // } else if (!isRecording && timer !== 0) {
-    //   clearInterval(interval!);
-    // }
 
     return () => {
       if (interval) {
@@ -102,7 +96,9 @@ export const Floating = () => {
           <span className="flex items-center justify-center px-6 py-4 text-sm font-medium">
             <span
               className={`text-sm font-medium ${
-                timer >= 60 * 5 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-gray-200"
+                timer >= 60 * 5
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-gray-900 dark:text-gray-200"
               }`}
             >
               {timer < 60 && timer}

@@ -39,6 +39,7 @@ export function ScreenSources({
         <QuickLink
           key={source.id}
           title={source.name}
+          applicationName={source.applicationName}
           imageUrl={source.thumbnail}
           source={source}
           selectedSource={selectedSource}
@@ -71,12 +72,14 @@ const SourcesSkeleton = () => {
 
 export function QuickLink({
   title,
+  applicationName,
   imageUrl,
   source,
   selectedSource,
   setSelectedSource,
 }: {
   title: string;
+  applicationName: string;
   imageUrl: string;
   source: Source;
   selectedSource: Source | null;
@@ -117,9 +120,10 @@ export function QuickLink({
         className="w-full h-auto object-cover rounded-lg hover:scale-105"
         style={{ aspectRatio: "1920 / 1080" }}
       />
-      <div className="p-2">
-        <p className="mt-2 text-sm text-slate-700 dark:text-slate-400">
-          {title}
+      <div className="space-y-1 text-sm pt-2">
+        <h3 className="font-medium leading-none">{applicationName ?? title}</h3>
+        <p className="text-xs text-muted-foreground truncate overflow-ellipsis overflow-hidden max-h-[3.5em]">
+          {title ?? ""}
         </p>
       </div>
     </div>

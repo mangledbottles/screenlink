@@ -61,7 +61,6 @@ function App() {
         email: account?.user?.email,
         name: account?.user?.name,
         id: account?.id,
-
       });
     };
     getAccount();
@@ -176,8 +175,9 @@ function App() {
         />
       </div>
       <p className="read-the-docs mb-4">
-        Screenlink is an open-source video capture tool that lets you record
-        your screen and camera to share your ideas with your anyone.
+        Screenlink is an open-source Loom alternative. Easily record your
+        screen, camera, and microphone; then get an instant shareable link for
+        your recording.
       </p>
     </>
   );

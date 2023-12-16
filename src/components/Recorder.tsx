@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Source, UploadLink, baseUrl, isProd } from "../utils";
 import { Video } from "lucide-react";
 import { captureException } from "@sentry/react";
+import { Progress } from "./ui/progress";
 
 export function Recorder({
   selectedSource,
@@ -19,6 +20,8 @@ export function Recorder({
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const [progress, setProgress] = useState(13);
+  const [justStarted, setJustStarted] = useState(false);
 
   const uploadFile = async (
     uploadFilePath: string,
@@ -78,6 +81,16 @@ export function Recorder({
       throw error;
     }
   };
+
+  useEffect(() => {
+    if (!justStarted) return;
+    const timer = setTimeout(() => setProgress(66), 500);
+    const timer2 = setTimeout(() => setProgress(100), 1200);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+    };
+  }, [justStarted]);
 
   const startRecording = async () => {
     const screenChunks: Blob[] = [];
@@ -160,6 +173,7 @@ export function Recorder({
     if (!selectedSource) return alert("Select a screen to record");
     if (selectedSource && !isRecording) {
       try {
+        setJustStarted(true);
         // Create a new upload link
         const { uploadId, uploadLink } = await handleStartRecording();
 
@@ -212,7 +226,7 @@ export function Recorder({
         });
 
         // Development Environment: Set the video source to the screen stream
-        if (!isProd) videoRef.current!.srcObject = screenStream;
+        if (!isProd && videoRef.current) videoRef.current.srcObject = screenStream;
 
         // Entire screen and a camera is selected
         if (selectedSource.sourceType === "window" && cameraSource) {
@@ -221,6 +235,7 @@ export function Recorder({
           });
 
           setScreenMedia(screenRecorder);
+          setJustStarted(false);
           if (cameraSource) setCameraMedia(cameraRecorder);
 
           screenRecorder.start();
@@ -345,9 +360,13 @@ export function Recorder({
       >
         {isRecording ? (
           <div className="flex items-center">
-            <div className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></div>
-            <div className="relative inline-flex rounded-full h-3 w-3 bg-red-400"></div>
-            <span className="ml-4 text-md">Recording...</span>
+            <div className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75 ml-3"></div>
+            <div className="relative inline-flex rounded-full h-3 w-3 bg-red-400 ml-3"></div>
+            <span className="text-md ml-3">Recording...</span>
+          </div>
+        ) : justStarted ? (
+          <div className="flex items-center justify-center">
+            <Progress value={progress} className="w-[60%]" />
           </div>
         ) : (
           <div className="flex items-center justify-center">

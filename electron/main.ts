@@ -18,7 +18,6 @@ const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
 const userAccountFilePath = path.join(sessionDataPath, 'userAccount.txt');
 const userPreferencesFilePath = path.join(sessionDataPath, 'userPreferences.txt');
 
-
 autoUpdater.logger = logger
 Sentry.init({
   dsn: 'https://d9c49d59e5554239ac977e3a7c409cda@glitchtip.dermot.email/2'
@@ -132,7 +131,7 @@ ipcMain.handle('get-desktop-capturer-sources', async () => {
       if (!sourceMatched) return;
       const sourceThumbnail = sourceMatched?.thumbnail.toDataURL() ?? '';
       const sourceId = sourceMatched?.id ?? '';
-      if (!sourceThumbnail || !sourceId || !window.ownerName) return;
+      if (!sourceThumbnail || !sourceId || !window.ownerName || window.ownerName === 'ScreenLink') return;
 
       return {
         id: sourceId,
@@ -142,7 +141,7 @@ ipcMain.handle('get-desktop-capturer-sources', async () => {
           height: window.height,
         },
         ...window,
-        name: `[${window.ownerName}] - ${window.name}`,
+        name: window.name,
         applicationName: window.ownerName,
       };
     }).filter(source => source !== undefined); // Filter out undefined entries
@@ -400,8 +399,6 @@ ipcMain.handle('upload-video', async (_, uploadFile, uploadLink: string) => {
 
       // When the upload is complete, send a message to the renderer process to update the UI
       mainWindow?.webContents.send('set-window', 'main');
-      webcamWindow?.hide();
-      floatingWindow?.hide();
 
     }).catch((err) => {
       console.log(JSON.stringify({ e: "failed to upload video", err, uploadLink }))
@@ -468,6 +465,8 @@ const toggleCameraWindow = (show: boolean) => {
 
 const verifyDeviceCode = async (deviceCode: string) => {
   try {
+    if (!deviceCode || deviceCode === "{}") return null;
+
     const url = `${baseUrl}/api/devices/verify`;
     const response = await axios.post(url, { deviceCode });
     if (response.status !== 200) {

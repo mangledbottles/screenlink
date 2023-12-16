@@ -1,5 +1,6 @@
 import { Account, Preference, logout } from "@/utils";
 import screenlinkLogo from "../assets/screenlink.svg";
+import screenlinkLogoDark from "../assets/screenlink-dark.svg";
 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -25,10 +26,12 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
+import { useTheme } from "./theme-provider";
 
 export function NavBar() {
   const [account, setAccount] = useState<Account | null>(null);
   const [preferences, setPreferences] = useState<Preference[] | null>(null);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const getAccount = async () => {
@@ -56,7 +59,7 @@ export function NavBar() {
       <div className="flex items-center space-x-2">
         <img
           className="h-10 w-auto mb-2 cursor-pointer"
-          src={screenlinkLogo}
+          src={theme === "dark" ? screenlinkLogoDark : screenlinkLogo}
           alt="ScreenLink"
           onClick={() => {
             window.electron.openInBrowser("https://screenlink.io/app");
@@ -135,6 +138,21 @@ export function NavBar() {
                           value: checked,
                         },
                       ]);
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between space-x-2">
+                  <Label htmlFor="darkMode" className="flex flex-col space-y-1">
+                    <span>Always Dark Mode</span>
+                    <span className="font-normal leading-snug text-muted-foreground">
+                      This will set the application to always use dark mode.
+                    </span>
+                  </Label>
+                  <Switch
+                    id="darkMode"
+                    checked={theme === "dark" ?? false}
+                    onCheckedChange={(checked) => {
+                      setTheme(checked ? "dark" : "light");
                     }}
                   />
                 </div>

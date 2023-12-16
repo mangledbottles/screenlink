@@ -1,16 +1,20 @@
 import screenlinkLogo from "../assets/screenlink.svg";
+import { useTheme } from "./theme-provider";
+import screenlinkLogoDark from "../assets/screenlink-dark.svg";
+
 export const Loading = ({
   loadingMessage,
 }: {
   loadingMessage?: string | null;
 }) => {
+  const { theme } = useTheme();
   return (
     <div className="card items-center justify-center min-h-screen w-screen">
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <img
             className="mx-auto h-16 w-auto mb-4 cursor-pointer transition-transform duration-300 ease-in-out hover:scale-110"
-            src={screenlinkLogo}
+            src={theme === "dark" ? screenlinkLogoDark : screenlinkLogo}
             alt="ScreenLink"
             onClick={() => {
               window.electron.openInBrowser("https://screenlink.io/app");
