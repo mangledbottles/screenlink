@@ -18,6 +18,8 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@headlessui/react": "^1.7.17",
     "@mux/mux-node": "^7.3.2",
+    "@sentry/electron": "^4.15.1",
+    "@sentry/react": "^7.88.0",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@types/recordrtc": "^5.6.14",
     "active-win": "^8.1.1",

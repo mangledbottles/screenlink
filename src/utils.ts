@@ -19,6 +19,17 @@ export interface UploadLink {
     uploadId: string;
 }
 
+export interface MacWindow {
+    pid: number;
+    ownerName: string;
+    name: string;
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+    number: number;
+  }
+
 export const isProd = process.env.NODE_ENV != "development";
 // export const isProd = true;
 export const baseUrl = isProd ? "https://screenlink.io" : "http://localhost:3008";

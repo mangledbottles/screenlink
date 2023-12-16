@@ -1,21 +1,31 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell, systemPreferences } from 'electron'
-import { Tray, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell, systemPreferences, Tray, Menu } from 'electron'
 import os from 'os';
 import axios from 'axios';
 const { getWindows, activateWindow } = require('mac-windows');
-
-const logger = require('electron-log');
+import * as logger from 'electron-log';
 import { autoUpdater } from "electron-updater"
-autoUpdater.logger = logger
+import * as Sentry from "@sentry/electron/main";
+import { createReadStream, writeFile } from 'node:fs'
+import { writeFile as writeFilePromise, readFile as readFilePromise, unlink as unlinkPromise } from 'fs/promises';
+import path from 'node:path'
+import got from "got";
+import cp from 'child_process';
+import { MacWindow, UploadLink, baseUrl } from '../src/utils';
+import { platform } from 'process';
 
+autoUpdater.logger = logger
+console.log(`dsn: ${process.env.SENTRY_DSN}`)
+Sentry.init({
+  dsn: 'https://d9c49d59e5554239ac977e3a7c409cda@glitchtip.dermot.email/2'
+});
 logger.info('App starting...');
+
 import ffmpeg from 'fluent-ffmpeg';
 const ffmpegPath = require('ffmpeg-static').replace(
   'app.asar',
   'app.asar.unpacked'
 )
 ffmpeg.setFfmpegPath(ffmpegPath)
-
 
 let mainWindow: BrowserWindow | null
 let floatingWindow: BrowserWindow | null
@@ -25,15 +35,10 @@ let tray: Tray | null = null
 // recording state
 let showCameraWindow = false;
 
-import { createReadStream, writeFile } from 'node:fs'
-import { writeFile as writeFilePromise, readFile as readFilePromise, unlink as unlinkPromise } from 'fs/promises';
-import path from 'node:path'
-import got from "got";
 const sessionDataPath = app.getPath('sessionData');
 const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
-import cp from 'child_process';
-import { UploadLink, baseUrl } from '../src/utils';
-import { platform } from 'process';
+
+// myUndefinedFunction();
 
 function getComputerName() {
   switch (process.platform) {
@@ -48,18 +53,6 @@ function getComputerName() {
       return os.hostname();
   }
 }
-
-export interface MacWindow {
-  pid: number;
-  ownerName: string;
-  name: string;
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  number: number;
-}
-
 
 ipcMain.handle('get-desktop-capturer-sources', async () => {
   const screenSources = await desktopCapturer.getSources({ types: ['screen'], fetchWindowIcons: true, thumbnailSize: { width: 1920, height: 1080 } })
@@ -147,8 +140,8 @@ ipcMain.handle('set-camera-source', async (_, source: Partial<MediaDeviceInfo> |
 
 ipcMain.handle('start-recording', async (_, applicationName?: string) => {
   try {
-    if (applicationName && platform === 'darwin') activateWindow(applicationName);
     if (mainWindow) mainWindow.minimize();
+    if (applicationName && platform === 'darwin') activateWindow(applicationName);
     if (webcamWindow && showCameraWindow) {
       toggleCameraWindow(true);
       webcamWindow.setAlwaysOnTop(true);
@@ -157,8 +150,12 @@ ipcMain.handle('start-recording', async (_, applicationName?: string) => {
       floatingWindow.show();
       floatingWindow.webContents.send('started-recording', true);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
+    Sentry.captureException(new Error(`Failed to start recording: ${error?.message}`), {
+      tags: { module: "start-recording" },
+      extra: { error }
+    });
   }
 });
 
@@ -167,6 +164,7 @@ ipcMain.handle('stop-recording', async (_) => {
   if (webcamWindow) {
     toggleCameraWindow(true);
     webcamWindow.setAlwaysOnTop(false);
+    webcamWindow.hide();
   }
   if (mainWindow) {
     console.log("finsihed recoridng, opening mainwindow")
@@ -197,8 +195,12 @@ const getUploadLink = async (sourceTitle: string) => {
     const data = response.data;
 
     return data;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to get upload link: ${error?.message}`), {
+      tags: { module: "getUploadLink" },
+      extra: { error }
+    });
     throw new Error(JSON.stringify({ e: "failed to get upload link", error }))
   }
 }
@@ -276,8 +278,12 @@ ipcMain.handle('save-screen-camera-blob', async (_, screenBlob: ArrayBuffer, cam
 
       command.run();
 
-    } catch (error) {
+    } catch (error: any) {
       console.log(error)
+      Sentry.captureException(new Error(`Failed to save screen camera blob: ${error?.message}`), {
+        tags: { module: "saveScreenCameraBlob" },
+        extra: { error }
+      });
       reject(error);
       throw new Error(JSON.stringify({ e: "failed to save blob", error }))
     }
@@ -292,8 +298,12 @@ ipcMain.handle('save-screen-blob', async (_, blob: ArrayBuffer) => {
     // Convert buffer to video file
     await writeFile(tempFilePath, Buffer.from(blob), () => console.log('Video file created successfully!'));
     return tempFilePath;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to save screen blob: ${error?.message}`), {
+      tags: { module: "saveScreenBlob" },
+      extra: { error }
+    });
     throw new Error(JSON.stringify({ e: "failed to save blob", error }))
   }
 });
@@ -305,8 +315,12 @@ ipcMain.handle('get-upload-link', async (_, sourceTitle: string): Promise<Upload
     const uploadLink = upload.uploadLink;
     const id = upload.id;
     return { uploadLink, uploadId: id };
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to get upload link: ${error?.message}`), {
+      tags: { module: "getUploadLink" },
+      extra: { error }
+    });
     throw new Error(JSON.stringify({ e: "failed to get upload link", error }))
   }
 });
@@ -338,16 +352,24 @@ ipcMain.handle('upload-video', async (_, uploadFile, uploadLink: string) => {
     });
 
     return;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to upload video: ${error?.message}`), {
+      tags: { module: "uploadVideo" },
+      extra: { error }
+    });
   }
 });
 
 ipcMain.handle('open-in-browser', async (_, url: string) => {
   try {
     return await shell.openExternal(url);
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to open in browser: ${error?.message}`), {
+      tags: { module: "openInBrowser" },
+      extra: { error }
+    });
   }
 });
 
@@ -358,16 +380,24 @@ ipcMain.handle('open-new-device', async (_) => {
     const deviceType = os.type();
     const url = `${baseUrl}/app/devices/new?device=${deviceName}&appVersion=${appVersion}&deviceType=${deviceType}`;
     return await shell.openExternal(url);
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to open new device: ${error?.message}`), {
+      tags: { module: "openNewDevice" },
+      extra: { error }
+    });
   }
 });
 
 ipcMain.handle('show-camera-window', async (_, show: boolean) => {
   try {
     toggleCameraWindow(show);
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to show camera window: ${error?.message}`), {
+      tags: { module: "showCameraWindow" },
+      extra: { error }
+    });
   }
 });
 
@@ -394,13 +424,20 @@ const verifyDeviceCode = async (deviceCode: string) => {
       throw new Error(response.statusText);
     }
     const data = await response.json();
+    Sentry.setUser({ userId: data?.id, deviceName: data?.name, projectId: data?.user?.currentProjectId, name: data?.user?.name, email: data?.user?.email })
+
     if (data.error) {
       console.log(JSON.stringify({ e: "failed to verify device code", url, error: data.error }))
+      Sentry.captureException(new Error(data.error));
       throw new Error(data.error);
     }
     return data;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to verify device code: ${error?.message}`), {
+      tags: { module: "verifyDeviceCode" },
+      extra: { error }
+    });
     throw new Error(JSON.stringify({ e: "failed to verify device code", error }))
   }
 }
@@ -419,8 +456,12 @@ const getDeviceCode = async () => {
       return;
     }
     return deviceCode;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to get device code: ${error?.message}`), {
+      tags: { module: "getDeviceCode" },
+      extra: { error }
+    });
     throw new Error(JSON.stringify({ e: "failed to get device code", error }))
   }
 }
@@ -435,17 +476,19 @@ const log = async (data: object) => {
       },
       body: JSON.stringify(data)
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to send log:', error);
+    Sentry.captureException(new Error(`Failed to send log: ${error?.message}`), {
+      tags: { module: "log" },
+      extra: { error }
+    });
   }
 }
 
 const getAccount = async () => {
   try {
     const deviceCode = await getDeviceCode();
-    console.log('Device code on get: ', deviceCode);
     if (deviceCode === '' || !deviceCode) {
-      log({ e: 'device code not found', location: "get device code" })
       if (mainWindow) {
         mainWindow.webContents.send('device-code', '');
       }
@@ -456,18 +499,21 @@ const getAccount = async () => {
     const device = await verifyDeviceCode(deviceCode);
     if (!device) {
       if (mainWindow) {
-        log({ e: 'device not found', location: "verify device code" })
         mainWindow.webContents.send('device-code', '');
+        Sentry.captureException(new Error(`Failed to get account: device not found`), {
+          tags: { module: "getAccount" },
+          extra: { deviceCode }
+        });
       }
       return;
     }
     return device;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
-    log({ e: 'failed to get account', error, location: "catch error" })
-    // if (mainWindow) {
-    //   mainWindow.webContents.send('device-code', '');
-    // }
+    Sentry.captureException(new Error(`Failed to get account: ${error?.message}`), {
+      tags: { module: "getAccount" },
+      extra: { error }
+    });
     return;
   }
 }
@@ -487,8 +533,12 @@ ipcMain.handle('get-device-code', async (_) => {
     //   return null;
     // }
     return deviceCode;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to get device code: ${error?.message}`), {
+      tags: { module: "getDeviceCode" },
+      extra: { error }
+    });
     return null;
   }
 });
@@ -498,7 +548,11 @@ ipcMain.handle('permissions-missing', async (_) => {
     if (mainWindow) {
       mainWindow.webContents.send('set-window', 'permissions');
     }
-  } catch (error) {
+  } catch (error: any) {
+    Sentry.captureException(new Error(`Failed to get device code: ${error?.message}`), {
+      tags: { module: "getDeviceCode" },
+      extra: { error }
+    });
     console.log(error)
   }
 });
@@ -561,8 +615,12 @@ const requestPermissions = async (permission: string): Promise<boolean> => {
       }
     }
     return false;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
+    Sentry.captureException(new Error(`Failed to request permissions: ${error?.message}`), {
+      tags: { module: "requestPermissions" },
+      extra: { error }
+    });
     return false;
   }
 
@@ -621,7 +679,6 @@ const createWebcamWindow = () => {
   });
 
   if (VITE_DEV_SERVER_URL) {
-    // webcamWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=webcam`);
     webcamWindow.loadURL(`${VITE_DEV_SERVER_URL}`).then(() => {
       // Once the file is loaded, send a message to the renderer with the parameter
       if (!webcamWindow) return console.log('No webcam window to send set-window to');
@@ -629,7 +686,6 @@ const createWebcamWindow = () => {
     });
 
   } else {
-    // webcamWindow.loadFile(path.join(process.env.DIST, 'index.html?window=webcam'));
     webcamWindow.loadFile(path.join(process.env.DIST, 'index.html')).then(() => {
       // Once the file is loaded, send a message to the renderer with the parameter
       if (!webcamWindow) return console.log('No webcam window to send set-window to');
@@ -713,7 +769,13 @@ function createWindow() {
           mainWindow?.webContents.send('set-window', 'main');
         }
       })
-      .catch(e => console.error('Failed to load index.html', e));
+      .catch((e) => {
+        Sentry.captureException(new Error(`Failed to load index.html: ${e?.message}`), {
+          tags: { module: "createWindow" },
+          extra: { e }
+        });
+        console.error('Failed to load index.html', e)
+      });
   }
 
   // Auto Updater
@@ -724,16 +786,17 @@ function createWindow() {
     mainWindow?.webContents.send('set-window', 'update', 'Error in auto-updater. Contact support if this continues. ' + err);
   })
   autoUpdater.on('download-progress', (progressObj) => {
-    let log_message = "Download speed: " + progressObj.bytesPerSecond;
-    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    let downloadSpeedInMBps = (progressObj.bytesPerSecond / (1024 * 1024)).toFixed(2);
+    let transferredInMB = (progressObj.transferred / (1024 * 1024)).toFixed(2);
+    let totalInMB = (progressObj.total / (1024 * 1024)).toFixed(2);
+    let log_message = "Download speed: " + downloadSpeedInMBps + " MB/s";
+    log_message = log_message + ' - Downloaded ' + Math.round(progressObj.percent) + '%';
+    log_message = log_message + ' (' + transferredInMB + "MB/" + totalInMB + 'MB)';
     mainWindow?.webContents.send('set-window', 'update', log_message);
   })
   autoUpdater.on('update-downloaded', () => {
     mainWindow?.webContents.send('set-window', 'main');
   });
-
-
 
   const iconPath = path.join(process.env.VITE_PUBLIC, 'tray-icon.png');
   let icon = nativeImage.createFromPath(iconPath);
@@ -751,7 +814,6 @@ function createWindow() {
   ])
   tray.setToolTip('This is my application.')
   tray.setContextMenu(contextMenu)
-  console.log(tray)
 
   // Read the device code from the file (deviceCodeFilePath)
   // and send it to the renderer process
@@ -764,6 +826,8 @@ function createWindow() {
       console.log('No window to send device code to');
     }
   });
+
+  getAccount();
 
 }
 
@@ -793,18 +857,14 @@ app.on('open-url', (event, url) => {
 
   // Parse the URL
   const parsedUrl = new URL(url);
-  // deviceCode is in host (    host: 'deviceCode=8cda48126269f9bbc55bef2c7cf0300e8f1cbfe5',)
   const deviceCode = parsedUrl.host.split('=')[1];
   // Log the device code
   console.log(`Device code: ${deviceCode}`);
-  // Send the device code to the renderer process
-  // ipcMain.emit('device-code', deviceCode);
 
   // Write the device code to a file in the sessionData directory
   writeFilePromise(deviceCodeFilePath, deviceCode).then(() => {
     console.log('Device code saved successfully!');
   });
-
 
   // Send the device code to the renderer process
   if (mainWindow) {

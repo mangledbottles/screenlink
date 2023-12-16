@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { UploadLink } from '../src/utils';
 
+
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', withPrototype(ipcRenderer))
 

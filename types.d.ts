@@ -25,4 +25,7 @@ declare global {
         };
     }
 }
+
+declare module '@sentry/electron/preload';
+
 export { };

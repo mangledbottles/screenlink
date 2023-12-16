@@ -1,17 +1,46 @@
 import { useEffect, useMemo, useState } from "react";
-import "./App.css";
+import * as Sentry from "@sentry/react";
+import screenlinkLogo from "./assets/screenlink.svg";
+
 import { ScreenSources } from "./components/Sources";
 import { Recorder } from "./components/Recorder";
 import SignIn from "./components/SignIn";
-import screenlinkLogo from "./assets/screenlink.svg";
 import { Floating } from "./components/Floating";
 import { Webcam } from "./components/Webcam";
 import CameraSources from "./components/CameraSources";
-import { Source } from "./utils";
 import AudioSources from "./components/AudioSources";
 import { Permissions } from "./components/Permissions";
 import Update from "./components/Update";
 import { Loading } from "./components/Loading";
+
+import { Source } from "./utils";
+
+import "./App.css";
+
+Sentry.init({
+  dsn: "https://03f0433ebb331913be9a44008d1bc6f8@o4506405451464704.ingest.sentry.io/4506405764530176",
+  // This sets the sample rate to be 10%. You may want this to be 100% while
+  // in development and sample at a lower rate in production
+  replaysSessionSampleRate: 0.5,
+  // If the entire session is not sampled, use the below sample rate to sample
+  // sessions when an error occurs.
+  replaysOnErrorSampleRate: 1.0,
+  tracesSampleRate: 1.0, //  Capture 100% of the transactions
+
+  integrations: [
+    new Sentry.BrowserTracing({
+      // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+      tracePropagationTargets: ["localhost", /^https:\/\/screenlink\.io/],
+    }),
+  ],
+  beforeSend(event, hint) {
+    // Check if it is an exception, and if so, show the report dialog
+    if (event.exception) {
+      Sentry.showReportDialog({ eventId: event.event_id });
+    }
+    return event;
+  },
+});
 
 // Get the device code from the desktop application
 export const refreshDeviceCode = async () => {
@@ -70,6 +99,20 @@ function App() {
       }
     })();
   }, [cameraSource]);
+
+  useEffect(() => {
+    if (windowType === "main") {
+      const client = Sentry.getCurrentHub().getClient();
+      if (!client || !client.addIntegration) return;
+      if (client.getIntegration(Sentry.Replay)) return;
+      client?.addIntegration(
+        new Sentry.Replay({
+          maskAllText: false,
+          blockAllMedia: false,
+        })
+      );
+    }
+  }, [windowType]);
 
   if (!windowType) {
     return <div></div>;
