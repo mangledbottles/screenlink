@@ -90,98 +90,7 @@ export default function Features() {
                     Easy Screen Recording
                   </div>
                   <div className="text-slate-500 mb-3">
-                    Effortlessly capture your screen with a few clicks. Perfect
-                    for creating tutorials, presentations, or sharing your ideas
-                  </div>
-                </div>
-                {/* <div className="text-right">
-                  <a
-                    className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
-                    href="#0"
-                  >
-                    Learn More{" "}
-                    <span className="tracking-normal group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
-                      -&gt;
-                    </span>
-                  </a>
-                </div> */}
-              </div>
-
-              <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
-                <Image
-                  className="mb-3"
-                  src={FeaturesIcon02}
-                  width={56}
-                  height={56}
-                  alt="Camera Integration"
-                />
-                <div className="grow">
-                  <div className="font-hkgrotesk font-bold text-xl">
-                    Integrated Camera Feed
-                  </div>
-                  <div className="text-slate-500 mb-3">
-                    Record your camera alongside your screen for more engaging
-                    and personable demonstrations and guides.
-                  </div>
-                </div>
-                {/* <div className="text-right">
-                  <a
-                    className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
-                    href="#0"
-                  >
-                    Learn More{" "}
-                    <span className="tracking-normal group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
-                      -&gt;
-                    </span>
-                  </a>
-                </div> */}
-              </div>
-
-              <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
-                <Image
-                  className="mb-3"
-                  src={FeaturesIcon04}
-                  width={56}
-                  height={56}
-                  alt="Open Source"
-                />
-                <div className="grow">
-                  <div className="font-hkgrotesk font-bold text-xl">
-                    Open Source
-                  </div>
-                  <div className="text-slate-500 mb-3">
-                    ScreenLink is an open source project. Contribute to the
-                    codebase, report issues, or suggest new features.
-                  </div>
-                </div>
-                {/* <div className="text-right">
-                  <a
-                    className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
-                    href="#0"
-                  >
-                    Learn More{" "}
-                    <span className="tracking-normal group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
-                      -&gt;
-                    </span>
-                  </a>
-                </div>  */}
-              </div>
-
-              <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
-                <Image
-                  className="mb-3"
-                  src={FeaturesIcon03}
-                  width={56}
-                  height={56}
-                  alt="Microphone Recording"
-                />
-                <div className="grow">
-                  <div className="font-hkgrotesk font-bold text-xl">
-                    Crystal Clear Audio
-                  </div>
-                  <div className="text-slate-500 mb-3">
-                    Add voiceovers with your microphone to make your recordings
-                    more informative and engaging.
+                    Upto 4K screen recording at 60 FPS - no more choppy videos!
                   </div>
                 </div>
                 {/* <div className="text-right">
@@ -207,13 +116,108 @@ export default function Features() {
                 />
                 <div className="grow">
                   <div className="font-hkgrotesk font-bold text-xl">
-                    Cross-Platform Compatibility
+                    Cross-Platform
                   </div>
                   <div className="text-slate-500 mb-3">
-                    Available on MacOS, Windows, and Linux. ScreenLink is
-                    versatile and accessible no matter your platform of choice.
+                    ScreenLink is available on MacOS, Windows and Linux!
                   </div>
                 </div>
+              </div>
+
+              <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
+                <Image
+                  className="mb-3"
+                  src={FeaturesIcon04}
+                  width={56}
+                  height={56}
+                  alt="Open Source"
+                />
+                <div className="grow">
+                  <div className="font-hkgrotesk font-bold text-xl">
+                    Open Source
+                  </div>
+                  <div className="text-slate-500 mb-3">
+                    ScreenLink is an open source project. Checkout our{" "}
+                    <a
+                      href="https://github.com/mangledbottles/screenlink-desktop"
+                      target="blank"
+                      className="text-indigo-500"
+                    >
+                      GitHub repo
+                    </a>{" "}
+                    to contribute!
+                  </div>
+                </div>
+                {/* <div className="text-right">
+                  <a
+                    className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
+                    href="#0"
+                  >
+                    Learn More{" "}
+                    <span className="tracking-normal group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
+                      -&gt;
+                    </span>
+                  </a>
+                </div>  */}
+              </div>
+
+              <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
+                <Image
+                  className="mb-3"
+                  src={FeaturesIcon02}
+                  width={56}
+                  height={56}
+                  alt="Camera Integration"
+                />
+                <div className="grow">
+                  <div className="font-hkgrotesk font-bold text-xl">
+                    Integrated Camera Feed
+                  </div>
+                  <div className="text-slate-500 mb-3">
+                    Your webcam feed is recorded alongside your screen for more
+                    engaging videos
+                  </div>
+                </div>
+                {/* <div className="text-right">
+                  <a
+                    className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
+                    href="#0"
+                  >
+                    Learn More{" "}
+                    <span className="tracking-normal group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
+                      -&gt;
+                    </span>
+                  </a>
+                </div> */}
+              </div>
+
+              <div className="swiper-slide h-auto flex flex-col bg-slate-800 p-6 rounded">
+                <Image
+                  className="mb-3"
+                  src={FeaturesIcon03}
+                  width={56}
+                  height={56}
+                  alt="Microphone Recording"
+                />
+                <div className="grow">
+                  <div className="font-hkgrotesk font-bold text-xl">
+                    Engagement
+                  </div>
+                  <div className="text-slate-500 mb-3">
+                    See how many people are watching your ScreenLink!
+                  </div>
+                </div>
+                {/* <div className="text-right">
+                  <a
+                    className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"
+                    href="#0"
+                  >
+                    Learn More{" "}
+                    <span className="tracking-normal group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
+                      -&gt;
+                    </span>
+                  </a>
+                </div> */}
                 {/* <div className="text-right">
                   <a
                     className="font-medium text-indigo-500 inline-flex items-center transition duration-150 ease-in-out group"

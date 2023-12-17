@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Faqs() {
   return (
     <section>
@@ -11,77 +13,93 @@ export default function Faqs() {
           <div className="md:flex md:space-x-12 space-y-8 md:space-y-0">
             {/* Column */}
             <div className="w-full md:w-1/2 space-y-8">
-              {/* Item */}
               <div className="space-y-2">
                 <h4 className="text-xl font-hkgrotesk font-medium">
-                  What is the difference between the Free and Paid versions?
+                  What is ScreenLink?
                 </h4>
                 <p className="text-slate-500">
-                  Our Free Plan allows you to record and share up to 10 videos,
-                  perfect for occasional users. The Pro and Growth plans offer
-                  more usage which is ideal for frequent use and professional
-                  needs.
+                  ScreenLink is an{" "}
+                  <span className={"text-indigo-500"}>
+                    open-source alternative to Loom
+                  </span>{" "}
+                  that lets you create and share screen recordings with
+                  integrated camera and microphone feeds. It's available for{" "}
+                  <Link className={"text-indigo-500"} href="/download">
+                    MacOS, Windows, and Linux
+                  </Link>
+                  .
                 </p>
               </div>
-              {/* Item */}
+
               <div className="space-y-2">
                 <h4 className="text-xl font-hkgrotesk font-medium">
-                  Do you have student or non-profit discounts?
+                  How do I start using ScreenLink?
                 </h4>
                 <p className="text-slate-500">
-                  Currently, we do not offer specific discounts for students or
-                  non-profit organizations. However, our Free Plan is designed
-                  to be accessible to all users, including educational and
-                  non-profit purposes.
+                  To use ScreenLink,{" "}
+                  <Link className={"text-indigo-500"} href={"signup"}>
+                    create an account
+                  </Link>{" "}
+                  on our website, download the desktop application, and start
+                  recording your screen. You can instantly share your
+                  recordings.
                 </p>
               </div>
-              {/* Item */}
+
               <div className="space-y-2">
                 <h4 className="text-xl font-hkgrotesk font-medium">
-                  How is the price determined?
+                  Is ScreenLink free to use?
                 </h4>
                 <p className="text-slate-500">
-                  The pricing is based on a per-user model to provide
-                  flexibility and scalability. It's designed to offer value for
-                  both individual users and teams, ensuring access to full
-                  features without restrictions.
+                  Yes, ScreenLink offers a{" "}
+                  <span className={"text-indigo-500"}>free tier</span> with
+                  basic features. For more advanced capabilities, we offer Pro
+                  and Growth plans with monthly or yearly subscriptions.
                 </p>
               </div>
             </div>
             {/* Column */}
             <div className="w-full md:w-1/2 space-y-8">
-              {/* Item */}
               <div className="space-y-2">
                 <h4 className="text-xl font-hkgrotesk font-medium">
-                  Do I need coding knowledge to use this product?
+                  Can I record in high quality?
                 </h4>
                 <p className="text-slate-500">
-                  No coding knowledge is required. ScreenLink is designed with a
-                  user-friendly interface, making it easy for anyone to start
-                  recording and sharing their demos with just a few clicks.
+                  Absolutely! ScreenLink supports up to{" "}
+                  <span className={"text-indigo-500"}>
+                    4K screen recording at 60 FPS
+                  </span>
+                  , ensuring smooth and high-quality videos.
                 </p>
               </div>
-              {/* Item */}
+
               <div className="space-y-2">
                 <h4 className="text-xl font-hkgrotesk font-medium">
-                  Is there a way to become an Affiliate reseller?
+                  How do I contribute to ScreenLink’s development?
                 </h4>
                 <p className="text-slate-500">
-                  We are always open to partnerships. If you're interested in
-                  becoming an Affiliate reseller, please contact us directly for
-                  more information about our affiliate program and partnership
-                  opportunities.
+                  As an open-source project, you can contribute to ScreenLink by
+                  visiting our{" "}
+                  <a
+                    href="https://github.com/mangledbottles/screenlink-desktop"
+                    target="_blank"
+                    className={"text-indigo-500"}
+                  >
+                    GitHub repo
+                  </a>
+                  .
                 </p>
               </div>
-              {/* Item */}
+
               <div className="space-y-2">
                 <h4 className="text-xl font-hkgrotesk font-medium">
-                  What forms of payment do you accept?
+                  What are the limitations of the free version?
                 </h4>
                 <p className="text-slate-500">
-                  We accept various forms of payment, including major credit
-                  cards and online payment systems. For detailed information on
-                  payment options, please visit our payment information page.
+                  The free version allows up to{" "}
+                  <span className={"text-indigo-500"}>10 video recordings</span>
+                  , with a maximum duration of 5 minutes per recording and
+                  support for one team member.
                 </p>
               </div>
             </div>

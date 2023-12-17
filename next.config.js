@@ -4,7 +4,7 @@ const nextConfig = {
     serverActions: true,
   },
   images: {
-    domains: ["image.mux.com"],
+    domains: ["image.mux.com", "cdn.screenlink.io"],
   }
 };
 

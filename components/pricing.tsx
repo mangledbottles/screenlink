@@ -8,8 +8,8 @@ import { AiOutlineCheck, AiOutlineLine } from "react-icons/ai";
 import Link from "next/link";
 
 export default function Pricing() {
-  const [annual, setAnnual] = useState<boolean>(true);
-  const usage = ["Video Recordings", "Recording Length", "Team Members"];
+  const [annual, setAnnual] = useState<boolean>(false);
+  const usage = ["Video Recordings", "Recording Duration", "Team Members"];
   const features = [
     "Video Transcription",
     "Export",
@@ -36,7 +36,8 @@ export default function Pricing() {
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
             <h2 className="h2 font-hkgrotesk mb-4">The right plan for you</h2>
             <p className="text-xl text-slate-500">
-              Simple pricing, for every size. Pay for what you need!
+              Get started for <span className={"text-indigo-500"}>free</span> ,
+              no credit card required! Add more features as you grow
             </p>
           </div>
           {/* Pricing tables */}

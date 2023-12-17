@@ -22,8 +22,7 @@ export default function Hero() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Create and share screen recording demos for your customers,
-              support team, and more in minutes with ScreenLink
+              Create and share screen recording demos instantly with ScreenLink for free.
             </p>
             <div
               className="max-w-xs mx-auto sm:max-w-none sm:inline-flex sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4"

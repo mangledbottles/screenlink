@@ -8,6 +8,12 @@ import FeaturesImage from "@/public/images/features-image.png";
 export default function Features02() {
   const [category, setCategory] = useState<string>("1");
 
+  const categoryImages = [
+    "sources-demo.gif",
+    "recording-demo-3.gif",
+    "dark-by-default-demo.gif",
+  ];
+
   return (
     <section className="relative border-t border-slate-800">
       {/* Background gradient and Illustration */}
@@ -39,7 +45,7 @@ export default function Features02() {
 
           {/* Box */}
           <div className="bg-slate-800 bg-opacity-60 rounded overflow-hidden">
-            <div className="flex flex-col md:flex-row items-end md:items-start md:justify-between lg:space-x-20">
+            <div className="flex flex-col md:flex-row items-end md:items-start md:justify-between lg:space-x-20 h-[24rem]">
               <div className="md:min-w-[28rem] p-6 lg:p-10">
                 {/* Filters */}
                 <div className="mb-6 lg:mb-8">
@@ -53,7 +59,7 @@ export default function Features02() {
                       }`}
                       onClick={() => setCategory("1")}
                     >
-                      Everyone
+                      Sources
                     </button>
                     <button
                       className={`btn-sm px-3 py-1 shadow-sm rounded-full m-1.5 ${
@@ -63,7 +69,7 @@ export default function Features02() {
                       }`}
                       onClick={() => setCategory("2")}
                     >
-                      Freelancers
+                      Sharable
                     </button>
                     <button
                       className={`btn-sm px-3 py-1 shadow-sm rounded-full m-1.5 ${
@@ -73,7 +79,7 @@ export default function Features02() {
                       }`}
                       onClick={() => setCategory("3")}
                     >
-                      Organizations
+                      Beautiful
                     </button>
                   </div>
                 </div>
@@ -82,46 +88,54 @@ export default function Features02() {
                 <div>
                   <div className={`${category !== "1" && "hidden"}`}>
                     <h3 className="h3 font-hkgrotesk mb-2">
-                      Enhance Team Collaboration
+                      Any Screen, Any Window
                     </h3>
                     <div className="text-lg text-slate-500">
-                      For teams seeking a seamless way to share ideas and demos,
-                      ScreenLink offers an intuitive platform. Record
-                      high-quality videos with ease, fostering effective
-                      communication and collaboration across all levels.
+                      Pick any screen, window, microphone or webcam to record.{" "}
+                      <span className={"text-indigo-500"}>
+                        ScreenLink makes it easy to capture exactly what you
+                        want.
+                      </span>{" "}
+                      Webcam and microphone are also optional!
                     </div>
                   </div>
                   <div className={`${category !== "2" && "hidden"}`}>
                     <h3 className="h3 font-hkgrotesk mb-2">
-                      Empower Your Freelance Journey
+                      Instantly Sharable Links
                     </h3>
                     <div className="text-lg text-slate-500">
-                      Freelancers can benefit from ScreenLink's flexibility and
-                      simplicity. Create engaging presentations or tutorials
-                      with ease, enhancing your portfolio and client
-                      interactions without worrying about video limits.
+                      As soon as you hit stop, the video is already uploading
+                      and processing to our CDN.{" "}
+                      <span className={"text-indigo-500"}>
+                        You get the share link instantly as soon as you hit
+                        stop!
+                      </span>{" "}
+                      You can share the link with anyone, anywhere.
                     </div>
                   </div>
                   <div className={`${category !== "3" && "hidden"}`}>
-                    <h3 className="h3 font-hkgrotesk mb-2">
-                      Streamline Organizational Communication
-                    </h3>
+                    <h3 className="h3 font-hkgrotesk mb-2">Dark by Default</h3>
                     <div className="text-lg text-slate-500">
-                      Organizations will find ScreenLink invaluable for clear,
-                      concise communication. Share project updates, training
-                      materials, and more, fostering a culture of transparency
-                      and efficiency in the workplace.
+                      ScreenLink is dark by default, so you can focus on your
+                      work and <span className={"text-indigo-500"}>protect your eyes!</span> You can also switch to light
+                      mode if you prefer.
                     </div>
                   </div>
                 </div>
               </div>
-              <Image
-                src={FeaturesImage}
-                className="md:max-w-none"
-                width="480"
-                height="414"
-                alt="Feature"
-              />
+              <div className="flex items-center justify-center h-full p-2">
+                <Image
+                  src={`https://cdn.screenlink.io/${
+                    categoryImages[Number(category) - 1] ?? categoryImages[0]
+                  }`}
+                  className="md:max-w-none"
+                  // className="max-w-sm min-h-[20rem]"
+                  // className="min-h-[20rem] min-w-[28rem]"
+                  width="480"
+                  height="414"
+                  alt="Feature"
+                />
+              </div>
             </div>
           </div>
         </div>
