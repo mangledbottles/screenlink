@@ -45,7 +45,7 @@ export default function Features02() {
 
           {/* Box */}
           <div className="bg-slate-800 bg-opacity-60 rounded overflow-hidden">
-            <div className="flex flex-col md:flex-row items-end md:items-start md:justify-between lg:space-x-20 h-[24rem]">
+            <div className="flex flex-col md:flex-row items-end md:items-start md:justify-between lg:space-x-20 md:h-[24rem]">
               <div className="md:min-w-[28rem] p-6 lg:p-10">
                 {/* Filters */}
                 <div className="mb-6 lg:mb-8">
