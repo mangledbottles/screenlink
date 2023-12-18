@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions = {
                             },
                         });
                         if (firstProject) {
-                            console.log("User has no current project, setting to first project");
+                            console.log(`User has no current project, setting to first project: ${firstProject.id}`);
                             // @ts-ignore
                             session.user.currentProjectId = firstProject.id;
                         }
@@ -91,12 +91,24 @@ export const authOptions: NextAuthOptions = {
                             // @ts-ignore
                             session.user.currentProjectId = project.id;
                         }
+
+                        await prisma.user.update({
+                            where: {
+                                // @ts-ignore
+                                id: session?.user?.id
+                            },
+                            data: {
+                                // @ts-ignore
+                                currentProjectId: session?.user?.currentProjectId
+                            }
+                        })
                     } else {
                         // console.log("User has current project set");
                         // @ts-ignore
                         session.user.currentProjectId = user.currentProjectId;
                     }
                 }
+
                 return session;
             } catch (error: any) {
                 captureException(new Error(`Session Callback: ${error?.message}`));
