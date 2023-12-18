@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Illustration from "@/public/images/pricing-illustration.svg";
-import { ArrowRightIcon, Check, CheckIcon, LucideCheck } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { AiOutlineCheck, AiOutlineLine } from "react-icons/ai";
 import Link from "next/link";
 

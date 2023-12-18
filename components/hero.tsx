@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import HeroImage from "@/public/images/hero-image.png";
 import CtaButton from "@components/ui/CtaButton";
 import DemoLimk from "../public/images/demo-link-2.png";
 import { HeaderAction } from "./HeaderAction";
