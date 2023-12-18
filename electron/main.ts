@@ -23,14 +23,35 @@ Sentry.init({
   dsn: 'https://d9c49d59e5554239ac977e3a7c409cda@glitchtip.dermot.email/2'
 });
 
+const getFile = async (filePath: string, defaultValue: any): Promise<any> => {
+  try {
+    // Check if the file exists before reading
+    if (!existsSync(filePath)) {
+      console.log(`File does not exist: ${filePath}`);
+      return defaultValue;
+    }
+
+    const data = await readFilePromise(filePath, 'utf-8');
+    // If defaultValue is {} or [], try to JSON parse, otherwise don't
+    let parsed = (defaultValue instanceof Array || defaultValue instanceof Object) ? JSON.parse(data) : data;
+    return parsed;
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to read file: ${filePath} with default value: ${defaultValue}. Error: ${error?.message}`), {
+      tags: { module: "readFile" },
+      extra: { error, filePath, defaultValue }
+    });
+    return defaultValue;
+  }
+};
+
 const getPreferences = async (): Promise<Preference[] | null> => {
   try {
-    const preferences = await readFilePromise(userPreferencesFilePath, 'utf-8');
-    let parsed = JSON.parse(preferences) as Preference[] ?? [];
-    if (!Array.isArray(parsed)) return [];
+    const preferences = await getFile(userPreferencesFilePath, []) as Preference[]
+    if (!Array.isArray(preferences)) return [];
 
     // Remove duplicates based on Preference.name
-    const uniquePreferences = Array.from(new Map(parsed.map(preference => [preference.name, preference])).values());
+    const uniquePreferences = Array.from(new Map(preferences.map(preference => [preference.name, preference])).values());
     return uniquePreferences;
   } catch (error: any) {
     console.log(error)
@@ -67,6 +88,7 @@ getPreference('errorLoggingEnabled').then((errorLoggingEnabled: string | boolean
 logger.info('App starting...');
 
 import ffmpeg from 'fluent-ffmpeg';
+import { existsSync } from 'fs';
 const ffmpegPath = require('ffmpeg-static').replace(
   'app.asar',
   'app.asar.unpacked'
@@ -131,7 +153,7 @@ ipcMain.handle('get-desktop-capturer-sources', async () => {
       if (!sourceMatched) return;
       const sourceThumbnail = sourceMatched?.thumbnail.toDataURL() ?? '';
       const sourceId = sourceMatched?.id ?? '';
-      if (!sourceThumbnail || !sourceId || !window.ownerName || window.ownerName === 'ScreenLink') return;
+      if (!sourceThumbnail || !sourceId || !window.ownerName || window.ownerName === 'ScreenLink' || window.ownerName === 'Electron') return;
 
       return {
         id: sourceId,
@@ -217,7 +239,7 @@ ipcMain.handle('start-recording', async (_, applicationName?: string) => {
 ipcMain.handle('stop-recording', async (_) => {
   if (floatingWindow) floatingWindow.hide();
   if (webcamWindow) {
-    toggleCameraWindow(true);
+    toggleCameraWindow(false);
     webcamWindow.setAlwaysOnTop(false);
     webcamWindow.minimize();
     webcamWindow.hide();
@@ -375,7 +397,6 @@ ipcMain.handle('get-upload-link', async (_, sourceTitle: string): Promise<Upload
     console.log(error)
     Sentry.captureException(new Error(`Failed to get upload link: ${error?.message}`), {
       tags: { module: "getUploadLink" },
-      extra: { error }
     });
     throw new Error(JSON.stringify({ e: "failed to get upload link", error }))
   }
@@ -496,7 +517,7 @@ const getDeviceCode = async () => {
   try {
     // Read the device code from the file (deviceCodeFilePath)
     // and send it to the renderer process
-    const deviceCodeBuffer = await readFilePromise(deviceCodeFilePath);
+    const deviceCodeBuffer = await getFile(deviceCodeFilePath, '');
     const deviceCode = deviceCodeBuffer.toString();
 
     if (!deviceCode) {
@@ -528,8 +549,8 @@ const getAccount = async (): Promise<Account | null> => {
     }
 
     // Auth cache stored for 5 minutes
-    const userAccountFileBuffer = await readFilePromise(userAccountFilePath);
-    const userAccount: Account = JSON.parse(userAccountFileBuffer.toString());
+    const userAccount = await getFile(userAccountFilePath, {});
+
     // Check if the user account was updated less than 5 minutes ago
     const currentTime = new Date().getTime();
     const lastUpdatedTime = new Date(userAccount.lastUpdated).getTime();
@@ -537,7 +558,6 @@ const getAccount = async (): Promise<Account | null> => {
     if (timeDifferenceInMinutes < 5) {
       return userAccount;
     }
-
 
     // Verify the device code
     const device: Account = await verifyDeviceCode(deviceCode);
@@ -652,9 +672,11 @@ ipcMain.handle('get-device-code', async (_) => {
 
 ipcMain.handle('logout', async (_) => {
   try {
-    // Clear the user account and device code
+    // Clear the user account, device code and preferences
     await writeFilePromise(userAccountFilePath, JSON.stringify({}));
-    await writeFilePromise(deviceCodeFilePath, JSON.stringify({}));
+    await writeFilePromise(deviceCodeFilePath, '');
+    await writeFilePromise(userPreferencesFilePath, JSON.stringify([]));
+
     // Send a logout event to the renderer process
     if (mainWindow) mainWindow.webContents.send('device-code', '');
     if (floatingWindow) floatingWindow.hide();
@@ -712,12 +734,10 @@ const missingPermissions = async () => {
   return missingList;
 }
 
-setTimeout(() => {
-  Sentry.captureException(new Error(`Testing sentry`));
-});
-
 const requestPermissions = async (permission: string): Promise<boolean> => {
   try {
+    if (webcamWindow) webcamWindow.hide();
+
     if (permission === 'camera' || permission === 'microphone') {
       const status = await systemPreferences.askForMediaAccess(permission);
       return status;
@@ -936,18 +956,15 @@ function createWindow() {
   });
   tray = new Tray(icon);
 
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Item1', type: 'radio' },
-    { label: 'Item2', type: 'radio' },
-    { label: 'Item3', type: 'radio', checked: true },
-    { label: 'Item4', type: 'radio' }
-  ])
-  tray.setToolTip('This is my application.')
-  tray.setContextMenu(contextMenu)
+  tray.on('click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+    }
+  });
 
   // Read the device code from the file (deviceCodeFilePath)
   // and send it to the renderer process
-  readFilePromise(deviceCodeFilePath).then((deviceCodeBuffer) => {
+  getFile(deviceCodeFilePath, '').then((deviceCodeBuffer) => {
     const deviceCode = deviceCodeBuffer.toString();
     console.log('Device code on ready: ', deviceCode);
     if (mainWindow) {
@@ -983,23 +1000,32 @@ app.on('activate', () => {
 
 // This event will be emitted when your app is opened with a URL that uses your protocol
 app.on('open-url', (event, url) => {
-  // Prevent the default behavior
-  event.preventDefault();
+  try {
+    // Prevent the default behavior
+    event.preventDefault();
 
-  // Parse the URL
-  const parsedUrl = new URL(url);
-  const deviceCode = parsedUrl.host.split('=')[1];
-  // Log the device code
-  console.log(`Device code: ${deviceCode}`);
+    // Parse the URL
+    const parsedUrl = new URL(url);
+    const deviceCode = parsedUrl.host.split('=')[1];
+    // Log the device code
+    console.log(`Device code: ${deviceCode}`);
+    Sentry.captureMessage(`Device code added: ${deviceCode}, parsedUrl: ${JSON.stringify(parsedUrl)}`);
 
-  // Write the device code to a file in the sessionData directory
-  writeFilePromise(deviceCodeFilePath, deviceCode).then(() => {
-    console.log('Device code saved successfully!');
-  });
+    // Write the device code to a file in the sessionData directory
+    writeFilePromise(deviceCodeFilePath, deviceCode).then(() => {
+      console.log('Device code saved successfully!');
+    });
 
-  // Send the device code to the renderer process
-  if (mainWindow) {
-    mainWindow.webContents.send('device-code', deviceCode);
+    // Send the device code to the renderer process
+    if (mainWindow) {
+      mainWindow.webContents.send('device-code', deviceCode);
+    }
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to open url: ${error?.message}`), {
+      tags: { module: "openUrl" },
+      extra: { error }
+    });
   }
 });
 
