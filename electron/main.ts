@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell, systemPreferences, Tray, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell, systemPreferences, Tray } from 'electron'
 import os from 'os';
 import axios from 'axios';
 const { getWindows, activateWindow } = require('mac-windows');

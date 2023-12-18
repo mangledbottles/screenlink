@@ -1,12 +1,12 @@
 {
   "name": "screenlink-desktop",
   "private": true,
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "Screenlink",
   "description": "Screenlink Desktop",
   "scripts": {
     "dev": "NODE_ENV=development vite",
-    "build": "tsc && vite build && electron-builder",
+    "build": "tsc && vite build && electron-builder -mwl",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
