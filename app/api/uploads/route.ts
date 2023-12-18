@@ -92,6 +92,7 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
 
     } catch (error: any) {
         console.log(error)
+        console.error(error)
         captureException(new Error(`Create Upload Link: ${error?.message}`), {
             data: {
                 error,

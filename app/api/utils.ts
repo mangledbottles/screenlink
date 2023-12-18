@@ -49,6 +49,9 @@ export const getDevice = async (deviceCode?: string): Promise<(Partial<Devices> 
                     select: {
                         currentProjectId: true,
                         id: true,
+                        email: true,
+                        name: true,
+                        image: true,
                     }
                 }
             }
