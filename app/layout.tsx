@@ -3,7 +3,7 @@ import "./css/style.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
-import AuthProvider from "./authProvider";
+import AuthProvider, { AuthUser } from "./authProvider";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Suspense } from "react";
@@ -58,9 +58,6 @@ export default function RootLayout({
   return (
     <AuthProvider>
       <html lang="en">
-        <Suspense>
-          <PostHogPageview />
-        </Suspense>
         <body
           className={`${inter.variable} ${hkgrotesk.variable} font-inter antialiased bg-slate-900 text-slate-200 tracking-tight overflow-x-hidden`}
         >
@@ -74,17 +71,21 @@ export default function RootLayout({
               <PHProvider>{children}</PHProvider>
             </ThemeProvider>
           </div>
+          <Suspense>
+            <AuthUser />
+            <PostHogPageview />
+          </Suspense>
           <Toaster />
           <Analytics />
-          <script
-            async
-            src="https://js.stripe.com/v3/pricing-table.js"
-            defer={true}
-          ></script>
           <script
             defer={true}
             data-domain="screenlink.io"
             src="https://analytics.dermot.email/js/script.js"
+          ></script>
+          <script
+            async
+            src="https://js.stripe.com/v3/pricing-table.js"
+            defer={true}
           ></script>
         </body>
       </html>

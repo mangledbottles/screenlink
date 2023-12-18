@@ -1,17 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-
 import AOS from "aos";
 import "aos/dist/aos.css";
-
 import Image from "next/image";
-import Header from "@/components/ui/header";
 import Illustration from "@/public/images/hero-illustration.svg";
-import Footer from "@/components/ui/footer";
-// import { getServerSession } from "next-auth";
-import { useSession, getSession } from "next-auth/react";
-import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
+import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 
@@ -21,10 +15,6 @@ export default function DefaultLayout({
   children: React.ReactNode;
 }) {
   const { data: session, status } = useSession();
-
-  // if (status === "loading") {
-  //   return <p>Loading...</p>;
-  // }
 
   if (status === "unauthenticated") {
     // If the user is already logged in, redirect.

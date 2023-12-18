@@ -1,10 +1,12 @@
-import { PrismaClient } from '@prisma/client'
+import { getUser } from '@/app/api/utils';
+import { prisma } from '@/app/utils';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
     try {
+        await getUser();
+
         const { id } = params;
-        const prisma = new PrismaClient();
         const url = new URL(request.url);
         const animated = url.searchParams.get('animated') === 'true';
 

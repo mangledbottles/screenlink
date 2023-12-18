@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 // import { getSession } from "next-auth/react";
 type OpenGraphType = "article" | "website" | "book" | "profile" | "music.song" | "music.album" | "music.playlist" | "music.radio_station" | "video.movie" | "video.episode" | "video.tv_show" | "video.other";
 
+import { PrismaClient } from '@prisma/client'
+export const prisma = new PrismaClient()
+
 export function constructMetadata({
     title = 'ScreenLink - Open Source Loom Alternative',
     description = "ScreenLink is an open-source Loom alternative that allows you to record and share your screen with ease using our desktop app.",

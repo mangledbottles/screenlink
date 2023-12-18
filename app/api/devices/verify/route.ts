@@ -1,27 +1,16 @@
-import { PrismaClient } from '@prisma/client'
 import { NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient()
+import { getDevice, getUser } from '../../utils';
+import { captureException } from '@sentry/nextjs';
 
 export async function POST(req: NextRequest, res: NextApiResponse) {
     try {
+        await getUser();
+
         const body = await new Response(req.body).json();
         const { deviceCode } = body;
 
-        const device = await prisma.devices.findFirst({
-            where: {
-                code: deviceCode
-            },
-            select: {
-                id: true,
-                name: true,
-                code: true,
-                createdAt: true,
-                updatedAt: true,
-                user: true,
-            }
-        });
+        const device = await getDevice(deviceCode);
 
         if (!device) {
             return NextResponse.json({
@@ -32,9 +21,12 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
         return NextResponse.json({
             isVerified: true, ...device
         });
-
-
     } catch (error: any) {
+        captureException(new Error(`Device Verify: ${error?.message}`), {
+            data: {
+                error,
+            },
+        });
         console.log(error)
         return NextResponse.json({
             error: error?.message || 'Something went wrong'

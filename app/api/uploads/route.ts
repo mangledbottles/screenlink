@@ -1,48 +1,36 @@
-import { Devices, PrismaClient, User, Upload as PrismaUpload } from '@prisma/client'
 import Mux, { Upload } from '@mux/mux-node';
 import { NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/app/utils';
+import { getDevice } from '../utils';
+import { captureException } from '@sentry/nextjs';
 
-const prisma = new PrismaClient()
 const { Video } = new Mux(process.env.MUX_ACCESS_TOKEN!, process.env.MUX_SECRET_KEY!);
 
 const createUploadLink = async (): Promise<Upload> => {
-    const upload = await Video.Uploads.create({
-        cors_origin: '*',
-        new_asset_settings: {
-            playback_policy: 'public',
-            max_resolution_tier: "2160p",
-            normalize_audio: true,
-        },
-        timeout: '3600',
-    });
+    try {
+        const upload = await Video.Uploads.create({
+            cors_origin: '*',
+            new_asset_settings: {
+                playback_policy: 'public',
+                max_resolution_tier: "2160p",
+                normalize_audio: true,
+            },
+            timeout: '3600',
+        });
 
-    return upload;
+        return upload;
+    } catch (error: any) {
+        captureException(new Error(`Mux Create Upload Link: ${error?.message}`), {
+            data: {
+                error,
+            },
+        });
+        console.log(error)
+        throw error;
+    }
 }
 
-const verifyDeviceCode = async (deviceCode: string): Promise<(Partial<Devices> & { user: Partial<User> }) | null> => {
-    const device = await prisma.devices.findFirst({
-        where: {
-            code: deviceCode
-        },
-        select: {
-            id: true,
-            name: true,
-            code: true,
-            createdAt: true,
-            updatedAt: true,
-            user: {
-                select: {
-                    currentProjectId: true,
-                    id: true,
-                }
-            }
-        }
-    });
-    if (!device) return null;
-
-    return device;
-}
 
 export async function POST(req: NextRequest, res: NextApiResponse) {
     try {
@@ -50,7 +38,7 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
         const authorization = req.headers.get('authorization');
         // deviceCode is after "Bearer "
         const deviceCode = authorization?.split(' ')[1];
-        const device = await verifyDeviceCode(deviceCode!);
+        const device = await getDevice(deviceCode);
         if (!device) {
             return NextResponse.json({
                 error: 'Device not found'
@@ -104,6 +92,11 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
 
     } catch (error: any) {
         console.log(error)
+        captureException(new Error(`Create Upload Link: ${error?.message}`), {
+            data: {
+                error,
+            },
+        });
         return NextResponse.json({
             status: 500,
             body: {

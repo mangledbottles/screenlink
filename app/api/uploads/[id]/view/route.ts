@@ -1,10 +1,13 @@
-import { PrismaClient } from '@prisma/client'
+import { getUser } from '@/app/api/utils';
+import { prisma } from '@/app/utils';
 import { NextResponse } from 'next/server';
+import { captureException } from '@sentry/nextjs';
 
-const prisma = new PrismaClient()
 
 export async function POST(_: Request, { params }: { params: { id: string } }) {
     try {
+        await getUser();
+
         const { id } = params;
         await prisma.upload.update({
             where: { id },
@@ -22,8 +25,13 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
             return NextResponse.json({
                 error: 'Upload not found. This upload may not exist or may have been deleted.'
             }, { status: 404 });
-
         }
+        captureException(new Error(`Add view to upload ${error?.message}`), {
+            data: {
+                error,
+            },
+        });
+
         return NextResponse.json({
             error: error?.message || 'Something went wrong'
         }, {

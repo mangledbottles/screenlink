@@ -1,11 +1,13 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/app/utils';
 import { NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient()
+import { getUser } from '../utils';
+import { captureException } from '@sentry/nextjs';
 
 export async function POST(req: NextRequest, res: NextApiResponse) {
     try {
+        await getUser();
+
         const body = await new Response(req.body).json();
         const { email, os } = body;
         if (!email) return NextResponse.json({ error: "Email is required" }, {
@@ -40,7 +42,12 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
         });
 
 
-    } catch (err) {
+    } catch (err: any) {
+        captureException(new Error(`Email Subscribe: ${err?.message}`), {
+            data: {
+                err,
+            },
+        });
         console.log(err)
         return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
     }

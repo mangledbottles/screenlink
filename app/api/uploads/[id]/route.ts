@@ -1,8 +1,9 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/app/utils';
 import Mux, { Upload } from '@mux/mux-node';
 import { NextResponse } from 'next/server';
+import { getUser } from '../../utils';
+import { captureException } from '@sentry/nextjs';
 
-const prisma = new PrismaClient()
 const { Video } = new Mux(process.env.MUX_ACCESS_TOKEN!, process.env.MUX_SECRET_KEY!);
 
 const getUpload = async (uploadId: string): Promise<Upload> => {
@@ -17,6 +18,8 @@ const getUpload = async (uploadId: string): Promise<Upload> => {
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
     try {
+        await getUser();
+
         const { id } = params;
         const upload = await prisma.upload.findUnique({ where: { id } });
 
@@ -50,8 +53,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             return NextResponse.json({
                 error: 'Upload not found. This upload may not exist or may have been deleted.'
             }, { status: 404 });
-
         }
+
+        captureException(new Error(`Get Upload ${error?.message}`));
+
         return NextResponse.json({
             error: error?.message || 'Something went wrong'
         }, {
