@@ -10,7 +10,7 @@ import LoopsClient from "loops";
 export const loops = new LoopsClient(process.env.LOOPS_API_KEY!);
 
 const isDev = process.env.NODE_ENV === "development";
-export const baseUrl = isDev ? "http://localhost:3008" : "https://screenlink.app";
+export const baseUrl = isDev ? "http://localhost:3008" : "https://screenlink.io";
 
 
 export function constructMetadata({
