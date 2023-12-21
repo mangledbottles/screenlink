@@ -135,13 +135,15 @@ export const authOptions: NextAuthOptions = {
                 if (message.isNewUser) {
                     console.log("New user sign up")
                     const [firstName, lastName] = message?.user?.name?.split(" ") ?? ["", ""];
-                    loops.createContact(message?.user?.email ?? "unknown", {
+                    const userEmail = message?.user?.email;
+                    if (!userEmail) throw new Error(`No user email found: ${message?.user?.id}`)
+                    loops.createContact(userEmail, {
                         firstName: firstName ?? "",
                         lastName: lastName ?? "",
                         source: "SignUp",
                         userId: message?.user?.id ?? "",
                     });
-                    loops.sendEvent(message?.user?.email ?? "unknown", "Sign Up");
+                    loops.sendEvent(userEmail, "Sign Up");
 
                     posthog_serverside.capture({
                         distinctId: message.user.id || message.user.email || "unknown",
