@@ -23,7 +23,7 @@ export default async function Dashboard() {
   // @ts-ignore
   const userId = session?.user?.id;
   if (!userId) return redirect("/signin");
-  const videos = await prisma.upload.findMany({
+  let videos = await prisma.upload.findMany({
     where: {
       // @ts-ignore
       User: {
@@ -33,6 +33,12 @@ export default async function Dashboard() {
     orderBy: {
       createdAt: "desc",
     },
+  });
+
+  // Filter out videos where there is no playbackId and it's older than 5 minutes
+  videos = videos.filter(video => {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    return video.playbackId && new Date(video.createdAt) < fiveMinutesAgo;
   });
 
   const projects = await prisma.project.findMany({
