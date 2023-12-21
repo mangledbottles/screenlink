@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
                             currentProjectId: true,
                         },
                     });
-                    if (!user) throw new Error("No user found");
+                    if (!user) throw new Error(`User not found: ${userId}`);
 
                     if (!user.currentProjectId) {
                         const firstProject = await prisma.project.findFirst({
@@ -141,7 +141,7 @@ export const authOptions: NextAuthOptions = {
                         source: "SignUp",
                         userId: message?.user?.id ?? "",
                     });
-                    loops.sendEvent(message?.user?.email ?? "unknown", "Sign Up")
+                    loops.sendEvent(message?.user?.email ?? "unknown", "Sign Up");
 
                     posthog_serverside.capture({
                         distinctId: message.user.id || message.user.email || "unknown",
@@ -173,6 +173,7 @@ export const authOptions: NextAuthOptions = {
                     });
                 }
             } catch (error: any) {
+                console.log(error)
                 captureException(new Error(`Sign In Event: ${error?.message}`), {
                     data: {
                         error,
