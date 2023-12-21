@@ -16,12 +16,21 @@ export default async function Devices(query: {
   const session = await getServerSession(authOptions);
   // @ts-ignore
   const userId = session?.user?.id;
-  if (!userId || !session) return redirect("/signin?redirect=/app/devices");
-
   const searchParams = query.searchParams;
   const device = searchParams.device ?? "Device";
   const appVersion = searchParams.appVersion ?? "Unknown";
   const deviceType = searchParams.deviceType ?? "Unknown";
+
+  if (!userId || !session)
+    return redirect(
+      encodeURI(
+        `/signup?redirect=/app/devices/new?device=${encodeURIComponent(
+          device
+        )}&appVersion=${encodeURIComponent(
+          appVersion
+        )}&deviceType=${encodeURIComponent(deviceType)}`
+      )
+    );
 
   if (searchParams.deviceCode) {
     const deviceCode = searchParams.deviceCode;
