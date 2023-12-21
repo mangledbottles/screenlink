@@ -130,42 +130,52 @@ export const authOptions: NextAuthOptions = {
     },
     events: {
         async signIn(message) {
-            console.log("User sign in completed");
-            if (message.isNewUser) {
-                const [firstName, lastName] = message?.user?.name?.split(" ") ?? ["", ""];
-                loops.createContact(message?.user?.email ?? "unknown", {
-                    firstName: firstName ?? "",
-                    lastName: lastName ?? "",
-                    source: "SignUp",
-                    userId: message?.user?.id ?? "",
-                });
-                loops.sendEvent(message?.user?.email ?? "unknown", "Sign Up")
+            try {
+                console.log("User sign in completed");
+                if (message.isNewUser) {
+                    console.log("New user sign up")
+                    const [firstName, lastName] = message?.user?.name?.split(" ") ?? ["", ""];
+                    loops.createContact(message?.user?.email ?? "unknown", {
+                        firstName: firstName ?? "",
+                        lastName: lastName ?? "",
+                        source: "SignUp",
+                        userId: message?.user?.id ?? "",
+                    });
+                    loops.sendEvent(message?.user?.email ?? "unknown", "Sign Up")
 
-                posthog_serverside.capture({
-                    distinctId: message.user.id || message.user.email || "unknown",
-                    event: 'Registered',
-                    groups: {
-                        // @ts-ignore
-                        projectId: message.user.currentProjectId ?? null,
-                    },
-                    properties: {
-                        ...message.user,
-                        ...message.account,
-                        ...message.profile,
-                    },
-                });
-            } else {
-                posthog_serverside.capture({
-                    distinctId: message.user.id || message.user.email || "unknown",
-                    event: 'Logged In',
-                    groups: {
-                        // @ts-ignore
-                        projectId: message.user.currentProjectId ?? null,
-                    },
-                    properties: {
-                        ...message.user,
-                        ...message.account,
-                        ...message.profile,
+                    posthog_serverside.capture({
+                        distinctId: message.user.id || message.user.email || "unknown",
+                        event: 'Registered',
+                        groups: {
+                            // @ts-ignore
+                            projectId: message.user.currentProjectId ?? null,
+                        },
+                        properties: {
+                            ...message.user,
+                            ...message.account,
+                            ...message.profile,
+                        },
+                    });
+                } else {
+                    console.log("Existing user sign in")
+                    posthog_serverside.capture({
+                        distinctId: message.user.id || message.user.email || "unknown",
+                        event: 'Logged In',
+                        groups: {
+                            // @ts-ignore
+                            projectId: message.user.currentProjectId ?? null,
+                        },
+                        properties: {
+                            ...message.user,
+                            ...message.account,
+                            ...message.profile,
+                        },
+                    });
+                }
+            } catch (error: any) {
+                captureException(new Error(`Sign In Event: ${error?.message}`), {
+                    data: {
+                        error,
                     },
                 });
             }
