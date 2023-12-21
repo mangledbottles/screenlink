@@ -6,6 +6,13 @@ type OpenGraphType = "article" | "website" | "book" | "profile" | "music.song" |
 import { PrismaClient } from '@prisma/client'
 export const prisma = new PrismaClient()
 
+import LoopsClient from "loops";
+export const loops = new LoopsClient(process.env.LOOPS_API_KEY!);
+
+const isDev = process.env.NODE_ENV === "development";
+export const baseUrl = isDev ? "http://localhost:3008" : "https://screenlink.app";
+
+
 export function constructMetadata({
     title = 'ScreenLink - Open Source Loom Alternative',
     description = "ScreenLink is an open-source Loom alternative that allows you to record and share your screen with ease using our desktop app.",
@@ -118,3 +125,5 @@ export function getOS(): string {
 
     return os;
 }
+
+export const TRANSACTIONAL_EMAIL_FIRST_UPLOAD_TEMPLATE_ID = "clqf2tv3800zze3b0y0odpo0b";
