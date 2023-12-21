@@ -101,7 +101,10 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
                 userEmail && loops.sendTransactionalEmail(transactionalId, userEmail, {
                     uploadLink
                 });
-                loops.sendEvent(device?.user?.email ?? "unknown", 'First Upload');
+                userEmail && loops.updateContact(userEmail, {
+                    hasMadeAnUpload: true,
+                });
+                userEmail && loops.sendEvent(userEmail, 'First Upload');
             } catch (error) {
                 console.log(error)
             }
