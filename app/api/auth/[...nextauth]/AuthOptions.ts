@@ -4,7 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 // import SlackProvider from "next-auth/providers/slack";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
-import { posthog_serverside } from "@/app/utils";
+import { loops, posthog_serverside } from "@/app/utils";
 import { captureException } from "@sentry/nextjs";
 
 const prisma = new PrismaClient();
@@ -132,6 +132,15 @@ export const authOptions: NextAuthOptions = {
         async signIn(message) {
             console.log("User sign in completed");
             if (message.isNewUser) {
+                const [firstName, lastName] = message?.user?.name?.split(" ") ?? ["", ""];
+                loops.createContact(message?.user?.email ?? "unknown", {
+                    firstName: firstName ?? "",
+                    lastName: lastName ?? "",
+                    source: "SignUp",
+                    userId: message?.user?.id ?? "",
+                });
+                loops.sendEvent(message?.user?.email ?? "unknown", "Sign Up")
+
                 posthog_serverside.capture({
                     distinctId: message.user.id || message.user.email || "unknown",
                     event: 'Registered',
