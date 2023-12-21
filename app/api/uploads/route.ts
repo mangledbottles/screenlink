@@ -1,7 +1,7 @@
 import Mux, { Upload } from '@mux/mux-node';
 import { NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/app/utils';
+import { TRANSACTIONAL_EMAIL_FIRST_UPLOAD_TEMPLATE_ID, baseUrl, loops, prisma } from '@/app/utils';
 import { getDevice } from '../utils';
 import { captureException } from '@sentry/nextjs';
 
@@ -84,6 +84,28 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
                 }
             }
         });
+
+        // Check if it's the user's first upload to the project
+        const uploadCount = await prisma.upload.count({
+            where: {
+                userId: device.user.id,
+                projectId: projectId,
+            }
+        });
+        const isFirstUpload = uploadCount <= 1;
+        if (isFirstUpload) {
+            try {
+                const transactionalId = TRANSACTIONAL_EMAIL_FIRST_UPLOAD_TEMPLATE_ID;
+                const userEmail = device?.user?.email;
+                const uploadLink = `${baseUrl}/view/${video?.id}` ?? `${baseUrl}/app`
+                userEmail && loops.sendTransactionalEmail(transactionalId, userEmail, {
+                    uploadLink
+                });
+                loops.sendEvent(device?.user?.email ?? "unknown", 'First Upload');
+            } catch (error) {
+                console.log(error)
+            }
+        }
 
         return NextResponse.json({
             uploadLink: upload.url,
