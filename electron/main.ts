@@ -20,7 +20,7 @@ const userPreferencesFilePath = path.join(sessionDataPath, 'userPreferences.txt'
 
 autoUpdater.logger = logger
 Sentry.init({
-  dsn: 'https://d9c49d59e5554239ac977e3a7c409cda@glitchtip.dermot.email/2'
+  dsn: import.meta.env.SENTRY_DSN_GLITCHTIP,
 });
 
 const getFile = async (filePath: string, defaultValue: any): Promise<any> => {
