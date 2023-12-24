@@ -27,6 +27,7 @@ declare global {
             getPreferences: () => Promise<Preference[]>;
             updatePreferences: (preferences: Preference[]) => Promise<void>;
             requestPermission: (permission: string) => Promise<boolean>;
+            getVersion: () => Promise<string>;
         };
     }
 }

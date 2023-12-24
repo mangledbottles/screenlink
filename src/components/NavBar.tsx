@@ -31,6 +31,7 @@ import { useTheme } from "./theme-provider";
 export function NavBar() {
   const [account, setAccount] = useState<Account | null>(null);
   const [preferences, setPreferences] = useState<Preference[] | null>(null);
+  const [version, setVersion] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -45,6 +46,12 @@ export function NavBar() {
       setPreferences(preferences);
     };
     getPreferences();
+
+    const getVersion = async () => {
+      const version = await window.electron.getVersion();
+      setVersion(version);
+    };
+    getVersion();
   }, []);
 
   const errorLoggingPreference = useMemo(() => {
@@ -96,28 +103,25 @@ export function NavBar() {
                   }}
                 >
                   Recordings
-                  {/* <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut> */}
                 </DropdownMenuItem>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem>
-                    Settings
-                    {/* <DropdownMenuShortcut>⌘S</DropdownMenuShortcut> */}
-                  </DropdownMenuItem>
+                  <DropdownMenuItem>Settings</DropdownMenuItem>
                 </DialogTrigger>
-                {/* <Settings /> */}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                Log out
-                {/* <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut> */}
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Settings</DialogTitle>
+              <DialogTitle>
+                Settings{" "}
+                <p className="text-xs leading-none text-muted-foreground mt-1">
+                  Version {version}
+                </p>
+              </DialogTitle>
               <DialogDescription className="grid gap-6 pt-4">
-                <div className="flex items-center justify-between space-x-2">
+                <div className="flex items-center justify-between space-x-0">
                   <Label
                     htmlFor="necessary"
                     className="flex flex-col space-y-1"

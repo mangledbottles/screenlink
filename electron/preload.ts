@@ -87,6 +87,9 @@ contextBridge.exposeInMainWorld('electron', {
   requestPermission: async (permission: string): Promise<void> => {
     return await ipcRenderer.invoke('request-permission', permission)
   },
+  getVersion: async (): Promise<any> => {
+    return await ipcRenderer.invoke('get-current-version');
+  },
 })
 
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.

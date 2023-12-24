@@ -722,6 +722,21 @@ ipcMain.handle('request-permission', async (_, permission: string) => {
   }
 });
 
+ipcMain.handle('get-current-version', async (_) => {
+  try {
+    const version = app.getVersion();
+    return version;
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to get current version: ${error?.message}`), {
+      tags: { module: "getCurrentVersion" },
+      extra: { error }
+    });
+    return false;
+  }
+});
+
+
 // The built directory structure
 //
 // ├─┬─┬ dist
