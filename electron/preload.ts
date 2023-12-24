@@ -76,7 +76,6 @@ contextBridge.exposeInMainWorld('electron', {
   showCameraWindow: async (show: boolean = true): Promise<void> => {
     return await ipcRenderer.invoke('show-camera-window', show)
   },
-  // setUpdatedCameraSource: async (_: any, source: MediaDeviceInfo | null): Promise<void> => {
   setUpdatedCameraSource: async (cameraSource: any): Promise<void> => {
     console.log({ cameraSource, in: 'preload.ts' })
     // console.log({ source, in: 'preload.ts' })
@@ -85,10 +84,9 @@ contextBridge.exposeInMainWorld('electron', {
   setPermissionsMissing: async (missing: boolean): Promise<void> => {
     return await ipcRenderer.invoke('permissions-missing', missing)
   },
-  // setUpdatedAudioSource: async (audioSource: any): Promise<void> => {
-  //   console.log({ audioSource, in: 'preload.ts' })
-  //   return await ipcRenderer.invoke('set-audio-source', audioSource)
-  // },
+  requestPermission: async (permission: string): Promise<void> => {
+    return await ipcRenderer.invoke('request-permission', permission)
+  },
 })
 
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.

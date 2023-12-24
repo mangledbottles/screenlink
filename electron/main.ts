@@ -599,7 +599,6 @@ ipcMain.handle('get-account', async (_) => {
   }
 });
 
-
 const updatePreferences = async (newPreferences: Preference[]): Promise<boolean> => {
   try {
     // Write upserted preferences back to file
@@ -642,8 +641,6 @@ ipcMain.handle('update-preferences', async (_event, newPreferences: Preference[]
     return false;
   }
 });
-
-
 
 ipcMain.handle('get-device-code', async (_) => {
   try {
@@ -690,11 +687,13 @@ ipcMain.handle('logout', async (_) => {
   }
 });
 
-
 ipcMain.handle('permissions-missing', async (_) => {
   try {
+    const permissionsMissing = await missingPermissions();
+
     if (mainWindow) {
-      mainWindow.webContents.send('set-window', 'permissions');
+      const permissions = permissionsMissing.join(', ');
+      mainWindow.webContents.send('set-window', 'permissions', permissions);
     }
   } catch (error: any) {
     Sentry.captureException(new Error(`Failed to get device code: ${error?.message}`), {
@@ -702,6 +701,24 @@ ipcMain.handle('permissions-missing', async (_) => {
       extra: { error }
     });
     console.log(error)
+  }
+});
+
+ipcMain.handle('request-permission', async (_, permission: string) => {
+  try {
+    const wasApproved = await requestPermissions(permission);
+    console.log({ wasApproved })
+    const missing = await missingPermissions();
+    if (wasApproved && mainWindow && missing.length > 0) mainWindow.webContents.send('set-window', 'permissions', missing.join(', '));
+
+    return wasApproved;
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to request permissions: ${error?.message}`), {
+      tags: { module: "requestPermissionsIPC" },
+      extra: { error }
+    });
+    return false;
   }
 });
 
@@ -727,9 +744,9 @@ const missingPermissions = async () => {
   const microphoneStatus = await systemPreferences.getMediaAccessStatus('microphone')
 
   let missingList = [];
-  if (cameraStatus != 'granted') missingList.push('camera');
-  if (microphoneStatus != 'granted') missingList.push('microphone');
-  if (screenStatus != 'granted') missingList.push('screen');
+  if (cameraStatus != 'granted') missingList.push('Camera');
+  if (microphoneStatus != 'granted') missingList.push('Microphone');
+  if (screenStatus != 'granted') missingList.push('Screen');
 
   return missingList;
 }
@@ -738,23 +755,21 @@ const requestPermissions = async (permission: string): Promise<boolean> => {
   try {
     if (webcamWindow) webcamWindow.hide();
 
-    if (permission === 'camera' || permission === 'microphone') {
-      const status = await systemPreferences.askForMediaAccess(permission);
+    console.log('Requesting permissions: ', permission)
+
+    if (permission.toLowerCase() === 'camera' || permission.toLowerCase() === 'microphone') {
+      console.log(`Requesting ${permission} permission`)
+      const status = await systemPreferences.askForMediaAccess(permission.toLowerCase() as 'camera' | 'microphone');
+      if (!status && process.platform === 'darwin') {
+        shell.openExternal(`x-apple.systempreferences:com.apple.preference.security?Privacy_${permission}`);
+      }
       return status;
-    } else if (permission === 'screen') {
+    } else if (permission.toLowerCase() === 'screen') {
       if (process.platform === 'darwin') {
         const screenAccessStatus = systemPreferences.getMediaAccessStatus('screen');
+        console.log(`Requesting ${permission} permission: ${screenAccessStatus}`)
         if (screenAccessStatus !== 'granted') {
-          dialog.showMessageBox({
-            type: 'info',
-            message: 'Please grant screen recording permissions in System Preferences.',
-            buttons: ['Open System Preferences', 'Cancel']
-          }).then(({ response }) => {
-            if (response === 0) {
-              // Open the Security & Privacy section of System Preferences
-              shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture');
-            }
-          });
+          shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture');
         } else {
           // already granted
           return true;
@@ -885,13 +900,8 @@ function createWindow() {
     mainWindow.loadURL(`${VITE_DEV_SERVER_URL}`).then(async () => {
       const permissionsMissing = await missingPermissions();
       if (permissionsMissing.length > 0) {
-        mainWindow?.webContents.send('set-window', 'permissions');
-        console.log({ permissionsMissing })
-        permissionsMissing.forEach(async (permission: string) => {
-          const wasApproved = await requestPermissions(permission);
-          if (wasApproved) permissionsMissing.splice(permissionsMissing.indexOf(permission), 1);
-        });
-
+        const permissions = permissionsMissing.join(', ');
+        mainWindow?.webContents.send('set-window', 'permissions', permissions);
       } else {
         // Once the file is loaded, send a message to the renderer with the parameter
         if (!mainWindow) return console.log('No main window to send set-window to');
@@ -906,13 +916,8 @@ function createWindow() {
       .then(async () => {
         const permissionsMissing = await missingPermissions();
         if (permissionsMissing.length > 0) {
-          mainWindow?.webContents.send('set-window', 'permissions');
-          console.log({ permissionsMissing })
-          permissionsMissing.forEach(async (permission: string) => {
-            const wasApproved = await requestPermissions(permission);
-            if (wasApproved) permissionsMissing.splice(permissionsMissing.indexOf(permission), 1);
-          });
-
+          const permissions = permissionsMissing.join(', ');
+          mainWindow?.webContents.send('set-window', 'permissions', permissions);
         } else {
           // Once the file is loaded, send a message to the renderer with the parameter
           if (!mainWindow) return console.log('No main window to send set-window to');

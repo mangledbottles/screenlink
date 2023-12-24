@@ -135,7 +135,7 @@ function App() {
   }
 
   if (windowType === "permissions") {
-    return <Permissions />;
+    return <Permissions permissionsMessage={windowMessage} />;
   }
 
   if (windowType === "loading") {
