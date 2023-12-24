@@ -1,7 +1,7 @@
 {
   "name": "screenlink-desktop",
   "private": true,
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "Screenlink",
   "description": "Screenlink Desktop",
   "scripts": {
@@ -33,6 +33,7 @@
     "axios": "^1.6.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "electron-builder-notarize": "^1.5.1",
     "electron-log": "^5.0.1",
     "electron-updater": "^6.1.7",
     "extendable-media-recorder": "^9.1.4",
@@ -49,6 +50,7 @@
     "update-electron-app": "^3.0.0"
   },
   "devDependencies": {
+    "@electron/notarize": "^2.2.0",
     "@rollup/plugin-alias": "^5.1.0",
     "@types/fluent-ffmpeg": "^2.1.24",
     "@types/react": "^18.2.21",

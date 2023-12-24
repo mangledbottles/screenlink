@@ -6,9 +6,10 @@
   appId: "io.screenlink.desktop",
   asar: true,
   productName: "ScreenLink",
+  afterSign: "electron-builder-notarize",
   directories: {
     // manually increase due to issue with Windows nsis
-    output: "release/0.0.7",
+    output: "release/0.0.8",
     buildResources: "build",
   },
   files: ["dist", "dist-electron"],
@@ -20,6 +21,9 @@
     icon: "public/icon.icns",
     hardenedRuntime: true,
     entitlements: "build/entitlements.mac.plist",
+    entitlementsInherit: "build/entitlements.mac.plist",
+    gatekeeperAssess: false,
+    category: "public.app-category.productivity",
     extendInfo: {
       NSMicrophoneUsageDescription: "ScreenLink requires microphone access to record audio.",
       NSCameraUsageDescription: "ScreenLink requires camera access to record video.",
