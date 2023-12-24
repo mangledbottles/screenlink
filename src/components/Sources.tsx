@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { Source, SourceType } from "../utils";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { RotateCcw } from "lucide-react";
 
 async function getScreenSources() {
   try {
@@ -20,39 +23,82 @@ export function ScreenSources({
   selectedSource: Source | null;
   setSelectedSource: (source: Source) => void;
 }) {
-  const [sources, setSources] = useState<any[]>([]);
+  const [sources, setSources] = useState<Source[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sourcesLoading, setSourcesLoading] = useState(true);
 
-  useMemo(() => {
+  const getSources = async () => {
+    setSourcesLoading(true);
     getScreenSources().then((newSources) => {
       const uniqueSources = Array.from(
         new Set(newSources.map((source) => JSON.stringify(source)))
       ).map((source) => JSON.parse(source));
+      setSourcesLoading(false);
       setSources(uniqueSources);
     });
+  };
+
+  useMemo(() => {
+    getSources();
   }, []);
 
-  if (!sources.length) return <SourcesSkeleton />;
-
   return (
-    <div className="not-prose my-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-      {sources.map((source) => (
-        <QuickLink
-          key={source.id}
-          title={source.name}
-          applicationName={source.applicationName}
-          imageUrl={source.thumbnail}
-          source={source}
-          selectedSource={selectedSource}
-          setSelectedSource={setSelectedSource}
+    <>
+      <div className="flex justify-between items-center space-x-2 mt-4">
+        <Input
+          placeholder="Search"
+          className="h-8 w-[150px] lg:w-[250px]"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
-      ))}
-    </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className={`h-8`}
+          onClick={() => getSources()}
+        >
+          <RotateCcw
+            className={`h-4 w-4 ${
+              sourcesLoading ? "animate-spin-reverse" : ""
+            }`}
+          />
+        </Button>
+      </div>
+      {!sources.length || sourcesLoading ? (
+        <SourcesSkeleton />
+      ) : (
+        <div className="not-prose mb-6 mt-2 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {sources
+            .filter((source) => {
+              if (!searchQuery) return true;
+              const regex = new RegExp(searchQuery, "i");
+              return (
+                (source?.applicationName &&
+                  regex.test(source?.applicationName)) ||
+                regex.test(source?.name) ||
+                regex.test(source?.id)
+              );
+            })
+            .map((source) => (
+              <QuickLink
+                key={source.id}
+                title={source.name}
+                applicationName={source.applicationName ?? source.name}
+                imageUrl={source.thumbnail}
+                source={source}
+                selectedSource={selectedSource}
+                setSelectedSource={setSelectedSource}
+              />
+            ))}
+        </div>
+      )}
+    </>
   );
 }
 
 const SourcesSkeleton = () => {
   return (
-    <div className="not-prose my-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="not-prose mb-6 mt-2 grid grid-cols-1 gap-4 sm:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
