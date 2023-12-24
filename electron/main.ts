@@ -933,7 +933,7 @@ function createWindow() {
     mainWindow?.webContents.send('set-window', 'update', 'Update available.');
   })
   autoUpdater.on('error', (err) => {
-    mainWindow?.webContents.send('set-window', 'update', 'Error in auto-updater. Contact support if this continues. ' + err);
+    mainWindow?.webContents.send('set-window', 'update', 'Error in auto-updater. You may need to reinstall ScreenLink. \n Contact support if this continues. \n' + err);
   })
   autoUpdater.on('download-progress', (progressObj) => {
     let downloadSpeedInMBps = (progressObj.bytesPerSecond / (1024 * 1024)).toFixed(2);
