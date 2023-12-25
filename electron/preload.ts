@@ -61,6 +61,9 @@ contextBridge.exposeInMainWorld('electron', {
   stopRecording: async (): Promise<void> => {
     return await ipcRenderer.invoke('stop-recording')
   },
+  cancelRecording: async (): Promise<void> => {
+    return await ipcRenderer.invoke('cancel-recording')
+  },
   getUploadLink: async (sourceTitle: string): Promise<UploadLink> => {
     return await ipcRenderer.invoke('get-upload-link', sourceTitle)
   },

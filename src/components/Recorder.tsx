@@ -77,6 +77,7 @@ export function Recorder({
           source: "recorder",
         },
       });
+      cancelRecording();
       alert("Failed to start recording, contact support if this persists");
       throw error;
     }
@@ -92,205 +93,260 @@ export function Recorder({
     };
   }, [justStarted]);
 
+  const cancelRecording = async () => {
+    try {
+      if (screenMedia) {
+        screenMedia.stop();
+        setScreenMedia(null);
+      }
+      if (cameraMedia) {
+        cameraMedia.stop();
+        setCameraMedia(null);
+      }
+
+      if (screenStream) {
+        screenStream.getTracks().forEach((track) => track.stop());
+        setScreenStream(null);
+      }
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        setCameraStream(null);
+      }
+      if (audioStream) {
+        audioStream.getTracks().forEach((track) => track.stop());
+        setAudioStream(null);
+      }
+
+      setIsRecording(false);
+      setJustStarted(false);
+      await window.electron.cancelRecording();
+    } catch (error) {
+      console.error("Failed to cancel recording:", error);
+      captureException(error, {
+        tags: {
+          source: "recorder",
+        },
+      });
+    }
+  };
+
   const startRecording = async () => {
-    const screenChunks: Blob[] = [];
-    const cameraChunks: Blob[] = [];
+    try {
+      const screenChunks: Blob[] = [];
+      const cameraChunks: Blob[] = [];
 
-    // Handles window recording when a camera is selected
-    // Requirements: [Window, Camera]
-    const processWindowRecord = async (
-      uploadLink: string,
-      uploadId: string
-    ) => {
-      try {
-        if (screenChunks.length > 0 && cameraChunks.length > 0) {
-          const screenBlob = new Blob(screenChunks, {
-            type: `video/webm; codecs=vp9,opus`,
-          });
-          const cameraBlob = new Blob(cameraChunks, {
-            type: `video/webm; codecs=vp9,opus`,
-          });
+      // Handles window recording when a camera is selected
+      // Requirements: [Window, Camera]
+      const processWindowRecord = async (
+        uploadLink: string,
+        uploadId: string
+      ) => {
+        try {
+          if (screenChunks.length > 0 && cameraChunks.length > 0) {
+            const screenBlob = new Blob(screenChunks, {
+              type: `video/webm; codecs=vp9,opus`,
+            });
+            const cameraBlob = new Blob(cameraChunks, {
+              type: `video/webm; codecs=vp9,opus`,
+            });
 
-          const screenConverted = await screenBlob.arrayBuffer();
-          const cameraConverted = await cameraBlob.arrayBuffer();
+            const screenConverted = await screenBlob.arrayBuffer();
+            const cameraConverted = await cameraBlob.arrayBuffer();
 
-          // Reset chunks and states
-          screenChunks.length = 0;
-          cameraChunks.length = 0;
+            // Reset chunks and states
+            screenChunks.length = 0;
+            cameraChunks.length = 0;
 
-          // Process the data
-          const outputFile = await window.electron.saveScreenCameraBlob(
-            screenConverted,
-            cameraConverted
-          );
-          console.log({ outputFile });
-          await uploadFile(outputFile, uploadLink, uploadId);
-        }
-      } catch (error) {
-        console.error("Failed to process window record:", error);
-        captureException(error, {
-          tags: {
-            source: "recorder",
-          },
-        });
-      }
-    };
-
-    // Handles full screen recording and window recording when no camera is selected
-    // Requirements: [Screen] or [Window, Camera]
-    const processScreenRecord = async (
-      uploadLink: string,
-      uploadId: string
-    ) => {
-      try {
-        if (screenChunks.length > 0) {
-          const screenBlob = new Blob(screenChunks, {
-            type: `video/webm; codecs=vp9,opus`,
-          });
-
-          const screenConverted = await screenBlob.arrayBuffer();
-
-          // Reset chunks and states
-          screenChunks.length = 0;
-
-          // Process the data
-          const outputFile = await window.electron.saveScreenBlob(
-            screenConverted
-          );
-          console.log({ outputFile });
-          await uploadFile(outputFile, uploadLink, uploadId);
-        }
-      } catch (error) {
-        console.error("Failed to process screen record:", error);
-        captureException(error, {
-          tags: {
-            source: "recorder",
-          },
-        });
-      }
-    };
-
-    if (!selectedSource) return alert("Select a screen to record");
-    if (selectedSource && !isRecording) {
-      try {
-        setJustStarted(true);
-        // Create a new upload link
-        const { uploadId, uploadLink } = await handleStartRecording();
-
-        // Capture the screen stream
-        const screenStream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            // @ts-ignore
-            mandatory: {
-              chromeMediaSource: "desktop",
-              chromeMediaSourceId: selectedSource.id,
+            // Process the data
+            const outputFile = await window.electron.saveScreenCameraBlob(
+              screenConverted,
+              cameraConverted
+            );
+            console.log({ outputFile });
+            await uploadFile(outputFile, uploadLink, uploadId);
+          }
+        } catch (error) {
+          console.error("Failed to process window record:", error);
+          captureException(error, {
+            tags: {
+              source: "recorder",
             },
-          },
-        });
-        setScreenStream(screenStream);
-
-        const audioStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            deviceId: audioSource?.deviceId,
-            echoCancellation: true,
-            noiseSuppression: true,
-          },
-        });
-        setAudioStream(audioStream);
-
-        // Capture the camera stream
-        const cameraStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            deviceId: cameraSource?.deviceId,
-            width: 240,
-            height: 180,
-            aspectRatio: 1,
-            facingMode: "user",
-            frameRate: 60,
-          },
-          audio: false,
-        });
-        setCameraStream(cameraStream);
-
-        const combinedStream = new MediaStream([
-          screenStream.getVideoTracks()[0],
-        ]);
-        if (audioSource) {
-          combinedStream.addTrack(audioStream.getAudioTracks()[0]);
+          });
+          throw error;
         }
+      };
 
-        // Set up the recorder with the combined stream
-        const screenRecorder = new MediaRecorder(combinedStream, {
-          mimeType: "video/webm; codecs=vp9,opus",
-        });
+      // Handles full screen recording and window recording when no camera is selected
+      // Requirements: [Screen] or [Window, Camera]
+      const processScreenRecord = async (
+        uploadLink: string,
+        uploadId: string
+      ) => {
+        try {
+          if (screenChunks.length > 0) {
+            const screenBlob = new Blob(screenChunks, {
+              type: `video/webm; codecs=vp9,opus`,
+            });
 
-        // Development Environment: Set the video source to the screen stream
-        if (!isProd && videoRef.current) videoRef.current.srcObject = screenStream;
+            const screenConverted = await screenBlob.arrayBuffer();
 
-        // Entire screen and a camera is selected
-        if (selectedSource.sourceType === "window" && cameraSource) {
-          const cameraRecorder = new MediaRecorder(cameraStream, {
+            // Reset chunks and states
+            screenChunks.length = 0;
+
+            // Process the data
+            const outputFile = await window.electron.saveScreenBlob(
+              screenConverted
+            );
+            console.log({ outputFile });
+            await uploadFile(outputFile, uploadLink, uploadId);
+          }
+        } catch (error) {
+          console.error("Failed to process screen record:", error);
+          captureException(error, {
+            tags: {
+              source: "recorder",
+            },
+          });
+          throw error;
+        }
+      };
+
+      if (!selectedSource) return alert("Select a screen to record");
+      if (selectedSource && !isRecording) {
+        try {
+          setJustStarted(true);
+          // Create a new upload link
+          const { uploadId, uploadLink } = await handleStartRecording();
+
+          if (!uploadId || !uploadLink) {
+            return cancelRecording();
+          }
+          // Capture the screen stream
+          const screenStream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+              // @ts-ignore
+              mandatory: {
+                chromeMediaSource: "desktop",
+                chromeMediaSourceId: selectedSource.id,
+              },
+            },
+          });
+          setScreenStream(screenStream);
+
+          const audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              deviceId: audioSource?.deviceId,
+              echoCancellation: true,
+              noiseSuppression: true,
+            },
+          });
+          setAudioStream(audioStream);
+
+          // Capture the camera stream
+          const cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: cameraSource?.deviceId,
+              width: 240,
+              height: 180,
+              aspectRatio: 1,
+              facingMode: "user",
+              frameRate: 60,
+            },
+            audio: false,
+          });
+          setCameraStream(cameraStream);
+
+          const combinedStream = new MediaStream([
+            screenStream.getVideoTracks()[0],
+          ]);
+          if (audioSource) {
+            combinedStream.addTrack(audioStream.getAudioTracks()[0]);
+          }
+
+          // Set up the recorder with the combined stream
+          const screenRecorder = new MediaRecorder(combinedStream, {
             mimeType: "video/webm; codecs=vp9,opus",
           });
 
-          setScreenMedia(screenRecorder);
-          setJustStarted(false);
-          if (cameraSource) setCameraMedia(cameraRecorder);
+          // Development Environment: Set the video source to the screen stream
+          if (!isProd && videoRef.current)
+            videoRef.current.srcObject = screenStream;
 
-          screenRecorder.start();
-          if (cameraSource) cameraRecorder.start();
+          // Entire screen and a camera is selected
+          if (selectedSource.sourceType === "window" && cameraSource) {
+            const cameraRecorder = new MediaRecorder(cameraStream, {
+              mimeType: "video/webm; codecs=vp9,opus",
+            });
 
-          // For screen recorder
-          // screenRecorder.onstart = handleStartRecording;
-          screenRecorder.onstop = () =>
-            processWindowRecord(uploadLink, uploadId);
+            setScreenMedia(screenRecorder);
+            setJustStarted(false);
+            if (cameraSource) setCameraMedia(cameraRecorder);
 
-          // When the screen recorder has data available, push it to the chunks array
-          screenRecorder.ondataavailable = ({ data }: BlobEvent) => {
-            screenChunks.push(data);
-          };
+            screenRecorder.start();
+            if (cameraSource) cameraRecorder.start();
 
-          // For camera recorder
-          cameraRecorder.onstop = () =>
-            processWindowRecord(uploadLink, uploadId);
+            // For screen recorder
+            // screenRecorder.onstart = handleStartRecording;
+            screenRecorder.onstop = () =>
+              processWindowRecord(uploadLink, uploadId);
 
-          // When the camera recorder has data available, push it to the chunks array
-          cameraRecorder.ondataavailable = ({ data }: BlobEvent) => {
-            cameraChunks.push(data);
-          };
-        } else if (
-          // Entire screen is selected
-          selectedSource.sourceType === "screen" ||
-          // Specific window is selected, but no camera
-          (selectedSource.sourceType === "window" && !cameraSource)
-        ) {
-          setScreenMedia(screenRecorder);
-          screenRecorder.start();
+            // When the screen recorder has data available, push it to the chunks array
+            screenRecorder.ondataavailable = ({ data }: BlobEvent) => {
+              screenChunks.push(data);
+            };
 
-          // For screen recorder
-          // screenRecorder.onstart = handleStartRecording;
-          screenRecorder.onstop = () =>
-            processScreenRecord(uploadLink, uploadId);
+            // For camera recorder
+            cameraRecorder.onstop = () =>
+              processWindowRecord(uploadLink, uploadId);
 
-          // When the screen recorder has data available, push it to the chunks array
-          screenRecorder.ondataavailable = ({ data }: BlobEvent) => {
-            screenChunks.push(data);
-          };
+            // When the camera recorder has data available, push it to the chunks array
+            cameraRecorder.ondataavailable = ({ data }: BlobEvent) => {
+              cameraChunks.push(data);
+            };
+          } else if (
+            // Entire screen is selected
+            selectedSource.sourceType === "screen" ||
+            // Specific window is selected, but no camera
+            (selectedSource.sourceType === "window" && !cameraSource)
+          ) {
+            setScreenMedia(screenRecorder);
+            screenRecorder.start();
+
+            // For screen recorder
+            // screenRecorder.onstart = handleStartRecording;
+            screenRecorder.onstop = () =>
+              processScreenRecord(uploadLink, uploadId);
+
+            // When the screen recorder has data available, push it to the chunks array
+            screenRecorder.ondataavailable = ({ data }: BlobEvent) => {
+              screenChunks.push(data);
+            };
+          }
+        } catch (error) {
+          console.error("Failed to get media stream:", error);
+          captureException(error, {
+            tags: {
+              source: "recorder",
+            },
+          });
+          alert("Failed to get media stream, contact support if this persists");
+          throw error;
         }
-      } catch (error) {
-        console.error("Failed to get media stream:", error);
-        captureException(error, {
-          tags: {
-            source: "recorder",
-          },
-        });
-        alert("Failed to get media stream, contact support if this persists");
-      }
 
-      // Notify the desktop application to start recording
-      // await window.electron.startRecording(selectedSource.id);
-      await window.electron.startRecording(selectedSource?.applicationName);
+        // Notify the desktop application to start recording
+        // await window.electron.startRecording(selectedSource.id);
+        await window.electron.startRecording(selectedSource?.applicationName);
+      }
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      captureException(error, {
+        tags: {
+          source: "recorder-render",
+        },
+      });
+      cancelRecording();
+      alert("Failed to start recording, contact support if this persists");
     }
   };
 

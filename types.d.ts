@@ -11,6 +11,7 @@ declare global {
             blobToBuffer: (blob: Blob) => Promise<Buffer>;
             startRecording: (applicationName?: string) => Promise<void>;
             stopRecording: () => Promise<void>;
+            cancelRecording: () => Promise<void>;
             openInBrowser: (url: string) => Promise<void>;
             openNewDevice: () => Promise<void>;
             getDeviceCode: () => Promise<string>;

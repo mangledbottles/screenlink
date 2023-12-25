@@ -247,7 +247,23 @@ ipcMain.handle('stop-recording', async (_) => {
   if (mainWindow) {
     console.log("finsihed recoridng, opening mainwindow")
     mainWindow.webContents.send('finished-recording', true);
-    mainWindow.maximize();
+    mainWindow.focus();
+  }
+});
+
+ipcMain.handle('cancel-recording', async (_) => {
+  console.log(`Cancel recording`)
+  if (floatingWindow) {
+    floatingWindow.hide();
+  }
+  if (webcamWindow) {
+    toggleCameraWindow(false);
+    webcamWindow.setAlwaysOnTop(false);
+    webcamWindow.minimize();
+    webcamWindow.hide();
+  }
+  if (mainWindow) {
+    mainWindow.webContents.send('set-window', 'main');
     mainWindow.focus();
   }
 });
