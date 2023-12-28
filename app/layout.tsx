@@ -76,7 +76,7 @@ export default function RootLayout({
             <AuthUser />
             <PostHogPageview />
           </Suspense>
-          <Toaster />
+          <Toaster position="top-right" />
           <Analytics />
           <script
             defer={true}
