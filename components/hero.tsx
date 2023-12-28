@@ -4,6 +4,7 @@ import Link from "next/link";
 import CtaButton from "@components/ui/CtaButton";
 import DemoLimk from "../public/images/demo-link-2.png";
 import { HeaderAction } from "./HeaderAction";
+import { Demo } from "./Demo";
 
 export default function Hero() {
   return (
@@ -21,7 +22,8 @@ export default function Hero() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Create and share screen recording demos instantly with ScreenLink for free.
+              Create and share screen recording demos instantly with ScreenLink
+              for free
             </p>
             <div
               className="max-w-xs mx-auto sm:max-w-none sm:inline-flex sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4"
@@ -47,14 +49,7 @@ export default function Hero() {
             data-aos="fade-up"
             data-aos-delay="300"
           >
-            <Image
-              className="mx-auto"
-              // src={HeroImage}
-              src={DemoLimk}
-              width={920}
-              height={518}
-              alt="Demo"
-            />
+            <Demo />
           </div>
         </div>
       </div>
