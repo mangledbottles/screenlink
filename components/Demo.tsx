@@ -175,7 +175,7 @@ export const Demo = () => {
                 >
                   <img
                     src={
-                      "https://www.screenlink.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fdemo-link-2.82879da2.png&w=1920&q=75"
+                      "https://cdn.screenlink.io/demo-link-2.webp"
                     }
                     alt={"title"}
                     className="w-full h-auto object-cover rounded-lg hover:scale-105"
