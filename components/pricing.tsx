@@ -69,7 +69,7 @@ export default function Pricing() {
             {/* Starter price */}
             <div className="flex flex-col justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-1 md:order-none md:text-center mt-6 md:mt-0">
               <div className="font-hkgrotesk text-lg font-bold text-indigo-500 mb-0.5">
-                Starter
+                Free Forever
               </div>
               <div>
                 <span className="text-xl font-semibold">€</span>
@@ -139,13 +139,13 @@ export default function Pricing() {
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-1 md:order-none">
               <div className="md:hidden text-slate-200">{usage[0]}</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                10
+                15
               </div>
             </div>
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-2 md:order-none">
               <div className="md:hidden text-slate-200">{usage[0]}</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                300
+                500
               </div>
             </div>
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-3 md:order-none">
@@ -161,19 +161,19 @@ export default function Pricing() {
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 bg-opacity-70 md:border-l border-slate-700 order-1 md:order-none">
               <div className="md:hidden text-slate-200">{usage[1]}</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                5 minutes
+                10 minutes
               </div>
             </div>
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 bg-opacity-70 md:border-l border-slate-700 order-2 md:order-none">
-              <div className="md:hidden text-slate-200">File Storage</div>
+              <div className="md:hidden text-slate-200">{usage[1]}</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                15 minutes
+                30 minutes
               </div>
             </div>
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 bg-opacity-70 md:border-l border-slate-700 order-3 md:order-none">
-              <div className="md:hidden text-slate-200">File Storage</div>
+              <div className="md:hidden text-slate-200">{usage[1]}</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                30 minutes
+                Unlimited
               </div>
             </div>
             {/* Active Users */}

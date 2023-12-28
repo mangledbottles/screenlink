@@ -97,8 +97,8 @@ export default function Faqs() {
                 </h4>
                 <p className="text-slate-500">
                   The free version allows up to{" "}
-                  <span className={"text-indigo-500"}>10 video recordings</span>
-                  , with a maximum duration of 5 minutes per recording and
+                  <span className={"text-indigo-500"}>15 video recordings</span>
+                  , with a maximum duration of 10 minutes per recording and
                   support for one team member.
                 </p>
               </div>
