@@ -115,7 +115,7 @@ export const HeaderAction = () => {
           >
             <GithubIcon className="mr-2 h-4 w-4" /> Star on GitHub
             <Badge variant="secondary" className="ml-2">
-              {formatStarCount(starCount)}
+              {starCount > 0 && formatStarCount(starCount)}
             </Badge>
           </button>
         </a>
