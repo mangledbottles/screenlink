@@ -120,6 +120,8 @@ model User {
   emailVerified    DateTime?
   image            String?
   currentProjectId String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
   accounts         Account[]
   sessions         Session[]
   projects         ProjectUsers[]
