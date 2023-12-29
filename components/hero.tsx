@@ -33,14 +33,6 @@ export default function Hero() {
               <div>
                 <CtaButton styles="btn" />
               </div>
-              <div>
-                <Link
-                  className="btn text-slate-300 bg-slate-700 hover:bg-slate-600 border-slate-600 w-full shadow-sm"
-                  href="/download"
-                >
-                  Download
-                </Link>
-              </div>
             </div>
           </div>
           {/* Hero image */}
