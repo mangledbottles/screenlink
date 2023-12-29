@@ -8,7 +8,7 @@ import "aos/dist/aos.css";
 import Image from "next/image";
 import Header from "@/components/ui/header";
 import Illustration from "@/public/images/hero-illustration.svg";
-import Footer from "@/components/ui/footer";
+import Footer from "@/components/Footer";
 
 export default function DefaultLayout({
   children,
@@ -45,7 +45,7 @@ export default function DefaultLayout({
         {children}
       </main>
 
-      {/* <Footer /> */}
+      <Footer />
     </>
   );
 }

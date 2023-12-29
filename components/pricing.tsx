@@ -18,7 +18,7 @@ export default function Pricing() {
   ];
 
   return (
-    <section className="relative">
+    <section className="relative" id="pricing">
       {/* Illustration */}
       <div
         className="hidden lg:block absolute bottom-0 left-1/2 -translate-x-1/2 -mb-24 pointer-events-none -z-10"
