@@ -136,23 +136,22 @@ export const Demo = () => {
                 <button
                   onClick={startRecording}
                   disabled={isRecording}
-                  className={`w-5/12 h-10 group relative justify-center gap-2 transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2 bg-sky-700 text-white hover:bg-sky-900 border border-transparent hover:border-sky-900 focus:border-sky-500 focus:ring focus:ring-sky-500 rounded-lg ${
+                  className={`w-5/12 md:h-10 sm:h-auto group relative justify-center gap-2 transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2 bg-sky-700 text-white hover:bg-sky-900 border border-transparent hover:border-sky-900 focus:border-sky-500 focus:ring focus:ring-sky-500 rounded-lg ${
                     isRecording &&
                     "bg-red-500 hover:bg-red-600 focus:border-red-400 focus:ring-red-400"
                   }`}
                 >
-                  {isRecording ? (
-                    <div className="flex items-center">
-                      <div className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75 ml-3"></div>
-                      <div className="relative inline-flex rounded-full h-3 w-3 bg-red-400 ml-3"></div>
-                      <span className="text-md ml-3">Recording...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <span className="dark:hidden absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform bg-white opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-60"></span>
+                  <div className="flex items-center justify-center w-full">
+                    {isRecording ? (
+                      <>
+                        <div className="animate-ping inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75 ml-3"></div>
+                        <div className="relative inline-flex rounded-full h-3 w-3 bg-red-400 ml-3"></div>
+                        <span className="text-md ml-3">Recording...</span>
+                      </>
+                    ) : (
                       <span className="text-md ml-2">Start Recording</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </button>
               </div>
             </div>
@@ -174,9 +173,7 @@ export const Demo = () => {
                   style={{ cursor: "pointer" }}
                 >
                   <img
-                    src={
-                      "https://cdn.screenlink.io/demo-link-2.webp"
-                    }
+                    src={"https://cdn.screenlink.io/demo-link-2.webp"}
                     alt={"title"}
                     className="w-full h-auto object-cover rounded-lg hover:scale-105"
                     style={{ aspectRatio: "1920 / 1080" }}
