@@ -144,8 +144,10 @@ export const Demo = () => {
                   <div className="flex items-center justify-center w-full">
                     {isRecording ? (
                       <>
-                        <div className="animate-ping inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75 ml-3"></div>
-                        <div className="relative inline-flex rounded-full h-3 w-3 bg-red-400 ml-3"></div>
+                        <div className="relative flex items-center justify-center">
+                          <div className="absolute h-3 w-3 rounded-full bg-red-400"></div>
+                          <div className="absolute animate-ping h-3 w-3 rounded-full bg-red-400 opacity-75"></div>
+                        </div>
                         <span className="text-md ml-3">Recording...</span>
                       </>
                     ) : (
