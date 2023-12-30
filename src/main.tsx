@@ -8,7 +8,7 @@ import { ThemeProvider } from "./components/theme-provider.tsx";
 // Initialize Sentry with specific configuration
 init({
   // Sentry Data Source Name (DSN)
-  dsn: import.meta.env.REACT_APP_SENTRY_DSN,
+  dsn: "https://03f0433ebb331913be9a44008d1bc6f8@o4506405451464704.ingest.sentry.io/4506405764530176",
   // Sample rate for session replays
   replaysSessionSampleRate: 0.5,
   // Sample rate for error replays
