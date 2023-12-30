@@ -174,11 +174,6 @@ function App() {
           setSelectedSource={setSelectedSource}
         />
       </div>
-      <p className="read-the-docs mb-4">
-        Screenlink is an open-source Loom alternative. Easily record your
-        screen, camera, and microphone; then get an instant shareable link for
-        your recording.
-      </p>
     </>
   );
 }
