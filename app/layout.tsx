@@ -88,7 +88,7 @@ export default function RootLayout({
             src="https://js.stripe.com/v3/pricing-table.js"
             defer={true}
           ></script>
-          <Script defer={true} strategy="lazyOnload">
+          <Script strategy="lazyOnload">
             {`
           var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
           (function(){
@@ -100,6 +100,19 @@ export default function RootLayout({
           s0.parentNode.insertBefore(s1,s0);
           })();
     `}
+          </Script>
+          <Script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=AW-16448683587"
+          />
+          <Script>
+            {`
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-16448683587');
+  `}
           </Script>
         </body>
       </html>
