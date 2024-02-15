@@ -4,10 +4,7 @@ import { getServerSession } from "next-auth";
 // import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import {
-  AiOutlineDownload,
-  AiOutlineVideoCameraAdd,
-} from "react-icons/ai";
+import { AiOutlineDownload, AiOutlineVideoCameraAdd } from "react-icons/ai";
 import TeamSwitcher from "@/components/TeamSwitcher";
 import DashboardStatistics from "@/components/DashboardStatistics";
 import { IconShareUploadButton } from "@/app/(view)/view/[id]/ShareUploadButton";
@@ -35,10 +32,9 @@ export default async function Dashboard() {
     },
   });
 
-  // Filter out videos where there is no playbackId and it's older than 5 minutes
-  videos = videos.filter(video => {
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    return video.playbackId && new Date(video.createdAt) < fiveMinutesAgo;
+  // Filter out videos where there is no playbackId
+  videos = videos.filter((video) => {
+    return video.playbackId;
   });
 
   const projects = await prisma.project.findMany({
