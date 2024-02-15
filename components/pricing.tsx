@@ -89,7 +89,7 @@ export default function Pricing() {
               <div>
                 <span className="text-xl font-semibold">€</span>
                 <span className="text-2xl font-semibold">
-                  {annual ? "80" : "10"}
+                  {annual ? "96" : "10"}
                 </span>
                 <span className="text-sm text-slate-500 font-medium">
                   {annual ? "/yr" : "/mo"} per seat
@@ -104,7 +104,7 @@ export default function Pricing() {
               <div>
                 <span className="text-xl font-semibold">€</span>
                 <span className="text-2xl font-semibold">
-                  {annual ? "130" : "13"}
+                  {annual ? "125" : "13"}
                 </span>
                 <span className="text-sm text-slate-500 font-medium">
                   {annual ? "/yr" : "/mo"} per seat
