@@ -90,7 +90,7 @@ export const Demo = () => {
             <div
               className="flex space-x-2"
               onClick={() => {
-                toast(<DownloadMessage />);
+                downloadToast();
               }}
             >
               <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -112,7 +112,7 @@ export const Demo = () => {
                 <div
                   className="w-5/12 bg-gray-800 text-white py-2 px-4 rounded flex items-center justify-between text-center"
                   onClick={() => {
-                    toast(<DownloadMessage />);
+                    downloadToast();
                   }}
                 >
                   <span className="text-center select-none">
@@ -124,7 +124,7 @@ export const Demo = () => {
                 <div
                   className="w-5/12 bg-gray-800 text-white py-2 px-4 rounded flex items-center justify-between text-center"
                   onClick={() => {
-                    toast(<DownloadMessage />);
+                    downloadToast();
                   }}
                 >
                   <span className="text-center select-none">
@@ -198,19 +198,15 @@ export const Demo = () => {
   );
 };
 
-const DownloadMessage = () => {
-  return (
-    <div className="flex justify-between items-center">
-      <span className="flex-grow mr-1">
-        This is just a demo of the Desktop app, you can't change the source
-      </span>
-      <Link
-        href="/download"
-        className="inline-flex items-center rounded-md bg-black px-3 py-2 text-xs text-white shadow-sm hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 flex-shrink-0"
-      >
-        Download
-      </Link>
-    </div>
+const downloadToast = () => {
+  return toast(
+    `This is just a demo of the Desktop app, you can't change the source`,
+    {
+      action: {
+        label: "Download",
+        onClick: () => (window.location.href = "/download"),
+      },
+    }
   );
 };
 
