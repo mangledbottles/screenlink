@@ -38,8 +38,6 @@ export default async function JoinProjectPage({
     },
   });
 
-  console.log({ project })
-
   if (!project) {
     redirect(`/app`);
   }
@@ -66,7 +64,7 @@ export default async function JoinProjectPage({
     return;
   };
 
-  if(project.projectSeats >= project._count.users) {
+  if(project.projectSeats <= project._count.users) {
     return <NotEnoughSeats projectName={project.name} />
   }
 
