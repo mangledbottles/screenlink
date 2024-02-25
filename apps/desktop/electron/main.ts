@@ -897,6 +897,11 @@ function createWindow() {
   autoUpdater.forceDevUpdateConfig = true;
   autoUpdater.checkForUpdates();
 
+  if (mainWindow) {
+    mainWindow.focus();
+    return;
+  }
+
   const applicationIconPath = path.join(process.env.VITE_PUBLIC, 'apple.icns');
   let applicationIcon = nativeImage.createFromPath(applicationIconPath);
   applicationIcon = applicationIcon.resize({
@@ -1030,39 +1035,81 @@ app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
+    createWindow();
+  } else if (mainWindow) {
+    mainWindow.focus();
   }
 })
 
 // This event will be emitted when your app is opened with a URL that uses your protocol
 app.on('open-url', (event, url) => {
-  try {
-    // Prevent the default behavior
-    event.preventDefault();
-
-    // Parse the URL
-    const parsedUrl = new URL(url);
-    const deviceCode = parsedUrl.host.split('=')[1];
-    // Log the device code
-    console.log(`Device code: ${deviceCode}`);
-    Sentry.captureMessage(`Device code added: ${deviceCode}, parsedUrl: ${JSON.stringify(parsedUrl)}`);
-
-    // Write the device code to a file in the sessionData directory
-    writeFilePromise(deviceCodeFilePath, deviceCode).then(() => {
-      console.log('Device code saved successfully!');
-    });
-
-    // Send the device code to the renderer process
-    if (mainWindow) {
-      mainWindow.webContents.send('device-code', deviceCode);
-    }
-  } catch (error: any) {
-    console.log(error)
-    Sentry.captureException(new Error(`Failed to open url: ${error?.message}`), {
-      tags: { module: "openUrl" },
-      extra: { error }
-    });
-  }
+  event.preventDefault();
+  handleDeepLink(url);
 });
+
+// Windows specific handling for single instance
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // Someone tried to run a second instance, we should focus our window.
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+
+    // Handle deep link for Windows
+    const url = commandLine.find(arg => arg.startsWith('screenlinkDesktop://'));
+    if (url) handleDeepLink(url);
+  });
+
+  // Create mainWindow, load the rest of the app, etc...
+  app.whenReady().then(createWindow);
+}
+
+function handleDeepLink(url: string) {
+  console.log(`Deep link URL: ${url}`);
+  // Parse and handle the deep link URL
+  // For example, extract the deviceCode and do something with it
+  const parsedUrl = new URL(url);
+  const deviceCode = parsedUrl.searchParams.get('deviceCode');
+  console.log(`Device code: ${deviceCode}`);
+
+  // Ensure mainWindow is available and send the device code to it
+  if (mainWindow) {
+    mainWindow.webContents.send('device-code', deviceCode);
+  }
+}
+
+// app.on('open-url', (event, url) => {
+//   try {
+//     // Prevent the default behavior
+//     event.preventDefault();
+
+//     // Parse the URL
+//     const parsedUrl = new URL(url);
+//     const deviceCode = parsedUrl.host.split('=')[1];
+//     // Log the device code
+//     console.log(`Device code: ${deviceCode}`);
+//     Sentry.captureMessage(`Device code added: ${deviceCode}, parsedUrl: ${JSON.stringify(parsedUrl)}`);
+
+//     // Write the device code to a file in the sessionData directory
+//     writeFilePromise(deviceCodeFilePath, deviceCode).then(() => {
+//       console.log('Device code saved successfully!');
+//     });
+
+//     // Send the device code to the renderer process
+//     if (mainWindow) {
+//       mainWindow.webContents.send('device-code', deviceCode);
+//     }
+//   } catch (error: any) {
+//     console.log(error)
+//     Sentry.captureException(new Error(`Failed to open url: ${error?.message}`), {
+//       tags: { module: "openUrl" },
+//       extra: { error }
+//     });
+//   }
+// });
 
 app.whenReady().then(createWindow)
