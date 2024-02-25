@@ -12,22 +12,35 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export const ViewHeader = ({ upload }: { upload: UserUpload }) => {
+import { updateTitle } from "@/actions"; // Adjust the import path as necessary
+import { getSession } from "next-auth/react";
+
+export const ViewHeader = async ({ upload }: { upload: UserUpload }) => {
   const [showEditTitle, setShowEditTitle] = useState(false);
+
+  const session = await getSession();
+  // @ts-ignore
+  const userCanEditTitle = upload.User?.id == session?.user?.id ?? false;
+
   return (
     <header>
       <div className="mx-auto flex items-center justify-between gap-x-8 lg:mx-0 max-w-none mt-8">
         <div className="flex items-center gap-x-6">
           <h1>
-            {!showEditTitle ? (
+            {!showEditTitle || !userCanEditTitle ? (
               <div
-                className="mt-1 text-base font-semibold leading-6 text-gray-200 dark:text-gray-200 cursor-pointer"
-                onClick={() => setShowEditTitle(true)}
+                className={`mt-1 text-base font-semibold leading-6 text-gray-200 dark:text-gray-200 ${
+                  userCanEditTitle ? "cursor-pointer" : ""
+                }`}
+                onClick={() => {
+                  if (userCanEditTitle) setShowEditTitle(true);
+                }}
               >
                 Watch {upload.sourceTitle}
               </div>
             ) : (
               <EditTitle
+                uploadId={upload.id}
                 currentTitle={upload.sourceTitle}
                 setShowEditTitle={setShowEditTitle}
               />
@@ -87,29 +100,89 @@ export const ViewHeader = ({ upload }: { upload: UserUpload }) => {
 };
 
 const EditTitle = ({
+  uploadId,
   currentTitle,
   setShowEditTitle,
 }: {
+  uploadId: string;
   currentTitle: string | null;
   setShowEditTitle: (show: boolean) => void;
 }) => {
-  const handleUpdate = () => {
-    setShowEditTitle(false);
+  const [title, setTitle] = useState(currentTitle ?? "");
+
+  // Handle local state changes, but the actual submission is via the form action
+  const handleLocalUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
   };
+
   return (
-    <div className="flex w-full max-w-sm items-center space-x-2">
+    <form
+      method="post" // Ensure method is POST for server actions
+      action={() => updateTitle({ id: uploadId, newTitle: title })}
+      className="flex w-full max-w-sm items-center space-x-2"
+      onSubmit={() => setShowEditTitle(false)}
+    >
       <Input
-        type="email"
-        id="email"
-        placeholder={""}
-        value={currentTitle ?? ""}
+        name="newTitle"
+        type="text"
+        placeholder="Enter new title"
+        value={title}
+        onChange={handleLocalUpdate}
       />
+      <input type="hidden" name="id" value={uploadId} />
       <Button
-        onClick={handleUpdate}
+        type="submit"
         className="relative inline-flex items-center rounded-md bg-pink-400/10 px-3 py-2 text-sm font-semibold text-pink-400 ring-1 ring-inset ring-pink-400/20 shadow-sm dark:hover:bg-pink-900 hover:bg-pink-900"
       >
         Update
       </Button>
-    </div>
+    </form>
   );
 };
+
+// const EditTitle = ({
+//   uploadId,
+//   currentTitle,
+//   setShowEditTitle,
+// }: {
+//   uploadId: string;
+//   currentTitle: string | null;
+//   setShowEditTitle: (show: boolean) => void;
+// }) => {
+//   const [title, setTitle] = useState(currentTitle ?? "");
+//   const initialState = {
+//     message: null, // Define initial state properties as needed
+//     success: false, // Ensure the initial state matches the expected structure
+//   };
+
+//   const [state, formAction] = useFormState(updateTitle, initialState);
+
+//   const handleUpdate = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     await formAction(new FormData(e.target as HTMLFormElement));
+//     setShowEditTitle(false);
+//   };
+
+//   return (
+//     <form
+//       onSubmit={handleUpdate}
+//       className="flex w-full max-w-sm items-center space-x-2"
+//     >
+//       <Input
+//         name="newTitle"
+//         type="text"
+//         placeholder="Enter new title"
+//         value={title}
+//         onChange={(e) => setTitle(e.target.value)}
+//       />
+//       <input type="hidden" name="id" value={uploadId} />
+//       <Button
+//         type="submit"
+//         className="relative inline-flex items-center rounded-md bg-pink-400/10 px-3 py-2 text-sm font-semibold text-pink-400 ring-1 ring-inset ring-pink-400/20 shadow-sm dark:hover:bg-pink-900 hover:bg-pink-900"
+//       >
+//         Update
+//       </Button>
+//       {state?.success && <p>{JSON.stringify(state)}</p>}
+//     </form>
+//   );
+// };

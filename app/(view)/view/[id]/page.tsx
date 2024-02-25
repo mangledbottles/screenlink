@@ -1,22 +1,15 @@
 import { PrismaClient, Upload, User } from "@prisma/client";
 import Player, { ErrorBanner } from "../Player";
 import { Metadata } from "next";
-import { formatDistanceToNow } from "date-fns";
-import { ShareUploadButton } from "./ShareUploadButton";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { CalendarIcon, PersonIcon } from "@radix-ui/react-icons";
 import Mux, { Upload as MuxUpload } from "@mux/mux-node";
 import { posthog_serverside } from "@/app/utils";
+import { ViewHeader } from "./ViewHeader";
 const { Video } = new Mux(
   process.env.MUX_ACCESS_TOKEN!,
   process.env.MUX_SECRET_KEY!
 );
 
-type UserUpload = Upload & {
+export type UserUpload = Upload & {
   User: User | null;
 };
 
@@ -142,66 +135,3 @@ export default async function View({ params }: { params: { id: string } }) {
     </section>
   );
 }
-
-const ViewHeader = ({ upload }: { upload: UserUpload }) => {
-  return (
-    <header>
-      <div className="mx-auto flex items-center justify-between gap-x-8 lg:mx-0 max-w-none mt-8">
-        <div className="flex items-center gap-x-6">
-          <h1>
-            <div className="mt-1 text-base font-semibold leading-6 text-gray-200 dark:text-gray-200">
-              Watch {upload.sourceTitle}
-            </div>
-            <div className="mt-1 flex flex-col sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-              <div className="mt-2 flex items-center text-sm text-gray-500">
-                <PersonIcon
-                  className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400"
-                  aria-hidden="true"
-                />
-                by {upload.User?.name ?? "Unknown"}
-              </div>
-              <div className="mt-2 flex items-center text-sm text-gray-500">
-                <CalendarIcon
-                  className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400"
-                  aria-hidden="true"
-                />
-                <HoverCard>
-                  <HoverCardTrigger className="cursor-pointer">
-                    {formatDistanceToNow(new Date(upload.createdAt))} ago
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <div className="flex items-center">
-                      <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />{" "}
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(upload.createdAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          }
-                        )}{" "}
-                        at{" "}
-                        {new Date(upload.createdAt).toLocaleTimeString(
-                          "en-US",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          }
-                        )}
-                      </span>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </div>
-            </div>
-          </h1>
-        </div>
-        <div className="flex items-center gap-x-4 sm:gap-x-6">
-          <ShareUploadButton uploadId={upload.id} />
-        </div>
-      </div>
-    </header>
-  );
-};
