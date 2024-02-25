@@ -9,6 +9,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Suspense } from "react";
 import { PHProvider, PostHogPageview } from "./posthogProvider";
 import Script from "next/script";
+import { Metadata } from "next";
+import { TanQueryProvider } from "@/components/TanQueryProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,7 +37,7 @@ const hkgrotesk = localFont({
   display: "swap",
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "ScreenLink",
   description: "Record a screen capture video and share it easily.",
 };
@@ -69,7 +71,9 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              <PHProvider>{children}</PHProvider>
+              <TanQueryProvider>
+                <PHProvider>{children}</PHProvider>
+              </TanQueryProvider>
             </ThemeProvider>
           </div>
           <Suspense>

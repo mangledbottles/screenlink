@@ -2,7 +2,7 @@ import Mux, { Upload } from '@mux/mux-node';
 import { NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
 import { TRANSACTIONAL_EMAIL_FIRST_UPLOAD_TEMPLATE_ID, baseUrl, loops, prisma } from '@/app/utils';
-import { getDevice } from '../utils';
+import { getDevice, getUser } from '../utils';
 import { captureException } from '@sentry/nextjs';
 
 const { Video } = new Mux(process.env.MUX_ACCESS_TOKEN!, process.env.MUX_SECRET_KEY!);
@@ -127,6 +127,65 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
             status: 500,
             body: {
                 error: error?.message || 'Something went wrong'
+            }
+        });
+    }
+}
+
+// Handles GET requests for fetching user uploads with pagination support
+export async function GET(req: NextRequest, res: NextApiResponse) {
+    try {
+        const user = await getUser();
+        // @ts-ignore
+        // If user retrieval fails, respond with an Unauthorized error
+        if (!user.id) return NextResponse.json({ error: "Unauthorized" }, {
+            status: 401
+        })
+
+        // Extracting offset and limit from the query parameters
+        const { searchParams } = new URL(req.url, baseUrl); // Ensure baseUrl is defined appropriately
+        const limit = parseInt(searchParams.get('limit') || '10', 10);
+        const offset = parseInt(searchParams.get('offset') || '0', 10);
+
+        // Fetch a paginated list of uploads for the current user
+        const uploads = await prisma.upload.findMany({
+            where: {
+                // @ts-ignore
+                userId: user?.id,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+            take: limit,
+            skip: offset,
+        });
+
+        // Fetching the total count of uploads for pagination
+        const totalCount = await prisma.upload.count({
+            where: {
+                // @ts-ignore
+                userId: user.id,
+            },
+        });
+
+        if (!uploads) {
+            return NextResponse.json({ error: 'No uploads found' }, {
+                status: 404
+            });
+        }
+        // Respond with the list of uploads and the total count for pagination
+        return NextResponse.json({ uploads, total: totalCount });
+    } catch (error: any) {
+        console.error(error);
+        captureException(new Error(`Fetching Uploads: ${error?.message}`), {
+            data: {
+                error,
+            },
+        });
+        return NextResponse.json({
+            status: 500,
+            body: {
+                error: error?.message || 'Failed to fetch uploads',
             }
         });
     }
