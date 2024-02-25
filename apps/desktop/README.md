@@ -2,8 +2,7 @@
 <h1 align="center">
 <img src="./src/assets/screenlink.svg" width="100" />
 <br>ScreenLink Desktop</h1>
-<h3>◦ ScreenLink is the Open Source Loom Alternative.</h3>
-<h3>◦ Link Your World, Expand Your Screen!</h3>
+
 
 <p align="center">
 <img src="https://img.shields.io/badge/electronbuilder-FFFFFF.svg?style=flat-square&logo=electron-builder&logoColor=black" alt="electronbuilder" />
@@ -40,7 +39,6 @@
   - [🤖 Running screenlink-desktop](#-running-screenlink-desktop)
 - [🤝 Contributing](#-contributing)
     - [*Contributing Guidelines*](#contributing-guidelines)
-- [📄 License](#-license)
 
 ---
 
@@ -50,8 +48,6 @@
 ScreenLink is the Open Source Loom Alternative. Get started at [ScreenLink.io](https://screenlink.io/) or checkout this Github repo!
 
 Screenlink Desktop is an Electron-based desktop application that offers user-friendly screen and webcam recording capabilities. The application provides device code retrieval, updates management, permissions handling, screen recording, webcam handling, and selection of audio and camera sources. Users can additionally manage audio and camera settings conveniently within the app. Written in TypeScript and employing React JS for the frontend, it features efficient linting with ESLint, and uses PostCSS and Tailwind CSS for polished presentation and interactivity, making it a feature-packed solution for screen recording needs.
-
-There is a NextJS web and API Github that manages user accounts, video uploads and the landing page available here: [screenlink-web](https://github.com/mangledbottles/screenlink-web)
 
 ---
 
@@ -148,12 +144,12 @@ There is a NextJS web and API Github that manages user accounts, video uploads a
 
 1. Clone the screenlink-desktop repository:
 ```sh
-git clone https://github.com/mangledbottles/screenlink-desktop
+git clone https://github.com/mangledbottles/screenlink
 ```
 
 2. Change to the project directory:
 ```sh
-cd screenlink-desktop
+cd screenlink/apps/desktop
 ```
 
 3. Install the dependencies:
@@ -211,12 +207,5 @@ Contributions are welcome! Here are several ways you can contribute:
 Once your PR is reviewed and approved, it will be merged into the main branch.
 
 </details>
-
----
-
-## 📄 License
-
-
-This project is protected under the [SELECT-A-LICENSE](https://choosealicense.com/licenses) License. For more details, refer to the [LICENSE](https://choosealicense.com/licenses/) file.
 
 ---
