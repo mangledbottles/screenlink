@@ -91,7 +91,9 @@ interface WithSessionHandler {
 }
 
 export const getSession = async () => {
-    return getServerSession(authOptions) as Promise<Session>;
+    const session = await getServerSession(authOptions) as Session;
+    if(!session?.user) return { user: null } as unknown as Session;
+    return session;
 };
 
 export const withSession =
@@ -127,3 +129,15 @@ export function getOS(): string {
 }
 
 export const TRANSACTIONAL_EMAIL_FIRST_UPLOAD_TEMPLATE_ID = "clqf2tv3800zze3b0y0odpo0b";
+
+export const toUpperCamelCase = (input: string): string => {
+    return input.charAt(0).toUpperCase() + input.slice(1);
+}
+
+export const getAvatarFallbackInitials = (name: string): string => {
+    const nameParts = name.split(' ');
+    if (nameParts.length > 1) {
+      return `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase();
+    }
+    return nameParts[0][0].toUpperCase();
+  }
