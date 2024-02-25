@@ -20,33 +20,18 @@ import {
   CommandSeparator,
 } from "@components/ui/command";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog
 } from "@components/ui/dialog";
-import { Input } from "@components/ui/input";
-import { Label } from "@components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@components/ui/select";
 import { Project } from "@prisma/client";
 import { toast } from "sonner";
 import { Settings, Users } from "lucide-react";
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
+import { signIn } from "next-auth/react";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
@@ -54,17 +39,38 @@ type PopoverTriggerProps = React.ComponentPropsWithoutRef<
 
 interface TeamSwitcherProps extends PopoverTriggerProps {
   projects: Project[];
+  currentProjectId: string;
+  changeProject: (projectId: string) => Promise<void>;
 }
 
 export default function TeamSwitcher({
   className,
   projects,
+  currentProjectId,
+  changeProject,
 }: TeamSwitcherProps) {
   const [open, setOpen] = React.useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = React.useState(false);
   const [selectedProject, setSelectedProject] = React.useState<Project>(
-    projects[0] ?? { id: 0 }
+    projects.find((project) => project.id === currentProjectId) ?? projects[0]
   );
+
+  const handleProjectChange = (project: Project) => {
+    toast.promise(changeProject(project.id), {
+      loading: "Switching project...",
+      success() {
+        setSelectedProject(project);
+        // @ts-ignore
+        signIn(null);
+        return "Project switched. Refreshing page...";
+      },
+      error(errorMessage: string) {
+        return `Failed to switch project ${errorMessage}`;
+      },
+    });
+
+    setOpen(false);
+  };
 
   const CurrentProject = () => {
     return (
@@ -139,13 +145,8 @@ export default function TeamSwitcher({
                   .map((project) => (
                     <CommandItem
                       key={project.id}
-                      onSelect={() => {
-                        setSelectedProject(project);
-                        setOpen(false);
-                        revalidatePath('/app')
-                        // changeProject(project.id);
-                      }}
-                      className="text-sm"
+                      onSelect={() => handleProjectChange(project)}
+                      className="text-sm cursor-pointer"
                     >
                       <Avatar className="mr-2 h-5 w-5">
                         <AvatarImage
@@ -168,8 +169,8 @@ export default function TeamSwitcher({
                   ))}
               </CommandGroup>
             </CommandList>
-            <CommandSeparator />
-            <CommandList>
+            {/* <CommandSeparator /> */}
+            {/* <CommandList>
               <CommandGroup>
                 <DialogTrigger asChild>
                   <CommandItem
@@ -183,11 +184,12 @@ export default function TeamSwitcher({
                   </CommandItem>
                 </DialogTrigger>
               </CommandGroup>
-            </CommandList>
+            </CommandList> */}
           </Command>
         </PopoverContent>
       </Popover>
-      <DialogContent className="p-4">
+      {/* TODO: Add logic to support creating new team */}
+      {/* <DialogContent className="p-4">
         <DialogHeader>
           <DialogTitle>Create team</DialogTitle>
           <DialogDescription>
@@ -243,7 +245,7 @@ export default function TeamSwitcher({
             Continue
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </DialogContent> */}
     </Dialog>
   );
 }

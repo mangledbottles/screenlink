@@ -158,7 +158,7 @@ const Upload = ({ upload }: { upload: Upload }) => {
 
 export const UploadSkeleton = ({ quantity }: { quantity: number }) => {
   return Array.from({ length: quantity }).map((_, i) => (
-    <div className="group animate-pulse">
+    <div className="group animate-pulse" key={i}>
       <div className="relative aspect-w-16 aspect-h-9">
         <div
           className="w-full h-40 bg-gray-300 dark:bg-gray-800"
