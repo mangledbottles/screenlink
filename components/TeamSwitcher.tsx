@@ -45,6 +45,8 @@ import {
 import { Project } from "@prisma/client";
 import { toast } from "sonner";
 import { Settings, Users } from "lucide-react";
+import Link from "next/link";
+import { revalidatePath } from "next/cache";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
@@ -67,45 +69,38 @@ export default function TeamSwitcher({
   const CurrentProject = () => {
     return (
       <CommandGroup key={selectedProject.id}>
-        <CommandItem
-          key={selectedProject.id}
-          className="text-sm hover:bg-inherit"
-          onSelect={() => setOpen(false)}
-        >
-          <Avatar className="mr-2 h-5 w-5">
-            <AvatarImage
-              src={`https://avatar.vercel.sh/${selectedProject.id}.png`}
-              alt={selectedProject.name}
-            />
-            <AvatarFallback>SC</AvatarFallback>
-          </Avatar>
-          {selectedProject.name}{" "}
-          <span className="ml-3 inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30">
-            {selectedProject.plan}
-          </span>
-        </CommandItem>
-        <CommandItem
-          key={"settings"}
-          onSelect={() => {
-            // TODO: Implement settings functionality
-            toast("Project settings coming soon!");
-          }}
-          className="text-sm"
-        >
-          <Settings className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-          Settings
-        </CommandItem>
-        <CommandItem
-          key={"members"}
-          onSelect={() => {
-            // TODO: Implement members functionality
-            toast("Project members coming soon!");
-          }}
-          className="text-sm"
-        >
-          <Users className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-          Members
-        </CommandItem>
+        <Link href={`/app/project/${selectedProject.id}`}>
+          <CommandItem
+            key={selectedProject.id}
+            className="text-sm hover:bg-inherit cursor-pointer"
+            onSelect={() => setOpen(false)}
+          >
+            <Avatar className="mr-2 h-5 w-5">
+              <AvatarImage
+                src={`https://avatar.vercel.sh/${selectedProject.id}.png`}
+                alt={selectedProject.name}
+              />
+              <AvatarFallback>SC</AvatarFallback>
+            </Avatar>
+            {selectedProject.name}{" "}
+            <span className="ml-3 inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30">
+              {selectedProject.plan}
+            </span>
+          </CommandItem>
+        </Link>
+        <Link href={`/app/project/${selectedProject.id}`}>
+          <CommandItem key={"settings"} className="text-sm cursor-pointer">
+            <Settings className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            Settings
+          </CommandItem>
+        </Link>
+
+        <Link href={`/app/project/${selectedProject.id}/members`}>
+          <CommandItem key={"members"} className="text-sm cursor-pointer">
+            <Users className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            Members
+          </CommandItem>
+        </Link>
       </CommandGroup>
     );
   };
@@ -147,6 +142,8 @@ export default function TeamSwitcher({
                       onSelect={() => {
                         setSelectedProject(project);
                         setOpen(false);
+                        revalidatePath('/app')
+                        // changeProject(project.id);
                       }}
                       className="text-sm"
                     >

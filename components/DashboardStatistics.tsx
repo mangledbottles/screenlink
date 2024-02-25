@@ -1,7 +1,7 @@
 import { Card, Metric, Text, Flex, ProgressBar, Grid } from "@tremor/react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Plan, PrismaClient, Project } from "@prisma/client";
+import { Plan, PrismaClient, Project, Role } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
 import { UpgradeButton } from "./UpgradeButton";
@@ -15,6 +15,9 @@ export default async function DashboardStatistics() {
   const project = await prisma.project.findFirst({
     where: {
       id: currentProjectId,
+    },
+    include: {
+      users: true,
     },
   });
 
@@ -39,6 +42,8 @@ export default async function DashboardStatistics() {
   if (!userId || !email || !projectId || !projectPlan)
     return <div>Something went wrong</div>;
 
+  const currentUserRole = project.users.find((user) => user.userId === userId)?.role ?? Role.member;
+
   return (
     <>
       <Grid numItemsSm={2} numItemsLg={2} className="gap-6 mb-4">
@@ -53,7 +58,7 @@ export default async function DashboardStatistics() {
             </span>
           </Metric>
           <Flex className="mt-4">
-            {projectPlan !== "Growth" && (
+            {(currentUserRole == "admin" || currentUserRole == "owner") && projectPlan != "Growth" && (
               <UpgradeButton
                 clientReferenceId={clientReferenceId}
                 email={email}
