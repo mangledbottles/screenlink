@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import crypto from "crypto";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AuthorizeDevice } from "./AuthorizeDevice";
+import { RedirectToDevice } from "./RedirectToDevice";
 
 export default async function Devices(query: {
   searchParams: {
@@ -34,23 +36,10 @@ export default async function Devices(query: {
 
   if (searchParams.deviceCode) {
     const deviceCode = searchParams.deviceCode;
-    redirect(`screenlinkDesktop://deviceCode=${deviceCode}`);
-    return (
-      <section className="relative">
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 mt-20">
-          <div className="bg-white shadow sm:rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <p className="mt-6 text-lg leading-8 text-gray-600">
-                Success! You can now close this window and return to the desktop
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
+    return <RedirectToDevice deviceCode={deviceCode} />;
   }
 
-  const confirmDevice = async () => {
+  const confirmDevice = async (): Promise<void> => {
     "use server";
     console.log("confirmDevice");
     const session = await getServerSession(authOptions);
@@ -64,7 +53,7 @@ export default async function Devices(query: {
     if (!user) {
       // Handle the case where the user does not exist
       console.error(`User with ID ${userId} not found`);
-      return;
+      throw new Error("User not found");
     }
 
     const deviceCode = crypto.randomBytes(20).toString("hex");
@@ -81,29 +70,20 @@ export default async function Devices(query: {
     });
     // Redirect to the same page with deviceCode in the URL
     redirect(`/app/devices/new?deviceCode=${deviceCode}`);
+    // return { deviceCode };
   };
 
   return (
     <section className="relative">
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 mt-20">
-        <div className="bg-white shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h2 className="mt-10 text-2xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              Login to a new device
-            </h2>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
+      <div className="relative max-w-6xl mx-auto">
+        <div className="bg-[#0E131D] shadow sm:rounded-lg">
+          <div className="sm:p-6">
+            <p className="text-lg leading-8 text-gray-400">
               You are logging in from a new device ({device ?? "Device"}).
               Please confirm that this is you.
             </p>
             <div className="mt-5 flex justify-start space-x-2">
-              <form action={confirmDevice}>
-                <button
-                  className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-                  type="submit"
-                >
-                  Yes! Log me in
-                </button>
-              </form>
+              <AuthorizeDevice confirmDevice={confirmDevice} />
               <Link href="/">
                 <button
                   type="button"
