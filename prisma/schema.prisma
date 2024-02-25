@@ -80,7 +80,7 @@ model Project {
   name              String         @default("My Project")
   users             ProjectUsers[]
   uploads           Upload[]
-  monthlyUploads    Int            @default(1000)
+  monthlyUploads    Int            @default(15)
   startDate         DateTime       @default(now())
   billingCycleStart Int? // The day of the month the billing cycle starts
   isActive          Boolean        @default(true)
@@ -90,12 +90,15 @@ model Project {
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   billingAdminId    String? // The user who is responsible for billing
+  projectSeats      Int            @default(1) // The number of seats in the project
+  invitationCode    String?        @unique @default(cuid())
 
   @@index([id])
 }
 
 enum Role {
   owner
+  admin
   member
 }
 
