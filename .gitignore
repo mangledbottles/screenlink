@@ -41,6 +41,8 @@ release
 *.pem
 *.tsbuildinfo
 next-env.d.ts
+.vscode
+.cursorignore
 
 # Debug logs
 .pnpm-debug.log*
