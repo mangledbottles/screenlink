@@ -27,7 +27,6 @@ export default function CameraSources({
         await window.electron.setPermissionsMissing(true);
       }
     };
-
     getDevices();
   }, []);
 

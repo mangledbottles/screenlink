@@ -52,5 +52,7 @@ export const Webcam = ({}) => {
 
   if (!cameraSource) return null;
 
-  return <video ref={videoRef} autoPlay />;
+  return (
+    <video ref={videoRef} autoPlay style={{ width: "100%", height: "100%" }} />
+  );
 };

@@ -79,7 +79,16 @@ export const Floating = () => {
   });
 
   return (
-    <div className="m-0 p-0 w-screen h-screen flex justify-center items-center bg-white dark:bg-gray-800">
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+      className="m-0 p-0 bg-white dark:bg-gray-800 overflow-hidden"
+    >
       <div className="divide-y divide-gray-300 dark:divide-gray-600 rounded-md shadow-md md:flex md:divide-y-0 bg-gray-50 dark:bg-gray-700">
         <button
           className="group flex w-full items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600"
