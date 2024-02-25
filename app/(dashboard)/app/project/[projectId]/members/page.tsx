@@ -13,8 +13,6 @@ export default async function Team({
     redirect("/signin?redirect=/app");
   }
 
-  console.log({ session });
-
   const projectUsers = await prisma.projectUsers.findMany({
     where: {
       projectId: params.projectId,

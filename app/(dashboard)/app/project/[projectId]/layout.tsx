@@ -1,5 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarNav } from "./SideBar";
+import { getSession, prisma } from "@/app/utils";
+import { redirect } from "next/navigation";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -8,7 +10,7 @@ interface SettingsLayoutProps {
   };
 }
 
-export default function SettingsLayout({
+export default async function SettingsLayout({
   children,
   params,
 }: SettingsLayoutProps) {
@@ -27,6 +29,20 @@ export default function SettingsLayout({
       href: `/app/project/${projectId}/billing`,
     },
   ];
+
+  const session = await getSession();
+  const userInProject = await prisma.projectUsers.findUnique({
+    where: {
+      userId_projectId: {
+        userId: session.user.id,
+        projectId: projectId,
+      },
+    },
+  });
+
+  if (!userInProject) {
+    redirect('/app')
+  }
 
   return (
     <>
