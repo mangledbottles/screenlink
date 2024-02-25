@@ -11,6 +11,8 @@ lerna-debug.log*
 /node_modules
 /.pnp
 .pnp.js
+**/node_modules/
+
 
 # Testing
 /coverage
@@ -61,3 +63,4 @@ next-env.d.ts
 .sentryclirc
 
 .env
+
