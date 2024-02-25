@@ -7,13 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Build directories
 dist
 dist-ssr
 dist-electron
 release
+/build
+
+# Local environment overrides
 *.local
-.env
+.env*.local
 
 # Editor directories and files
 .vscode/*
@@ -25,3 +36,28 @@ release
 *.njsproj
 *.sln
 *.sw?
+
+# Misc & OS generated files
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+.vscode
+.cursorignore
+
+# Debug logs
+.pnpm-debug.log*
+
+# Vercel
+.vercel
+
+# Framework-specific
+.next/
+/out/
+
+# Contentlayer
+.contentlayer
+
+# Sentry Config File
+.sentryclirc
+
+.env
