@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
+import { AcceptInvite } from "./AcceptInvite";
+import { NotEnoughSeats } from "./NotEnoughSeats";
 
 export default async function JoinProjectPage({
   params,
@@ -24,7 +26,19 @@ export default async function JoinProjectPage({
         },
       },
     },
+    select: {
+      id: true,
+      projectSeats: true,
+      name: true,
+      _count: {
+        select: {
+          users: true,
+        },
+      },
+    },
   });
+
+  console.log({ project })
 
   if (!project) {
     redirect(`/app`);
@@ -32,27 +46,31 @@ export default async function JoinProjectPage({
 
   const handleAcceptInvite = async () => {
     "use server";
-    await toast.promise(
-      prisma.projectUsers.create({
-        data: {
-          userId: session.user.id,
-          role: Role.member,
-          projectId: project.id,
-        },
-      }),
-      {
-        loading: "Joining project...",
-        success: "Successfully joined the project!",
-        error: "Failed to join the project.",
-      }
-    );
+    await prisma.projectUsers.create({
+      data: {
+        userId: session.user.id,
+        role: Role.member,
+        projectId: project.id,
+      },
+    });
 
-    redirect(`/app/project/${project.id}`);
+    await prisma.user.update({
+      data: {
+        currentProjectId: project.id,
+      },
+      where: {
+        id: session.user.id,
+      },
+    });
+
+    return;
   };
 
+  if(project.projectSeats >= project._count.users) {
+    return <NotEnoughSeats projectName={project.name} />
+  }
+
   return (
-    <form action={handleAcceptInvite}>
-      <Button type="submit">Join project</Button>
-    </form>
+    <AcceptInvite handleAcceptInvite={handleAcceptInvite} projectId={project.id} />
   );
 }
