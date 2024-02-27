@@ -970,13 +970,29 @@ function createWindow() {
   }
 
   // Auto Updater
-  autoUpdater.on('update-available', () => {
-    mainWindow?.webContents.send('set-window', 'update', 'Update available.');
+  let forcedUpdate = false;
+
+  autoUpdater.on('update-available', (updateInfo) => {
+    // If release is required, force the update
+    const isForcedUpdateRequired = /\[REQUIRED\]/.test(updateInfo.releaseName || "");
+    if (isForcedUpdateRequired) {
+      forcedUpdate = true;
+      mainWindow?.webContents.send('set-window', 'update', 'Update available.');
+    }
+    logger.info('Update available. Downloading...');
   })
+
   autoUpdater.on('error', (err) => {
-    mainWindow?.webContents.send('set-window', 'update', 'Error in auto-updater. You may need to reinstall ScreenLink. \n Contact support if this continues. \n' + err);
+    Sentry.captureException(err, {
+      tags: { module: "autoUpdater", forcedUpdate },
+      extra: { error: err }
+    });
+    if (!forcedUpdate) return;
+    mainWindow?.webContents.send('set-window', 'update', 'Error in auto-updater. You may need to reinstall ScreenLink. \n Contact support if this continues (support@screenlink.io) \n \n \n' + err);
   })
+
   autoUpdater.on('download-progress', (progressObj) => {
+    if (!forcedUpdate) return;
     let downloadSpeedInMBps = (progressObj.bytesPerSecond / (1024 * 1024)).toFixed(2);
     let transferredInMB = (progressObj.transferred / (1024 * 1024)).toFixed(2);
     let totalInMB = (progressObj.total / (1024 * 1024)).toFixed(2);
@@ -985,9 +1001,31 @@ function createWindow() {
     log_message = log_message + ' (' + transferredInMB + "MB/" + totalInMB + 'MB)';
     mainWindow?.webContents.send('set-window', 'update', log_message);
   })
+
   autoUpdater.on('update-downloaded', () => {
-    mainWindow?.webContents.send('set-window', 'main');
+    if (forcedUpdate) {
+      autoUpdater.quitAndInstall();
+    } else {
+
+      // Prompt user to install the update
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Update Ready',
+        message: 'New version downloaded. Install now?',
+        buttons: ['Yes', 'Later']
+      }).then(result => {
+        // If user agrees, quit and install the update
+        if (result.response === 0) {
+          autoUpdater.quitAndInstall();
+        }
+      }).catch(error => {
+        logger.error('Error prompting update installation:', error);
+        Sentry.captureException(error);
+      });
+    }
   });
+
+
 
   const iconPath = path.join(process.env.VITE_PUBLIC, 'tray-icon.png');
   let icon = nativeImage.createFromPath(iconPath);
