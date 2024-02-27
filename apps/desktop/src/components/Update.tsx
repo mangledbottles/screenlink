@@ -14,12 +14,12 @@ export default function Update({ updateMessage }: { updateMessage: string }) {
             alt="ScreenLink"
           />
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-300">
-            ScreenLink Update
+            Required ScreenLink Update
           </h2>
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <p className="mt-10 text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-gray-500">
             {updateMessage}
           </p>
         </div>
