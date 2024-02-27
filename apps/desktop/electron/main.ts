@@ -587,6 +587,9 @@ const getAccount = async (): Promise<Account | null> => {
       return null;
     }
 
+    // Reload webcam window
+    webcamWindow?.reload();
+
     // Write the response to userAccountFilePath
     await writeFilePromise(userAccountFilePath, JSON.stringify({ ...device, lastUpdated: new Date() }));
 
