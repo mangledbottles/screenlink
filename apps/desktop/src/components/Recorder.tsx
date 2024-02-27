@@ -244,18 +244,20 @@ export function Recorder({
           setAudioStream(audioStream);
 
           // Capture the camera stream
-          const cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: cameraSource?.deviceId,
-              width: 240,
-              height: 180,
-              aspectRatio: 1,
-              facingMode: "user",
-              frameRate: 60,
-            },
-            audio: false,
-          });
-          setCameraStream(cameraStream);
+          if (cameraSource) {
+            const cameraStream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: cameraSource?.deviceId,
+                width: 240,
+                height: 180,
+                aspectRatio: 1,
+                facingMode: "user",
+                frameRate: 60,
+              },
+              audio: false,
+            });
+            setCameraStream(cameraStream);
+          }
 
           const combinedStream = new MediaStream([
             screenStream.getVideoTracks()[0],
@@ -274,7 +276,11 @@ export function Recorder({
             videoRef.current.srcObject = screenStream;
 
           // Entire screen and a camera is selected
-          if (selectedSource.sourceType === "window" && cameraSource) {
+          if (
+            selectedSource.sourceType === "window" &&
+            cameraSource &&
+            cameraStream
+          ) {
             const cameraRecorder = new MediaRecorder(cameraStream, {
               mimeType: "video/webm; codecs=vp9,opus",
             });
