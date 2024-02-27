@@ -1052,7 +1052,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
+  app.on('second-instance', (_event, commandLine, _workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
@@ -1069,47 +1069,31 @@ if (!gotTheLock) {
 }
 
 function handleDeepLink(url: string) {
-  console.log(`Deep link URL: ${url}`);
-  // Parse and handle the deep link URL
-  // For example, extract the deviceCode and do something with it
-  const parsedUrl = new URL(url);
-  const deviceCode = parsedUrl.searchParams.get('deviceCode');
-  console.log(`Device code: ${deviceCode}`);
+  try {
+    console.log(`Deep link URL: ${url}`);
+    // Parse and handle the deep link URL
+    const parsedUrl = new URL(url);
+    const deviceCode = parsedUrl.host.split('=')[1];
+    console.log(`Device code: ${deviceCode}`);
 
-  // Ensure mainWindow is available and send the device code to it
-  if (mainWindow) {
-    mainWindow.webContents.send('device-code', deviceCode);
+    Sentry.captureMessage(`Device code added: ${deviceCode}, parsedUrl: ${JSON.stringify(parsedUrl)}`);
+
+    // Write the device code to a file in the sessionData directory
+    writeFilePromise(deviceCodeFilePath, deviceCode).then(() => {
+      console.log('Device code saved successfully!');
+    });
+
+    // Send the device code to the renderer process
+    if (mainWindow) {
+      mainWindow.webContents.send('device-code', deviceCode);
+    }
+  } catch (error: any) {
+    console.log(error)
+    Sentry.captureException(new Error(`Failed to handle deep link: ${error?.message}`), {
+      tags: { module: "handleDeepLink" },
+      extra: { error, url }
+    });
   }
 }
-
-// app.on('open-url', (event, url) => {
-//   try {
-//     // Prevent the default behavior
-//     event.preventDefault();
-
-//     // Parse the URL
-//     const parsedUrl = new URL(url);
-//     const deviceCode = parsedUrl.host.split('=')[1];
-//     // Log the device code
-//     console.log(`Device code: ${deviceCode}`);
-//     Sentry.captureMessage(`Device code added: ${deviceCode}, parsedUrl: ${JSON.stringify(parsedUrl)}`);
-
-//     // Write the device code to a file in the sessionData directory
-//     writeFilePromise(deviceCodeFilePath, deviceCode).then(() => {
-//       console.log('Device code saved successfully!');
-//     });
-
-//     // Send the device code to the renderer process
-//     if (mainWindow) {
-//       mainWindow.webContents.send('device-code', deviceCode);
-//     }
-//   } catch (error: any) {
-//     console.log(error)
-//     Sentry.captureException(new Error(`Failed to open url: ${error?.message}`), {
-//       tags: { module: "openUrl" },
-//       extra: { error }
-//     });
-//   }
-// });
 
 app.whenReady().then(createWindow)
