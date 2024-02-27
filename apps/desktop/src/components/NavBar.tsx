@@ -27,6 +27,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { useTheme } from "./theme-provider";
+import { ExternalLink } from "lucide-react";
 
 export function NavBar() {
   const [account, setAccount] = useState<Account | null>(null);
@@ -85,7 +86,7 @@ export function NavBar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
+              <DropdownMenuLabel className="font-normal select-none">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
                     {account?.user?.name}
@@ -101,15 +102,20 @@ export function NavBar() {
                   onClick={() => {
                     window.electron.openInBrowser("https://screenlink.io/app");
                   }}
+                  className={"cursor-pointer"}
                 >
-                  Recordings
+                  Recordings <ExternalLink className="h-4 w-4 inline ml-1" />
                 </DropdownMenuItem>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
+                  <DropdownMenuItem className={"cursor-pointer"}>
+                    Settings
+                  </DropdownMenuItem>
                 </DialogTrigger>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
+              <DropdownMenuItem onClick={logout} className={"cursor-pointer"}>
+                Log out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DialogContent>
