@@ -234,14 +234,16 @@ export function Recorder({
           });
           setScreenStream(screenStream);
 
-          const audioStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              deviceId: audioSource?.deviceId,
-              echoCancellation: true,
-              noiseSuppression: true,
-            },
-          });
-          setAudioStream(audioStream);
+          if (audioSource) {
+            const audioStream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                deviceId: audioSource?.deviceId,
+                echoCancellation: true,
+                noiseSuppression: true,
+              },
+            });
+            setAudioStream(audioStream);
+          }
 
           // Capture the camera stream
           if (cameraSource) {
@@ -262,7 +264,7 @@ export function Recorder({
           const combinedStream = new MediaStream([
             screenStream.getVideoTracks()[0],
           ]);
-          if (audioSource) {
+          if (audioSource && audioStream) {
             combinedStream.addTrack(audioStream.getAudioTracks()[0]);
           }
 
