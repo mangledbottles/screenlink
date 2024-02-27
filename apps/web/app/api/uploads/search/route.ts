@@ -1,8 +1,8 @@
-import { NextApiResponse, NextApiRequest } from 'next';
+import { NextApiResponse } from 'next';
 import { prisma } from '@/app/utils';
 import { getUser } from '../../utils';
 import { captureException } from '@sentry/nextjs';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod'; // Import Zod
 import { Role } from '@prisma/client';
 
@@ -15,7 +15,7 @@ const requestBodySchema = z.object({
 });
 
 // Handles POST requests for fetching user uploads with pagination and filtering support
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(req: NextRequest, res: NextApiResponse) {
     try {
         // console.log(req.body)
         const body = await new Response(req.body).json();
