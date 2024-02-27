@@ -7,6 +7,10 @@ import { ArrowDownIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useRef, useState } from "react";
 import { AiOutlineDownload, AiOutlineVideoCameraAdd } from "react-icons/ai";
+import { Filter } from "./Filter";
+import { Role } from "@prisma/client";
+import { toast } from "sonner";
+import { queryClient } from "@/components/TanQueryProvider";
 
 interface Upload {
   id: string;
@@ -25,10 +29,65 @@ interface Upload {
   deviceId: string;
 }
 
-const fetchUploads = async ({ pageParam = { offset: 0, limit: 10 } }) => {
+interface Filters {
+  authorIds: string[];
+}
+interface UploadsProps {
+  projectId: string;
+  projectUsers: {
+    id: string;
+    name: string;
+    role: Role;
+  }[];
+  currentUserId: string;
+  isUserOwner: boolean;
+}
+
+interface FetchUploadsType {
+  pageParam: { offset: number; limit: number };
+  projectId: string;
+  authorIds?: string[] | null;
+}
+
+const fetchUploads = async ({
+  pageParam = { offset: 0, limit: 10 },
+  projectId,
+  authorIds,
+}: FetchUploadsType) => {
   const { offset, limit } = pageParam;
-  const res = await fetch(`/api/uploads?offset=${offset}&limit=${limit}`);
-  if (!res.ok) throw new Error("Network response was not ok");
+  // Prepare the request body
+  const requestBody = {
+    offset,
+    limit,
+    projectId,
+    authorIds, // Ensure this matches the expected API parameter for author IDs
+  };
+  const res = await fetch(`/api/uploads/search`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    const errorMessage = error.error ?? error.message ?? "Could not filter.";
+    console.log({ error, errorMessage });
+
+    if (res.status === 403) {
+      // If a 403 error is encountered, cancel future refetches for this query
+      queryClient.cancelQueries({
+        queryKey: ["uploads", projectId, authorIds],
+      });
+      // Set a specific state in your query data to indicate a 403 error was encountered. Allows your UI to react accordingly
+      queryClient.setQueryData(["uploads", projectId, authorIds], {
+        error: "Forbidden",
+      });
+    }
+
+    toast.error(`${errorMessage}`);
+    throw new Error("Network response was not ok");
+  }
   const data = (await res.json()) as { uploads: Upload[]; total: number };
   const hasMore = offset + limit < data.total;
   return {
@@ -37,13 +96,21 @@ const fetchUploads = async ({ pageParam = { offset: 0, limit: 10 } }) => {
   };
 };
 
-export default function Uploads() {
+export default function Uploads({
+  projectId,
+  projectUsers,
+  currentUserId,
+  isUserOwner,
+}: UploadsProps) {
+  const [filters, setFilters] = useState<Filters>({ authorIds: [] });
+
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
     useInfiniteQuery({
-      queryKey: ["uploads"],
-      queryFn: fetchUploads,
+      queryKey: ["uploads", projectId, filters.authorIds],
+      queryFn: ({ pageParam }) =>
+        fetchUploads({ pageParam, projectId, authorIds: filters.authorIds }),
       getNextPageParam: (lastPage) => lastPage.nextPage,
-      initialPageParam: undefined,
+      initialPageParam: { offset: 0, limit: 10 },
     });
 
   const observer = useRef<IntersectionObserver>();
@@ -65,14 +132,28 @@ export default function Uploads() {
   const allUploads = data?.pages.flatMap((page) => page.uploads) || [];
 
   return (
-    <main className="flex-1 p-4 rounded overflow-hidden">
+    <main className="flex-1 p-2 rounded overflow-hidden">
+      {isUserOwner && (
+        <div className="flex flex-1 items-center space-x-2 pb-2">
+          <Filter
+            title="Created By"
+            options={projectUsers.map((user) => ({
+              label: user.name,
+              value: user.id,
+            }))}
+            onChange={(value: string[]) => setFilters({ authorIds: value })}
+            defaultValue={[currentUserId]}
+          />
+        </div>
+      )}
+
       {!isFetchingNextPage && !isFetching && allUploads.length === 0 && (
         <NoUploads />
       )}
       <div className="grid grid-cols-3 gap-4">
-        {allUploads.map((upload) => (
-          upload && <Upload upload={upload} key={upload.id} />
-        ))}
+        {allUploads.map(
+          (upload) => upload && <Upload upload={upload} key={upload.id} />
+        )}
         {(isFetchingNextPage || isFetching) && <UploadSkeleton quantity={10} />}
       </div>
 

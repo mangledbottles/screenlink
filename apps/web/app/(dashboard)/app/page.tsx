@@ -1,5 +1,5 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
-import { PrismaClient } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
@@ -58,6 +58,39 @@ export default async function Dashboard() {
     return;
   };
 
+  const isUserOwner = !!(await prisma.projectUsers.findFirst({
+    where: {
+      projectId: currentProjectId,
+      userId,
+      role: Role.owner,
+    },
+  })) ?? false;
+
+  const projectUsers = isUserOwner
+    ? await prisma.projectUsers
+        .findMany({
+          where: {
+            projectId: currentProjectId,
+          },
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        })
+        .then((users) => {
+          return users.map((user) => {
+            return {
+              id: user.userId,
+              name: user.user?.name || "",
+              role: user.role,
+            };
+          });
+        })
+    : [];
+
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -74,11 +107,16 @@ export default async function Dashboard() {
             className="flex flex-col rounded overflow-hidden bg-slate-800 bg-opacity-60 "
           >
             <header className="rounded overflow-hidden">
-              <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
+              <div className="max-w-7xl mx-auto flex items-center justify-between px-4 pt-4">
                 <h1 className="text-md font-semibold">Video Library</h1>
               </div>
             </header>
-            <Uploads />
+            <Uploads
+              projectId={currentProjectId}
+              projectUsers={projectUsers}
+              currentUserId={userId}
+              isUserOwner={isUserOwner}
+            />
           </div>
         </div>
       </div>
