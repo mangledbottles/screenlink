@@ -1,10 +1,19 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-// import { getSession } from "next-auth/react";
+import { PostHog } from 'posthog-node';
+import { authOptions } from "./api/auth/[...nextauth]/AuthOptions";
+import { PrismaClient } from "@prisma/client";
+
 type OpenGraphType = "article" | "website" | "book" | "profile" | "music.song" | "music.album" | "music.playlist" | "music.radio_station" | "video.movie" | "video.episode" | "video.tv_show" | "video.other";
 
-import { PrismaClient } from '@prisma/client'
-export const prisma = new PrismaClient()
+
+// Singleton pattern for Prisma Client
+let prisma: PrismaClient;
+if (!global.prisma) {
+    global.prisma = new PrismaClient();
+}
+prisma = global.prisma;
+export { prisma };
 
 import LoopsClient from "loops";
 export const loops = new LoopsClient(process.env.LOOPS_API_KEY!);
@@ -48,9 +57,6 @@ export function constructMetadata({
 
 }
 
-import { PostHog } from 'posthog-node';
-import { authOptions } from "./api/auth/[...nextauth]/AuthOptions";
-
 export const posthog_serverside = new PostHog(
     process.env.NEXT_PUBLIC_POSTHOG_KEY!,
     { host: process.env.NEXT_PUBLIC_POSTHOG_HOST },
@@ -92,7 +98,7 @@ interface WithSessionHandler {
 
 export const getSession = async () => {
     const session = await getServerSession(authOptions) as Session;
-    if(!session?.user) return { user: null } as unknown as Session;
+    if (!session?.user) return { user: null } as unknown as Session;
     return session;
 };
 
@@ -137,7 +143,7 @@ export const toUpperCamelCase = (input: string): string => {
 export const getAvatarFallbackInitials = (name: string): string => {
     const nameParts = name.split(' ');
     if (nameParts.length > 1) {
-      return `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase();
+        return `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase();
     }
     return nameParts[0][0].toUpperCase();
-  }
+}
