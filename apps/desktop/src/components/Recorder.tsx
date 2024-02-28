@@ -234,37 +234,33 @@ export function Recorder({
           });
           setScreenStream(screenStream);
 
-          if (audioSource) {
-            const audioStream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                deviceId: audioSource?.deviceId,
-                echoCancellation: true,
-                noiseSuppression: true,
-              },
-            });
-            setAudioStream(audioStream);
-          }
+          const audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              deviceId: audioSource?.deviceId,
+              echoCancellation: true,
+              noiseSuppression: true,
+            },
+          });
+          setAudioStream(audioStream);
 
           // Capture the camera stream
-          if (cameraSource) {
-            const cameraStream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                deviceId: cameraSource?.deviceId,
-                width: 240,
-                height: 180,
-                aspectRatio: 1,
-                facingMode: "user",
-                frameRate: 60,
-              },
-              audio: false,
-            });
-            setCameraStream(cameraStream);
-          }
+          const cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: cameraSource?.deviceId,
+              width: 240,
+              height: 180,
+              aspectRatio: 1,
+              facingMode: "user",
+              frameRate: 60,
+            },
+            audio: false,
+          });
+          setCameraStream(cameraStream);
 
           const combinedStream = new MediaStream([
             screenStream.getVideoTracks()[0],
           ]);
-          if (audioSource && audioStream) {
+          if (audioSource) {
             combinedStream.addTrack(audioStream.getAudioTracks()[0]);
           }
 
@@ -278,11 +274,7 @@ export function Recorder({
             videoRef.current.srcObject = screenStream;
 
           // Entire screen and a camera is selected
-          if (
-            selectedSource.sourceType === "window" &&
-            cameraSource &&
-            cameraStream
-          ) {
+          if (selectedSource.sourceType === "window" && cameraSource) {
             const cameraRecorder = new MediaRecorder(cameraStream, {
               mimeType: "video/webm; codecs=vp9,opus",
             });
