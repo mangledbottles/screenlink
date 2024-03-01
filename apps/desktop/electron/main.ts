@@ -915,6 +915,8 @@ function createWindow() {
 
   mainWindow = new BrowserWindow({
     icon: applicationIconPath,
+    title: 'ScreenLink',
+    vibrancy: 'ultra-dark',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
