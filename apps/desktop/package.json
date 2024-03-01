@@ -5,9 +5,11 @@
   "author": "Screenlink",
   "description": "Screenlink Desktop",
   "scripts": {
-    "dev": "NODE_ENV=development vite",
-    "build": "tsc && vite build && electron-builder -mwl",
-    "build:mac": "tsc && vite build && electron-builder -m",
+    "dev": "cross-env NODE_ENV=development vite",
+    "build": "cross-env NODE_ENV=production vite build && electron-builder -mwl",
+    "build:mac": "cross-env NODE_ENV=production vite build && electron-builder -m",
+    "build:windows": "cross-env NODE_ENV=production vite build && electron-builder -w",
+    "build:linux": "cross-env NODE_ENV=production vite build && electron-builder -l",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -60,6 +62,7 @@
     "@typescript-eslint/parser": "^6.6.0",
     "@vitejs/plugin-react": "^4.0.4",
     "autoprefixer": "^10.4.16",
+    "cross-env": "^7.0.3",
     "electron": "^26.1.0",
     "electron-builder": "^24.6.4",
     "eslint": "^8.48.0",
