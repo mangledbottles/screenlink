@@ -31,17 +31,20 @@ export default async function SettingsLayout({
   ];
 
   const session = await getSession();
+  const userId = session?.user?.id;
+  if (!userId) redirect(`/signin?redirect=/app/project/${projectId}`);
+
   const userInProject = await prisma.projectUsers.findUnique({
     where: {
       userId_projectId: {
-        userId: session.user.id,
+        userId: userId,
         projectId: projectId,
       },
     },
   });
 
   if (!userInProject) {
-    redirect('/app')
+    redirect("/app");
   }
 
   return (

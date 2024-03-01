@@ -1,4 +1,4 @@
-import { prisma } from "@/app/utils";
+import { getSession, prisma } from "@/app/utils";
 import { redirect } from "next/navigation";
 
 interface SettingsLayoutProps {
@@ -12,6 +12,11 @@ export default async function SettingsLayout({
   children,
   params,
 }: SettingsLayoutProps) {
+  const session = await getSession();
+  if (!session?.user) {
+    redirect(`/signin?redirect=/app/project/join/${params.invitationCode}`);
+  }
+
   const invitationCode = params.invitationCode;
   const project = await prisma.project.findUnique({
     where: {

@@ -12,9 +12,6 @@ export default async function JoinProjectPage({
   params: { invitationCode: string };
 }) {
   const session = await getSession();
-  if (!session.user) {
-    redirect(`/signin?redirect=/app/project/join/${params.invitationCode}`);
-  }
   const invitationCode = params.invitationCode;
 
   const project = await prisma.project.findUnique({
@@ -22,7 +19,7 @@ export default async function JoinProjectPage({
       invitationCode: invitationCode,
       users: {
         none: {
-          userId: session.user.id,
+          userId: session?.user?.id,
         },
       },
     },

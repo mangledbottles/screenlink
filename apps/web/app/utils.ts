@@ -97,9 +97,13 @@ interface WithSessionHandler {
 }
 
 export const getSession = async () => {
+    try {
     const session = await getServerSession(authOptions) as Session;
     if (!session?.user) return { user: null } as unknown as Session;
     return session;
+    } catch(error) {
+        return { user: null } as unknown as Session;
+    }
 };
 
 export const withSession =
