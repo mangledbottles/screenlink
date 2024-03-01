@@ -243,19 +243,25 @@ export function Recorder({
           });
           setAudioStream(audioStream);
 
+          let localCameraStream: MediaStream | null = null;
           // Capture the camera stream
-          const cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: cameraSource?.deviceId,
-              width: 240,
-              height: 180,
-              aspectRatio: 1,
-              facingMode: "user",
-              frameRate: 60,
-            },
-            audio: false,
-          });
-          setCameraStream(cameraStream);
+          if (cameraSource) {
+            const cameraStream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: cameraSource?.deviceId,
+                width: 240,
+                height: 180,
+                aspectRatio: 1,
+                facingMode: "user",
+                frameRate: 60,
+              },
+              audio: false,
+            });
+            localCameraStream = cameraStream;
+            setCameraStream(cameraStream);
+          } else {
+            setCameraStream(null);
+          }
 
           const combinedStream = new MediaStream([
             screenStream.getVideoTracks()[0],
@@ -274,8 +280,12 @@ export function Recorder({
             videoRef.current.srcObject = screenStream;
 
           // Entire screen and a camera is selected
-          if (selectedSource.sourceType === "window" && cameraSource) {
-            const cameraRecorder = new MediaRecorder(cameraStream, {
+          if (
+            selectedSource.sourceType === "window" &&
+            cameraSource &&
+            localCameraStream
+          ) {
+            const cameraRecorder = new MediaRecorder(localCameraStream, {
               mimeType: "video/webm; codecs=vp9,opus",
             });
 
@@ -308,7 +318,8 @@ export function Recorder({
             // Entire screen is selected
             selectedSource.sourceType === "screen" ||
             // Specific window is selected, but no camera
-            (selectedSource.sourceType === "window" && !cameraSource)
+            (selectedSource.sourceType === "window" && !cameraSource) ||
+            !localCameraStream
           ) {
             setScreenMedia(screenRecorder);
             screenRecorder.start();
