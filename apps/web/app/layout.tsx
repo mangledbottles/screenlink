@@ -11,6 +11,7 @@ import { PHProvider, PostHogPageview } from "./posthogProvider";
 import Script from "next/script";
 import { Metadata } from "next";
 import { TanQueryProvider } from "@/components/TanQueryProvider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -77,6 +78,7 @@ export default function RootLayout({
             </ThemeProvider>
           </div>
           <Suspense>
+            <SpeedInsights />
             <AuthUser />
             <PostHogPageview />
           </Suspense>
