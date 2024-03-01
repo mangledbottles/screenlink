@@ -248,6 +248,7 @@ ipcMain.handle('stop-recording', async (_) => {
     console.log("finsihed recoridng, opening mainwindow")
     mainWindow.webContents.send('finished-recording', true);
     mainWindow.focus();
+    mainWindow.show();
   }
 });
 
