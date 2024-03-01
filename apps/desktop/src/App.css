@@ -41,16 +41,40 @@ button {
   -webkit-app-region: no-drag;
 }
 
-/* @media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-} */
-
 .card {
   padding: 2em;
 }
 
 .read-the-docs {
   color: #888;
+}
+
+/* Standard mode scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-200; /* Standard mode track color */
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-lg border border-gray-200; /* Standard mode thumb color */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500; /* Standard mode thumb hover color */
+}
+
+/* Dark mode scrollbar styles */
+.dark ::-webkit-scrollbar-track {
+  @apply bg-gray-700; /* Dark mode track color */
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-gray-500 rounded-lg border border-gray-700; /* Dark mode thumb color */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400; /* Dark mode thumb hover color */
 }
