@@ -1,0 +1,19 @@
+.webcamVideo {
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+}
+
+.draggableArea {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.notDraggable {
+  -webkit-app-region: no-drag;
+}
+
+button {
+  -webkit-app-region: no-drag;
+}
