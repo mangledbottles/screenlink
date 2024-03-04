@@ -1,17 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import AudioSources from "./components/AudioSources";
 import CameraSources from "./components/CameraSources";
 import { NavBar } from "./components/NavBar";
 import { Recorder } from "./components/Recorder";
 import { ScreenSources } from "./components/Sources";
-import { Account, Source, Status } from "./utils";
+import { Account, Source, Status, refreshDeviceCode } from "./utils";
 import "./index.css";
 import { useRecordingContext } from "./contexts/RecordingContext";
 import { Permissions } from "./components/Permissions";
 import { Loading } from "./components/Loading";
 import Update from "./components/Update";
 import { getCurrentHub, setContext, setUser } from "@sentry/react";
-import { refreshDeviceCode } from "./App_1";
 import SignIn from "./components/SignIn";
 
 export const Landing = () => {

@@ -66,3 +66,8 @@ export const baseUrl = isProd ? "https://screenlink.io" : "http://localhost:3008
 export const logout = async () => {
     await window.electron.logout();
 }
+
+export const refreshDeviceCode = async () => {
+    const newDeviceCode = await window.electron.getDeviceCode();
+    return newDeviceCode;
+  };
