@@ -26,7 +26,8 @@ export function Recorder({
   const uploadFile = async (
     uploadFilePath: string,
     uploadLink: string,
-    uploadId: string
+    uploadId: string,
+    openInBrowser: boolean = false
   ) => {
     try {
       if (!uploadLink || !uploadId) {
@@ -47,7 +48,7 @@ export function Recorder({
       }
       await window.electron.uploadVideo(uploadFilePath, uploadLink);
       const uploadUrl = `${baseUrl}/view/${uploadId}`;
-      await window.electron.openInBrowser(uploadUrl);
+      if(openInBrowser) await window.electron.openInBrowser(uploadUrl);
     } catch (error) {
       console.error("Failed to upload file:", error);
       captureException(error, {
@@ -143,6 +144,9 @@ export function Recorder({
       ) => {
         try {
           if (screenChunks.length > 0 && cameraChunks.length > 0) {
+            const uploadUrl = `${baseUrl}/view/${uploadId}`;
+            await window.electron.openInBrowser(uploadUrl);
+
             const screenBlob = new Blob(screenChunks, {
               type: `video/webm; codecs=vp9,opus`,
             });
@@ -162,7 +166,7 @@ export function Recorder({
               screenConverted,
               cameraConverted
             );
-            console.log({ outputFile });
+
             await uploadFile(outputFile, uploadLink, uploadId);
           }
         } catch (error) {
@@ -198,7 +202,7 @@ export function Recorder({
               screenConverted
             );
             console.log({ outputFile });
-            await uploadFile(outputFile, uploadLink, uploadId);
+            await uploadFile(outputFile, uploadLink, uploadId, true);
           }
         } catch (error) {
           console.error("Failed to process screen record:", error);
