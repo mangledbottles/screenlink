@@ -20,7 +20,7 @@ export const Permissions = ({
   const { theme } = useTheme();
   return (
     <>
-      <div className="card">
+      <div className="card bg-background text-foreground p-4">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <img
             className="mx-auto h-10 w-auto"

@@ -9,7 +9,7 @@ export const Loading = ({
 }) => {
   const { theme } = useTheme();
   return (
-    <div className="card items-center justify-center min-h-screen w-screen">
+    <div className="card items-center justify-center min-h-screen w-screen bg-background text-foreground p-4">
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <img
