@@ -18,6 +18,24 @@ const deviceCodeFilePath = path.join(sessionDataPath, 'deviceCode.txt');
 const userAccountFilePath = path.join(sessionDataPath, 'userAccount.txt');
 const userPreferencesFilePath = path.join(sessionDataPath, 'userPreferences.txt');
 
+logger.info('App starting...');
+
+import ffmpeg from 'fluent-ffmpeg';
+import { existsSync } from 'fs';
+const ffmpegPath = require('ffmpeg-static').replace(
+  'app.asar',
+  'app.asar.unpacked'
+)
+ffmpeg.setFfmpegPath(ffmpegPath)
+
+let mainWindow: BrowserWindow | null
+let floatingWindow: BrowserWindow | null
+let webcamWindow: BrowserWindow | null
+let tray: Tray | null = null
+
+// recording state
+let showCameraWindow = false;
+
 autoUpdater.logger = logger
 Sentry.init({
   dsn: import.meta.env.SENTRY_DSN_GLITCHTIP,
@@ -84,24 +102,6 @@ getPreference('errorLoggingEnabled').then((errorLoggingEnabled: string | boolean
     }
   }
 });
-
-logger.info('App starting...');
-
-import ffmpeg from 'fluent-ffmpeg';
-import { existsSync } from 'fs';
-const ffmpegPath = require('ffmpeg-static').replace(
-  'app.asar',
-  'app.asar.unpacked'
-)
-ffmpeg.setFfmpegPath(ffmpegPath)
-
-let mainWindow: BrowserWindow | null
-let floatingWindow: BrowserWindow | null
-let webcamWindow: BrowserWindow | null
-let tray: Tray | null = null
-
-// recording state
-let showCameraWindow = false;
 
 function getComputerName() {
   switch (process.platform) {
@@ -208,11 +208,23 @@ ipcMain.handle('save-video', async (_, filePath, buffer: Buffer) => {
   await writeFile(filePath, buffer, () => console.log('video saved successfully!'));
 });
 
+ipcMain.handle('set-camera-source', async (_, previousSource: MediaDeviceInfo | null, source: MediaDeviceInfo | null): Promise<void> => {
+  // Prevent unnecessary updates if the camera source hasn't changed
+  if (previousSource?.deviceId == source?.deviceId) return;
 
-ipcMain.handle('set-camera-source', async (_, source: Partial<MediaDeviceInfo> | null) => {
-  if (webcamWindow) {
-    webcamWindow.webContents.send('new-camera-source', source);
+  // If no source is provided, notify the renderer to clear the camera source and hide the webcam window
+  if (!source) {
+    mainWindow?.webContents.send('new-camera-source', null);
+    webcamWindow?.hide();
+    return;
   }
+
+  // Notify the webcam window of the new camera source and show it
+  webcamWindow?.webContents.send('new-camera-source', source);
+  webcamWindow?.show();
+
+  // Notify the main window of the new camera source for UI
+  mainWindow?.webContents.send('new-camera-source', source);
 });
 
 ipcMain.handle('start-recording', async (_, applicationName?: string) => {
@@ -362,7 +374,13 @@ ipcMain.handle('save-screen-camera-blob', async (_, screenBlob: ArrayBuffer, cam
         .fps(60)
         .format('mp4')
         .output(outputPath)
-        .on('error', (err) => console.error('Error:', err))
+        .on('error', (err) => {
+          Sentry.captureException(new Error(`Failed to process video: ${err?.message}`), {
+            tags: { module: "ffmpeg" },
+            extra: { err }
+          });
+          console.error('Error:', err)
+        })
         .on('end', async () => {
           // Delete the screen and webcam temporary files after processing
           await unlinkPromise(screenPath)
@@ -842,20 +860,19 @@ function createFloatingWindow() {
     },
   });
 
+  // Adjusted URL loading logic
   if (VITE_DEV_SERVER_URL) {
-    // floatingWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=floating`);
-    floatingWindow.loadURL(`${VITE_DEV_SERVER_URL}`).then(() => {
-      // Once the file is loaded, send a message to the renderer with the parameter
-      if (!floatingWindow) return console.log('No floating window to send set-window to');
-      floatingWindow?.webContents.send('set-window', 'floating');
-    });
-
+    // Development mode: Load from Vite dev server with the /floating route
+    // Assuming you're using HashRouter, adjust the URL accordingly
+    const floatingUrl = `${VITE_DEV_SERVER_URL}#/floating`;
+    floatingWindow.loadURL(floatingUrl).catch(e => console.error('Failed to load floating page in development mode:', e));
   } else {
-    // floatingWindow.loadFile(path.join(process.env.DIST, 'index.html?window=floating')).then(() => {
-    floatingWindow.loadFile(path.join(process.env.DIST, 'index.html')).then(() => {
-      // Once the file is loaded, send a message to the renderer with the parameter
-      if (!floatingWindow) return console.log('No floating window to send set-window to');
-      floatingWindow?.webContents.send('set-window', 'floating');
+    // Production mode: Load the built index.html file, then navigate to /floating
+    floatingWindow.loadFile(path.join(process.env.DIST, 'index.html'), { hash: 'floating' }).catch(e => {
+      Sentry.captureException(new Error(`Failed to load floating window: ${e?.message}`), {
+        tags: { module: "createWindow" },
+        extra: { e }
+      });
     });
   }
   return floatingWindow;
@@ -863,15 +880,28 @@ function createFloatingWindow() {
 
 
 const createWebcamWindow = () => {
+
+  const scalingFactor = 1;
+  const monitorHeight = 1080;
+  const windowHeight = 232;
+  // const windowHeight = 1000;
+  const windowWidth = 200;
+  // const windowWidth = 1000;
+  const x = 100;
+  const y =
+    monitorHeight / scalingFactor - windowHeight - 100;
+
   const webcamWindow = new BrowserWindow({
-    width: 200,
-    height: 150,
-    x: 1920 - 200,
-    y: 1080,
+    transparent: true,
+    frame: false,
+    backgroundColor: '#00FFFFFF',
+    x,
+    y,
+    width: windowWidth,
+    height: windowHeight,
     resizable: false,
     movable: true,
-    // alwaysOnTop: true,
-    frame: false, // This makes the window frameless
+    alwaysOnTop: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -879,17 +909,16 @@ const createWebcamWindow = () => {
   });
 
   if (VITE_DEV_SERVER_URL) {
-    webcamWindow.loadURL(`${VITE_DEV_SERVER_URL}`).then(() => {
-      // Once the file is loaded, send a message to the renderer with the parameter
-      if (!webcamWindow) return console.log('No webcam window to send set-window to');
-      webcamWindow?.webContents.send('set-window', 'webcam');
-    });
-
+    // Development mode: Load from Vite dev server with the /webcam route
+    const webcamUrl = `${VITE_DEV_SERVER_URL}#/webcam`; // Adjusted for client-side routing (HashRouter)
+    webcamWindow.loadURL(webcamUrl).catch(e => console.error('Failed to load webcam page in development mode:', e));
   } else {
-    webcamWindow.loadFile(path.join(process.env.DIST, 'index.html')).then(() => {
-      // Once the file is loaded, send a message to the renderer with the parameter
-      if (!webcamWindow) return console.log('No webcam window to send set-window to');
-      webcamWindow?.webContents.send('set-window', 'webcam');
+    // Production mode: Load the built index.html file, then navigate to /webcam using hash
+    webcamWindow.loadFile(path.join(process.env.DIST, 'index.html'), { hash: 'webcam' }).catch(e => {
+      Sentry.captureException(new Error(`Failed to load webcam window: ${e?.message}`), {
+        tags: { module: "createWebcamWindow" },
+        extra: { e }
+      });
     });
   }
   return webcamWindow;
@@ -942,42 +971,20 @@ function createWindow() {
   webcamWindow = createWebcamWindow();
   webcamWindow.hide();
 
+  // Assuming the rest of your Electron setup remains the same
+
   if (VITE_DEV_SERVER_URL) {
-    // mainWindow.loadURL(`${VITE_DEV_SERVER_URL}?window=main`);
-    mainWindow.loadURL(`${VITE_DEV_SERVER_URL}`).then(async () => {
-      const permissionsMissing = await missingPermissions();
-      if (permissionsMissing.length > 0) {
-        const permissions = permissionsMissing.join(', ');
-        mainWindow?.webContents.send('set-window', 'permissions', permissions);
-      } else {
-        // Once the file is loaded, send a message to the renderer with the parameter
-        if (!mainWindow) return console.log('No main window to send set-window to');
-        mainWindow?.webContents.send('set-window', 'main');
-      }
-    })
-      .catch(e => console.error('Failed to load index.html', e));
+    // Development mode: Load from Vite dev server
+    mainWindow.loadURL(`${VITE_DEV_SERVER_URL}`).catch(e => console.error('Failed to load from dev server:', e));
   } else {
-    // mainWindow.loadFile(path.join(process.env.DIST, 'index.html?window=main'));
-    // Load the file directly without URL parameters
-    mainWindow.loadFile(path.join(process.env.DIST, 'index.html'))
-      .then(async () => {
-        const permissionsMissing = await missingPermissions();
-        if (permissionsMissing.length > 0) {
-          const permissions = permissionsMissing.join(', ');
-          mainWindow?.webContents.send('set-window', 'permissions', permissions);
-        } else {
-          // Once the file is loaded, send a message to the renderer with the parameter
-          if (!mainWindow) return console.log('No main window to send set-window to');
-          mainWindow?.webContents.send('set-window', 'main');
-        }
-      })
-      .catch((e) => {
-        Sentry.captureException(new Error(`Failed to load index.html: ${e?.message}`), {
-          tags: { module: "createWindow" },
-          extra: { e }
-        });
-        console.error('Failed to load index.html', e)
+    // Production mode: Load the built index.html file
+    // Directly navigate to the root route using hash routing
+    mainWindow.loadFile(path.join(process.env.DIST, 'index.html'), { hash: '/' }).catch(e => {
+      Sentry.captureException(new Error(`Failed to load main window: ${e?.message}`), {
+        tags: { module: "createWindow" },
+        extra: { e }
       });
+    });
   }
 
   // Auto Updater
@@ -1066,7 +1073,6 @@ function createWindow() {
   });
 
   getAccount();
-
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

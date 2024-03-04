@@ -79,10 +79,9 @@ contextBridge.exposeInMainWorld('electron', {
   showCameraWindow: async (show: boolean = true): Promise<void> => {
     return await ipcRenderer.invoke('show-camera-window', show)
   },
-  setUpdatedCameraSource: async (cameraSource: any): Promise<void> => {
-    console.log({ cameraSource, in: 'preload.ts' })
+  setUpdatedCameraSource: async (previousSource: MediaDeviceInfo | null, source: MediaDeviceInfo | null): Promise<void> => {
     // console.log({ source, in: 'preload.ts' })
-    return await ipcRenderer.invoke('set-camera-source', cameraSource)
+    return await ipcRenderer.invoke('set-camera-source', previousSource, source)
   },
   setPermissionsMissing: async (missing: boolean): Promise<void> => {
     return await ipcRenderer.invoke('permissions-missing', missing)
