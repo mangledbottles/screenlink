@@ -1,5 +1,7 @@
 import { Account, Preference, UploadLink } from "./src/utils";
 
+type EventCallback<T> = (value: T) => void;
+
 // types.d.ts
 declare global {
     interface Window {
@@ -15,9 +17,9 @@ declare global {
             openInBrowser: (url: string) => Promise<void>;
             openNewDevice: () => Promise<void>;
             getDeviceCode: () => Promise<string>;
-            on: (channel: string, func: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => void;
+            on: (channel: string, func: EventCallback<any> | ((...args: any[]) => void) | ((event: Electron.IpcRendererEvent, ...args: any[]) => void)) => void;
             showCameraWindow: (show: boolean) => Promise<void>;
-            setUpdatedCameraSource: (source: any) => Promise<void>;
+            setUpdatedCameraSource: (previousSource: MediaDeviceInfo | null, source: MediaDeviceInfo | null) => Promise<void>;
             setPermissionsMissing: (missing: boolean) => Promise<void>;
             saveScreenBlob: (blob: ArrayBuffer) => Promise<string>;
             saveScreenCameraBlob: (screenBlob: ArrayBuffer, cameraBlob: ArrayBuffer) => Promise<string>;

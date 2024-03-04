@@ -48,6 +48,12 @@ export interface Account {
     lastUpdated: string;
 }
 
+
+export type Status = {
+    type: string | null;
+    message: string | null;
+};
+
 export interface Preference {
     name: string;
     value: string | boolean;
