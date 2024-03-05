@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import styles from '../styles/Floating.module.css';
+import styles from "../styles/Floating.module.css";
+import { StopCircle } from "lucide-react";
 
 const DragIcon: React.FC = () => {
   return (
@@ -21,26 +22,6 @@ const DragIcon: React.FC = () => {
       <circle cx="12" cy="15" r="1" />
       <circle cx="19" cy="15" r="1" />
       <circle cx="5" cy="15" r="1" />
-    </svg>
-  );
-};
-
-export const PauseIcon: React.FC = () => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="lucide lucide-stop-circle"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <rect width="6" height="6" x="9" y="9" />
     </svg>
   );
 };
@@ -82,24 +63,22 @@ export const Floating = () => {
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
       }}
-      className={`${styles.draggableArea} m-0 p-0 bg-white dark:bg-gray-800 overflow-hidden`}
+      className={`${styles.draggableArea} h-screen w-screen m-0 p-0 bg-white dark:bg-gray-800 overflow-hidden`}
     >
-      <div className="divide-y divide-gray-300 dark:divide-gray-600 rounded-md shadow-md md:flex md:divide-y-0 bg-gray-50 dark:bg-gray-700">
+      <div className="h-full divide-y divide-gray-300 dark:divide-gray-600 rounded-md shadow-md md:flex md:divide-y-0 bg-gray-50 dark:bg-gray-700">
         <button
-          className="group flex w-full items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600"
+          className="group flex w-full items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
           onClick={() => {
             setTimer(0);
             stopRecording();
           }}
         >
           <span className="flex items-center px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-200">
-            <PauseIcon />
+            <StopCircle className={"text-red-400"} />
           </span>
         </button>
         <span className="group flex w-full items-center justify-center border-t border-b border-gray-300 dark:border-gray-600">

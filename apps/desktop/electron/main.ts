@@ -468,6 +468,7 @@ ipcMain.handle('upload-video', async (_, uploadFile, uploadLink: string) => {
       tags: { module: "uploadVideo" },
       extra: { error }
     });
+    mainWindow?.reload();
   }
 });
 
@@ -847,7 +848,7 @@ const requestPermissions = async (permission: string): Promise<boolean> => {
 function createFloatingWindow() {
   const floatingWindow = new BrowserWindow({
     width: 60,
-    height: 130,
+    height: 140,
     x: 0,
     y: 0,
     resizable: false,
