@@ -70,4 +70,4 @@ export const logout = async () => {
 export const refreshDeviceCode = async () => {
     const newDeviceCode = await window.electron.getDeviceCode();
     return newDeviceCode;
-  };
+};
