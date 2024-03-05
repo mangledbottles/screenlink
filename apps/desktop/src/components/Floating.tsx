@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import styles from '../styles/Floating.module.css';
 
 const DragIcon: React.FC = () => {
   return (
@@ -24,7 +25,7 @@ const DragIcon: React.FC = () => {
   );
 };
 
-const PauseIcon: React.FC = () => {
+export const PauseIcon: React.FC = () => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -87,7 +88,7 @@ export const Floating = () => {
         justifyContent: "center",
         alignItems: "center",
       }}
-      className="m-0 p-0 bg-white dark:bg-gray-800 overflow-hidden"
+      className={`${styles.draggableArea} m-0 p-0 bg-white dark:bg-gray-800 overflow-hidden`}
     >
       <div className="divide-y divide-gray-300 dark:divide-gray-600 rounded-md shadow-md md:flex md:divide-y-0 bg-gray-50 dark:bg-gray-700">
         <button
