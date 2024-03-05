@@ -1,7 +1,7 @@
 {
   "name": "screenlink-desktop",
   "private": true,
-  "version": "0.0.13",
+  "version": "0.0.14",
   "author": "Screenlink",
   "description": "Screenlink Desktop",
   "scripts": {
