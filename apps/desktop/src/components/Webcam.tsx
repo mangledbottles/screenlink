@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import styles from "../Webcam.module.css"; // Import the styles
+import styles from "../styles/Webcam.module.css"; // Import the styles
 import { RefreshCwIcon, XIcon } from "lucide-react";
 import { useRecordingContext } from "@/contexts/RecordingContext";
 import { captureException } from "@sentry/react";
@@ -12,6 +12,7 @@ export const Webcam = ({}): JSX.Element => {
   const { selectedCamera, setSelectedCamera } = useRecordingContext();
 
   useEffect(() => {
+    stopCam();
     const startCam = async () => {
       if (!selectedCamera) return;
       setIsLoading(true);
@@ -84,7 +85,8 @@ export const Webcam = ({}): JSX.Element => {
       <>
         <MenuBar refreshCamera={refreshCamera} closeCamera={closeCamera} />
         <div
-          className={`${styles.draggableArea} animate-spin top-0 object-cover cursor-move rounded-full h-32 w-32 border-b-4 border-white-600`}
+          // className={`${styles.draggableArea} animate-spin mx-auto object-cover cursor-move rounded-full h-80 w-80 border-b-4 border-white-600`}
+          className={`${styles.draggableArea} animate-spin mx-auto object-cover cursor-move rounded-full h-64 w-64 border-b-4 border-white-600`}
         />
       </>
     );
@@ -104,19 +106,17 @@ export const Webcam = ({}): JSX.Element => {
 const MenuBar = ({ refreshCamera, closeCamera }: any) => {
   return (
     <div className={`${styles.notDraggable} space-x-4 h-8`}>
-      <div
-        className="top-0 right-0 mb-8 mr-8 flex justify-center items-center"
-      >
+      <div className="top-0 right-0 mb-8 flex justify-center items-center">
         <>
           <button
             onClick={refreshCamera}
-            className="flex items-center justify-center p-2 bg-gray-900 rounded-lg cursor-pointer"
+            className="flex items-center justify-center p-2 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"
           >
             <RefreshCwIcon className="w-4 h-4 text-gray-200" />
           </button>
           <button
             onClick={closeCamera}
-            className="flex items-center justify-center p-2 bg-gray-900 rounded-lg cursor-pointer"
+            className="flex items-center justify-center p-2 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"
           >
             <XIcon className="w-4 h-4 text-gray-200" />
           </button>
