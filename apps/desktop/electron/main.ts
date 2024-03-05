@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell, systemPreferences, Tray } from 'electron'
+import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, nativeImage, shell, systemPreferences, Tray, screen } from 'electron'
 import os from 'os';
 import axios from 'axios';
 const { getWindows, activateWindow } = require('mac-windows');
@@ -512,7 +512,7 @@ ipcMain.handle('show-camera-window', async (_, show: boolean) => {
 });
 
 const toggleCameraWindow = (show: boolean) => {
-  if (webcamWindow) {
+  if (webcamWindow && !webcamWindow.isDestroyed()) {
     showCameraWindow = show;
     if (show) webcamWindow.show();
     else webcamWindow.hide();
@@ -847,7 +847,7 @@ const requestPermissions = async (permission: string): Promise<boolean> => {
 function createFloatingWindow() {
   const floatingWindow = new BrowserWindow({
     width: 60,
-    height: 150,
+    height: 130,
     x: 0,
     y: 0,
     resizable: false,
@@ -881,15 +881,18 @@ function createFloatingWindow() {
 
 const createWebcamWindow = () => {
 
-  const scalingFactor = 1;
-  const monitorHeight = 1080;
+  const primaryDisplay = screen.getPrimaryDisplay();
+
+  const scalingFactor = primaryDisplay.scaleFactor;
+  const monitorHeight = primaryDisplay.workAreaSize.height;
+  // const monitorHeight = 1080;
   const windowHeight = 232;
   // const windowHeight = 1000;
   const windowWidth = 200;
   // const windowWidth = 1000;
   const x = 100;
   const y =
-    monitorHeight / scalingFactor - windowHeight - 100;
+    monitorHeight / scalingFactor - windowHeight - 0;
 
   const webcamWindow = new BrowserWindow({
     transparent: true,
@@ -930,7 +933,7 @@ function createWindow() {
   autoUpdater.forceDevUpdateConfig = true;
   autoUpdater.checkForUpdates();
 
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.focus();
     return;
   }
@@ -961,6 +964,17 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
+
+  // Close other windows when mainWindow is closed
+  mainWindow.on('closed', () => {
+    if (floatingWindow && !floatingWindow.isDestroyed()) {
+      floatingWindow.close();
+    }
+    if (webcamWindow && !webcamWindow.isDestroyed()) {
+      webcamWindow.close();
+    }
+    mainWindow = null; // Dereference the window object
+  });
 
 
   // Create the floating window and hide it
@@ -1081,7 +1095,6 @@ function createWindow() {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
-    mainWindow = null
   }
 })
 
