@@ -1,8 +1,8 @@
-import { PrismaClient, Upload, User } from "@prisma/client";
+import { Upload, User } from "@prisma/client";
 import Player, { ErrorBanner } from "../Player";
 import { Metadata } from "next";
 import Mux, { Upload as MuxUpload } from "@mux/mux-node";
-import { posthog_serverside } from "@/app/utils";
+import { posthog_serverside, prisma } from "@/app/utils";
 import { ViewHeader } from "./ViewHeader";
 
 export type UserUpload = Upload & {
@@ -15,7 +15,6 @@ export const generateMetadata = async ({
   params: { id: string };
 }): Promise<Metadata> => {
   const { id } = params;
-  const prisma = new PrismaClient();
   const upload = await prisma.upload.findUnique({ where: { id } });
 
   posthog_serverside.capture({
@@ -62,7 +61,6 @@ const getUpload = async (Video: any, uploadId: string): Promise<MuxUpload> => {
 export default async function View({ params }: { params: { id: string } }) {
   const { id } = params;
   let errorMessage;
-  const prisma = new PrismaClient();
   let upload = await prisma.upload.findUnique({
     where: { id },
     include: { User: true },
