@@ -4,10 +4,6 @@ import { Metadata } from "next";
 import Mux, { Upload as MuxUpload } from "@mux/mux-node";
 import { posthog_serverside } from "@/app/utils";
 import { ViewHeader } from "./ViewHeader";
-const { Video } = new Mux(
-  process.env.MUX_ACCESS_TOKEN!,
-  process.env.MUX_SECRET_KEY!
-);
 
 export type UserUpload = Upload & {
   User: User | null;
@@ -53,7 +49,7 @@ export const generateMetadata = async ({
   };
 };
 
-const getUpload = async (uploadId: string): Promise<MuxUpload> => {
+const getUpload = async (Video: any, uploadId: string): Promise<MuxUpload> => {
   try {
     const upload = await Video.Uploads.get(uploadId);
     return upload;
@@ -83,9 +79,19 @@ export default async function View({ params }: { params: { id: string } }) {
     },
   });
 
+  const isUploadDevelopment = upload?.provider == "mux-dev";
+  const { Video } = new Mux(
+    isUploadDevelopment
+      ? process.env.MUX_DEV_ACCESS_TOKEN!
+      : process.env.MUX_ACCESS_TOKEN!,
+    isUploadDevelopment
+      ? process.env.MUX_DEV_SECRET_KEY!
+      : process.env.MUX_SECRET_KEY!
+  );
+
   // If there is no Asset ID, but there is an Upload ID, check Mux for the status of the upload
   if (!upload?.assetId && upload?.uploadId) {
-    const muxUpload = await getUpload(upload.uploadId);
+    const muxUpload = await getUpload(Video, upload.uploadId);
     if (muxUpload.status === "asset_created") {
       const video = await Video.Assets.get(muxUpload.asset_id!);
       const playbackId = video?.playback_ids?.[0]?.id;
