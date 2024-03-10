@@ -57,11 +57,11 @@ export const Demo = () => {
 
       {isRecording && (
         <div className="fixed left-0 top-1/2 transform -translate-y-1/2 text-white px-4 pl-8 py-2 rounded-r w-10 z-50">
-          <div className="flex justify-center items-center bg-white dark:bg-gray-800">
+          <div className="flex justify-center items-center bg-white dark:bg-black">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="divide-y divide-gray-300 dark:divide-gray-600 rounded-md shadow-md md:flex md:divide-y-0 bg-gray-50 dark:bg-gray-700">
+                  <div className="divide-y divide-gray-300 dark:divide-gray-600 rounded-md shadow-md md:flex md:divide-y-0 bg-gray-50 dark:bg-black">
                     <button
                       className="group flex w-full items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600"
                       onClick={() => {
@@ -134,8 +134,7 @@ export const Demo = () => {
                 </div>
 
                 <button
-                  onClick={startRecording}
-                  disabled={isRecording}
+                  onClick={!isRecording ? startRecording : stopRecording}
                   className={`w-5/12 md:h-10 sm:h-auto group relative justify-center gap-2 transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2 bg-sky-700 text-white hover:bg-sky-900 border border-transparent hover:border-sky-900 focus:border-sky-500 focus:ring focus:ring-sky-500 rounded-lg ${
                     isRecording &&
                     "bg-red-500 hover:bg-red-600 focus:border-red-400 focus:ring-red-400"
@@ -200,7 +199,7 @@ export const Demo = () => {
 
 const downloadToast = () => {
   return toast(
-    `This is just a demo of the Desktop app, you can't change the source`,
+    `Interactive demo of ScreenLink Desktop, download the application!`,
     {
       action: {
         label: "Download",
@@ -221,14 +220,14 @@ const RecordingCompletedDialog = ({
     <AlertDialog open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Demo Recording Complete 🚀</AlertDialogTitle>
+          <AlertDialogTitle>Interactive Demo Finished 🚀</AlertDialogTitle>
           <AlertDialogDescription>
-            This was just a demo of how the ScreenLink Desktop app works! You
-            can download and get started
+            This is what ScreenLink Desktop looks like. You can download and get
+            started!
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={onClose}>I don't want to benefit</AlertDialogCancel>
           <AlertDialogAction>
             <Link href="/download">Download</Link>
           </AlertDialogAction>

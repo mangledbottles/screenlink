@@ -18,7 +18,7 @@ export default function CtaButton({ styles }: { styles?: string }) {
   if (status === "authenticated")
     return (
       <Link
-        className={`text-white bg-indigo-500 hover:bg-indigo-600 w-full shadow-sm group ${
+        className={`text-white bg-indigo-500 hover:bg-indigo-600 shadow-sm group ${
           styles ? styles : ``
         }`}
         href="/app"
@@ -33,12 +33,12 @@ export default function CtaButton({ styles }: { styles?: string }) {
 
   return (
     <Link
-      className={`font-medium text-white bg-indigo-500 hover:bg-indigo-600 w-full shadow-sm group px-3 lg:px-4 py-2 flex items-center transition duration-150 ease-in-out rounded-md ${
+      className={`font-medium text-white bg-indigo-500 hover:bg-indigo-600 shadow-sm group px-3 lg:px-4 py-2 flex items-center transition duration-150 ease-in-out rounded-md ${
         styles ? styles : ``
       }`}
       href="/signup"
     >
-      Start for Free{" "}
+      Get Started{" "}
       <ArrowRightIcon className="tracking-normal text-sky-300 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1" />
     </Link>
   );
