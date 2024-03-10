@@ -11,6 +11,7 @@ export default function Pricing() {
   const [annual, setAnnual] = useState<boolean>(false);
   const usage = ["Video Recordings", "Recording Duration", "Team Members"];
   const features = [
+    "Instant Share Link",
     "Video Transcription",
     "Export",
     "Analytics & Insights",
@@ -31,13 +32,13 @@ export default function Pricing() {
         />
       </div>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="pt-10 pb-12 md:pb-20">
+        <div className="pt-10 pb-12">
           {/* Section header */}
-          <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
+          <div className="max-w-3xl mx-auto text-center pb-12">
             <h2 className="h2 font-hkgrotesk mb-4">The right plan for you</h2>
             <p className="text-xl text-slate-500">
-              Get started for <span className={"text-indigo-500"}>free</span> ,
-              no credit card required! Add more features as you grow
+              Get started for <span className={"text-indigo-500"}>free</span>,
+              no credit card required. Add more features as you grow
             </p>
           </div>
           {/* Pricing tables */}
@@ -250,17 +251,17 @@ export default function Pricing() {
                 />
               </div>
             </div>
-            {/* Data Export */}
+
+            {/* Transcription */}
             <div className="hidden md:flex flex-col justify-center p-4 md:px-6 bg-slate-800 bg-opacity-70 md:col-span-3">
               <div className="text-slate-200">{features[1]}</div>
             </div>
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 bg-opacity-70 md:border-l border-slate-700 order-1 md:order-none">
               <div className="md:hidden text-slate-200">{features[1]}</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                <AiOutlineLine
-                  className="inline-flex fill-slate-500"
-                  size={22}
-                  height={2}
+                <AiOutlineCheck
+                  className="inline-flex fill-emerald-400"
+                  size={15}
                 />
               </div>
             </div>
@@ -282,7 +283,8 @@ export default function Pricing() {
                 />
               </div>
             </div>
-            {/* Adjust Group Sizes */}
+
+            {/* Export */}
             <div className="hidden md:flex flex-col justify-center p-4 md:px-6 bg-slate-800 md:col-span-3">
               <div className="text-slate-200">{features[2]}</div>
             </div>
@@ -298,9 +300,9 @@ export default function Pricing() {
             <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-2 md:order-none">
               <div className="md:hidden text-slate-200">{features[2]}</div>
               <div className="text-sm font-medium text-slate-200 text-center">
-                <AiOutlineLine
-                  className="inline-flex fill-slate-500"
-                  size={22}
+                <AiOutlineCheck
+                  className="inline-flex fill-emerald-400"
+                  size={15}
                 />
               </div>
             </div>
@@ -314,7 +316,7 @@ export default function Pricing() {
               </div>
             </div>
 
-            {/* Remove Branding */}
+            {/* Analytics and Insight */}
             <div className="hidden md:flex flex-col justify-center p-4 md:px-6 bg-slate-800 md:col-span-3">
               <div className="text-slate-200">{features[3]}</div>
             </div>
@@ -345,6 +347,39 @@ export default function Pricing() {
                 />
               </div>
             </div>
+
+            {/* Remove Branding */}
+            <div className="hidden md:flex flex-col justify-center p-4 md:px-6 bg-slate-800 md:col-span-3">
+              <div className="text-slate-200">{features[4]}</div>
+            </div>
+            <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-1 md:order-none">
+              <div className="md:hidden text-slate-200">{features[4]}</div>
+              <div className="text-sm font-medium text-slate-200 text-center">
+                <AiOutlineLine
+                  className="inline-flex fill-slate-500"
+                  size={22}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-2 md:order-none">
+              <div className="md:hidden text-slate-200">{features[4]}</div>
+              <div className="text-sm font-medium text-slate-200 text-center">
+                <AiOutlineLine
+                  className="inline-flex fill-slate-500"
+                  size={22}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between md:flex-col md:justify-center p-4 md:px-6 bg-slate-800 md:border-l border-slate-700 order-3 md:order-none">
+              <div className="md:hidden text-slate-200">{features[4]}</div>
+              <div className="text-sm font-medium text-slate-200 text-center">
+                <AiOutlineCheck
+                  className="inline-flex fill-emerald-400"
+                  size={15}
+                />
+              </div>
+            </div>
+
             {/* CTA row */}
             <div className="hidden md:flex flex-col justify-center px-4 md:px-6 py-2 bg-slate-700 bg-opacity-25 md:col-span-3" />
             <div className="flex flex-col justify-center p-4 bg-slate-700 bg-opacity-25 md:border-l border-slate-700 order-1 md:order-none">
