@@ -19,9 +19,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@components/ui/command";
-import {
-  Dialog
-} from "@components/ui/dialog";
+import { Dialog } from "@components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -31,7 +29,8 @@ import { Project } from "@prisma/client";
 import { toast } from "sonner";
 import { Settings, Users } from "lucide-react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { changeProject } from "@/actions";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
@@ -40,29 +39,32 @@ type PopoverTriggerProps = React.ComponentPropsWithoutRef<
 interface TeamSwitcherProps extends PopoverTriggerProps {
   projects: Project[];
   currentProjectId: string;
-  changeProject: (projectId: string) => Promise<void>;
 }
 
 export default function TeamSwitcher({
   className,
   projects,
   currentProjectId,
-  changeProject,
 }: TeamSwitcherProps) {
   const [open, setOpen] = React.useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = React.useState(false);
   const [selectedProject, setSelectedProject] = React.useState<Project>(
     projects.find((project) => project.id === currentProjectId) ?? projects[0]
   );
+  const { update: updateSession, data: sessionData } = useSession();
 
   const handleProjectChange = (project: Project) => {
-    toast.promise(changeProject(project.id), {
+    console.log({ project });
+    toast.promise(changeProject({ projectIdToChangeTo: project?.id }), {
       loading: "Switching project...",
       success() {
+        // Update session with updated project ID
+        updateSession({
+          currentProjectId: project.id,
+          ...sessionData,
+        });
         setSelectedProject(project);
-        // @ts-ignore
-        signIn(null);
-        return "Project switched. Refreshing page...";
+        return `Project switched to ${project.name}`;
       },
       error(errorMessage: string) {
         return `Failed to switch project ${errorMessage}`;

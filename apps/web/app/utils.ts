@@ -16,6 +16,7 @@ prisma = global.prisma;
 export { prisma };
 
 import LoopsClient from "loops";
+import { ZodError, ZodIssue } from "zod";
 export const loops = new LoopsClient(process.env.LOOPS_API_KEY!);
 
 const isDev = process.env.NODE_ENV === "development";
@@ -98,10 +99,10 @@ interface WithSessionHandler {
 
 export const getSession = async () => {
     try {
-    const session = await getServerSession(authOptions) as Session;
-    if (!session?.user) return { user: null } as unknown as Session;
-    return session;
-    } catch(error) {
+        const session = await getServerSession(authOptions) as Session;
+        if (!session?.user) return { user: null } as unknown as Session;
+        return session;
+    } catch (error) {
         return { user: null } as unknown as Session;
     }
 };
@@ -151,3 +152,17 @@ export const getAvatarFallbackInitials = (name: string): string => {
     }
     return nameParts[0][0].toUpperCase();
 }
+
+/**
+ * Parses Zod errors into user-friendly messages.
+ * @param error ZodError instance containing validation errors.
+ * @returns A string with a user-friendly error message.
+ */
+export const parseZodError = (error: ZodError): string => {
+    // Combine all error messages into a single string
+    const messages = error.errors.map((e: ZodIssue) => {
+        const path = e.path.join('.');
+        return `${path}: ${e.message}`;
+    });
+    return messages.join(', ');
+};

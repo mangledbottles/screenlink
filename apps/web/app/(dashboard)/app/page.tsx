@@ -1,12 +1,8 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
 import { Role } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { formatDistanceToNow } from "date-fns";
-import Link from "next/link";
-import { AiOutlineDownload, AiOutlineVideoCameraAdd } from "react-icons/ai";
 import TeamSwitcher from "@/components/TeamSwitcher";
 import DashboardStatistics from "@/components/DashboardStatistics";
-import { IconShareUploadButton } from "@/app/(view)/view/[id]/ShareUploadButton";
 import { redirect } from "next/navigation";
 import Uploads from "./Uploads";
 import { prisma } from "@/app/utils";
@@ -33,30 +29,6 @@ export default async function Dashboard() {
     },
   });
 
-  const changeProject = async (projectIdToChangeTo: string) => {
-    "use server";
-
-    const canUserSwitchToProject = await prisma.projectUsers.findFirst({
-      where: {
-        projectId: projectIdToChangeTo,
-        userId,
-      },
-    });
-
-    if (!canUserSwitchToProject) {
-      throw new Error("You do not have access to this project");
-    }
-
-    await prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        currentProjectId: projectIdToChangeTo,
-      },
-    });
-    return;
-  };
 
   const isUserOwner = !!(await prisma.projectUsers.findFirst({
     where: {
@@ -99,7 +71,6 @@ export default async function Dashboard() {
             projects={projects}
             className="mb-3"
             currentProjectId={currentProjectId}
-            changeProject={changeProject}
           />
           <DashboardStatistics />
           <div
