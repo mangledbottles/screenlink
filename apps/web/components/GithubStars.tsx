@@ -1,9 +1,12 @@
+// GithubStars.tsx
+
 "use client";
-import { GithubIcon } from "lucide-react";
+import { GithubIcon, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "./ui/badge";
+import { LockClosedIcon } from "@radix-ui/react-icons";
 
-export const HeaderAction = () => {
+export const GithubStars = ({ styles }: { styles?: string }) => {
   const [starCount, setStarCount] = useState(0);
 
   useEffect(() => {
@@ -32,7 +35,9 @@ export const HeaderAction = () => {
         >
           <button
             type="button"
-            className="relative inline-flex items-center rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-gray-300 hover:bg-white/20 focus:z-10"
+            className={`relative inline-flex items-center justify-center rounded-md bg-white/10 px-4 text-sm font-semibold text-white ring-1 ring-inset ring-gray-300 hover:bg-white/20 focus:z-10 ${
+              styles ? styles : ""
+            }`}
           >
             <GithubIcon className="mr-2 h-4 w-4" /> Star on GitHub
             <Badge

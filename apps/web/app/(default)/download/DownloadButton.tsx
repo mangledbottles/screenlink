@@ -1,7 +1,7 @@
 "use client";
 
 import { getOS } from "@/app/utils";
-import { HeaderAction } from "@/components/HeaderAction";
+import { GithubStars } from "@/components/GithubStars";
 import { useEffect, useState } from "react";
 
 // Define the interface for a GitHub release asset
@@ -77,7 +77,7 @@ export const DownloadButton = () => {
             : "."}{" "}
           Get notified when it is available for your OS.
         </p>
-        <HeaderAction />
+        <GithubStars />
       </div>
     );
   }
