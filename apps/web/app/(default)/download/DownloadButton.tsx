@@ -3,6 +3,7 @@
 import { getOS } from "@/app/utils";
 import { GithubStars } from "@/components/GithubStars";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 // Define the interface for a GitHub release asset
 interface ReleaseAsset {
@@ -37,36 +38,40 @@ function getDownloadUrl(os: string, releases: GitHubRelease[]): string | null {
   return null;
 }
 
+const fetchReleases = async (): Promise<GitHubRelease[]> => {
+  const response = await fetch(
+    "https://api.github.com/repos/mangledbottles/screenlink-desktop/releases"
+  );
+  return response.json();
+};
+
 export const DownloadButton = () => {
   const [os, setOs] = useState<string | null>(null);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-  const [githubRequestFinished, setGithubRequestFinished] = useState(false);
-  const [releases, setReleases] = useState<GitHubRelease[]>([]);
 
   useEffect(() => {
     const updatedOs = getOS();
     setOs(updatedOs);
-
-    // Fetch the latest releases from GitHub
-    fetch(
-      "https://api.github.com/repos/mangledbottles/screenlink-desktop/releases"
-    )
-      .then((response) => response.json())
-      .then((releases: GitHubRelease[]) => {
-        // Assuming the first release in the array is the latest
-        const latestRelease = releases[0];
-        const url = getDownloadUrl(updatedOs, releases);
-        setReleases(releases);
-        setDownloadUrl(url);
-        setGithubRequestFinished(true);
-      })
-      .catch((error) => {
-        console.error("Error fetching releases:", error);
-        setGithubRequestFinished(true);
-      });
   }, []);
 
-  if (githubRequestFinished && !downloadUrl) {
+  const {
+    data: releases,
+    isLoading,
+    isError,
+  } = useQuery<GitHubRelease[], Error, GitHubRelease[]>({
+    queryKey: ["releases"],
+    queryFn: fetchReleases,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const downloadUrl = releases ? getDownloadUrl(os ?? "", releases) : null;
+
+  if (isLoading) {
+    return (
+      <span className="animate-pulse inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20 w-44 h-16 cursor-pointer"></span>
+    );
+  }
+
+  if (isError || (releases && !downloadUrl)) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <p className="max-w-[800px] mb-4 text-white text-center md:text-sm/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-white">
@@ -87,12 +92,7 @@ export const DownloadButton = () => {
       <span className="animate-pulse inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20 w-44 h-16 cursor-pointer"></span>
     );
 
-  if (!downloadUrl)
-    return (
-      <span className="animate-pulse inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20 w-44 h-16 cursor-pointer"></span>
-    );
-
-  if (os === "macOS") return <MacDownloadButton releases={releases} />;
+  if (os === "macOS") return <MacDownloadButton releases={releases ?? []} />;
 
   return (
     <a
