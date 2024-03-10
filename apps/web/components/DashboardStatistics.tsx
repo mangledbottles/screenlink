@@ -1,17 +1,13 @@
 import { Card, Metric, Text, Flex, ProgressBar, Grid } from "@tremor/react";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { Plan, PrismaClient, Project, Role } from "@prisma/client";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/AuthOptions";
+import { Role } from "@prisma/client";
 import { UpgradeButton } from "./UpgradeButton";
+import { getSession, prisma } from "@/app/utils";
 
 export default async function DashboardStatistics() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
-  const prisma = new PrismaClient();
   // @ts-ignore
-  const currentProjectId = session?.user?.currentProjectId;
+  const currentProjectId = session.user.currentProjectId;
   const project = await prisma.project.findFirst({
     where: {
       id: currentProjectId,
@@ -23,14 +19,11 @@ export default async function DashboardStatistics() {
 
   if (!project) return null;
 
-  const limits: Record<Plan, number> = { Free: 5, Pro: 100, Growth: 1000 };
-
   const totalVideoUploads = await prisma.upload.count({
     where: {
       projectId: currentProjectId,
     },
   });
-  const limit = limits[project.plan as Plan];
 
   // @ts-ignore
   const userId = session?.user?.id;
@@ -42,12 +35,16 @@ export default async function DashboardStatistics() {
   if (!userId || !email || !projectId || !projectPlan)
     return <div>Something went wrong</div>;
 
-  const currentUserRole = project.users.find((user) => user.userId === userId)?.role ?? Role.member;
+  const currentUserRole =
+    project.users.find((user) => user.userId === userId)?.role ?? Role.member;
 
   return (
     <>
       <Grid numItemsSm={2} numItemsLg={2} className="gap-6 mb-4">
-        <MonthlyUsage limit={limit} total={totalVideoUploads} />
+        <MonthlyUsage
+          limit={project.monthlyUploads}
+          total={totalVideoUploads}
+        />
         <Card className="p-4">
           <Text>Plan</Text>
           <Metric className="text-tremor-content-emphasis">
@@ -58,13 +55,14 @@ export default async function DashboardStatistics() {
             </span>
           </Metric>
           <Flex className="mt-4">
-            {(currentUserRole == "admin" || currentUserRole == "owner") && projectPlan != "Growth" && (
-              <UpgradeButton
-                clientReferenceId={clientReferenceId}
-                email={email}
-                plan={projectPlan}
-              />
-            )}
+            {(currentUserRole == "admin" || currentUserRole == "owner") &&
+              projectPlan != "Growth" && (
+                <UpgradeButton
+                  clientReferenceId={clientReferenceId}
+                  email={email}
+                  plan={projectPlan}
+                />
+              )}
           </Flex>
         </Card>
       </Grid>
