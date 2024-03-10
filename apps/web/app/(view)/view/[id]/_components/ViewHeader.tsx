@@ -1,7 +1,7 @@
 "use client";
-import { UserUpload } from "./page";
+import { UserUpload } from "../page";
 import { formatDistanceToNow } from "date-fns";
-import { ShareUploadButton } from "./ShareUploadButton";
+import { ShareUploadButton } from "../ShareUploadButton";
 import {
   HoverCard,
   HoverCardContent,

@@ -1,9 +1,10 @@
 import { Upload, User } from "@prisma/client";
-import Player, { ErrorBanner } from "../Player";
+import Player, { ErrorBanner } from "./_components/Player";
 import { Metadata } from "next";
 import Mux, { Upload as MuxUpload } from "@mux/mux-node";
 import { posthog_serverside, prisma } from "@/app/utils";
-import { ViewHeader } from "./ViewHeader";
+import { ViewHeader } from "./_components/ViewHeader";
+import { ReactionToolbar } from "./_components/EmojiToolbar";
 
 export type UserUpload = Upload & {
   User: User | null;
@@ -63,7 +64,7 @@ export default async function View({ params }: { params: { id: string } }) {
   let errorMessage;
   let upload = await prisma.upload.findUnique({
     where: { id },
-    include: { User: true },
+    include: { User: true, reactions: true },
   });
 
   posthog_serverside.capture({
@@ -101,7 +102,7 @@ export default async function View({ params }: { params: { id: string } }) {
           assetId: muxUpload.asset_id,
           playbackId,
         },
-        include: { User: true },
+        include: { User: true, reactions: true },
       });
     }
   }
@@ -122,6 +123,15 @@ export default async function View({ params }: { params: { id: string } }) {
   // Check if the video is ready
   const isReady = muxVideo?.status === "ready" ?? false;
 
+  const reactions = upload?.reactions.reduce((acc, reaction) => {
+    if (acc[reaction.emoji]) {
+      acc[reaction.emoji].count++;
+    } else {
+      acc[reaction.emoji] = { emoji: reaction.emoji, count: 1 };
+    }
+    return acc;
+  }, {} as Record<string, { emoji: string; count: number }>);
+
   return (
     <section className="relative">
       <div className="relative max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
@@ -132,7 +142,28 @@ export default async function View({ params }: { params: { id: string } }) {
               message={errorMessage ?? "Video could not be loaded"}
             />
           ) : (
-            <Player id={id} video={upload} isUploadReady={isReady} />
+            <>
+              <Player id={id} video={upload} isUploadReady={isReady} />
+              <ReactionToolbar uploadId={upload.id} />
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Reactions
+                </h2>
+                <div className="mt-4 flex flex-wrap gap-4">
+                  {Object.values(reactions ?? {}).map(({ emoji, count }) => (
+                    <div
+                      key={emoji}
+                      className="flex items-center space-x-2 rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1"
+                    >
+                      <span className="text-xl">{emoji}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

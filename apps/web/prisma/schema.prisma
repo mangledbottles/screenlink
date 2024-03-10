@@ -9,27 +9,39 @@ datasource db {
 }
 
 model Upload {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   provider    String // can be 'mux' or 'cloudflare'
-  uploadLink  String   @db.VarChar(2048)
+  uploadLink  String     @db.VarChar(2048)
   assetId     String
   uploadId    String
   playbackId  String?
-  status      String   @default("unknown")
-  sourceTitle String?  @default("ScreenLink Recording") @db.VarChar(2048)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  Project     Project? @relation(fields: [projectId], references: [id])
+  status      String     @default("unknown")
+  sourceTitle String?    @default("ScreenLink Recording") @db.VarChar(2048)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  Project     Project?   @relation(fields: [projectId], references: [id])
   projectId   String?
-  User        User?    @relation(fields: [userId], references: [id])
+  User        User?      @relation(fields: [userId], references: [id])
   userId      String?
-  views       Int      @default(0)
+  views       Int        @default(0)
   deviceId    String?
-  Device      Devices? @relation(fields: [deviceId], references: [id])
+  Device      Devices?   @relation(fields: [deviceId], references: [id])
+  reactions   Reaction[]
 
   @@index([deviceId])
   @@index([userId])
   @@index([projectId])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  emoji     String
+  reactedBy String   @default("anonymous")
+  createdAt DateTime @default(now())
+  upload    Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  uploadId  String
+
+  @@index([uploadId])
 }
 
 model Account {

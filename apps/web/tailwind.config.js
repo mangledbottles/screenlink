@@ -156,6 +156,21 @@ module.exports = {
         "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
         "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
       },
+      keyframes: {
+        flyEmoji: {
+          "0%": {
+            transform: "translateY(0) scale(1)",
+            opacity: "0.7",
+          },
+          "100%": {
+            transform: "translateY(-150px) scale(2)",
+            opacity: "0",
+          },
+        },
+      },
+      animation: {
+        flyEmoji: "flyEmoji 1s forwards",
+      },
     },
   },
   safelist: [
@@ -188,4 +203,4 @@ module.exports = {
     },
   ],
   plugins: [require("tailwindcss-animate")],
-}
+};
