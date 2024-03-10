@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Illustration from "@/public/images/features-illustration-02.svg";
 import FeaturesImage from "@/public/images/features-image.png";
+import Link from "next/link";
 
 export default function Features02() {
   const [category, setCategory] = useState<string>("1");
@@ -37,10 +38,18 @@ export default function Features02() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="py-12 md:py-20">
           {/* Section header */}
-          <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
+          <div className="max-w-3xl mx-auto text-center pb-12">
             <h2 className="h2 font-hkgrotesk">
               Powerful Features for Every User
             </h2>
+            <Link className="flex justify-center mt-8" href="/signup">
+              <button className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
+                  Get Started for Free
+                </span>
+              </button>
+            </Link>
           </div>
 
           {/* Box */}
@@ -117,8 +126,11 @@ export default function Features02() {
                     <h3 className="h3 font-hkgrotesk mb-2">Dark by Default</h3>
                     <div className="text-lg text-slate-500">
                       ScreenLink is dark by default, so you can focus on your
-                      work and <span className={"text-indigo-500"}>protect your eyes!</span> You can also switch to light
-                      mode if you prefer.
+                      work and{" "}
+                      <span className={"text-indigo-500"}>
+                        protect your eyes!
+                      </span>{" "}
+                      You can also switch to light mode if you prefer.
                     </div>
                   </div>
                 </div>
