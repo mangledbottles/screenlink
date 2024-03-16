@@ -8,12 +8,16 @@ type OpenGraphType = "article" | "website" | "book" | "profile" | "music.song" |
 
 
 // Singleton pattern for Prisma Client
-let prisma: PrismaClient;
-if (!global.prisma) {
-    global.prisma = new PrismaClient();
+const prismaClientSingleton = () => {
+    return new PrismaClient()
 }
-prisma = global.prisma;
-export { prisma };
+declare global {
+    var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>
+}
+const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
+export { prisma }
+if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma
+
 
 import LoopsClient from "loops";
 import { ZodError, ZodIssue } from "zod";
