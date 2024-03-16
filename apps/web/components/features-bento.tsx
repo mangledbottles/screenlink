@@ -153,7 +153,7 @@ const CrossPlatformSkeleton = () => {
     >
       <div className="flex flex-row space-x-4">
         {platforms.map((platform, i) => (
-          <Link href="/download">
+          <Link href="/download" key={platform.name}>
             <motion.div
               key={"platform-" + i}
               variants={variants}
