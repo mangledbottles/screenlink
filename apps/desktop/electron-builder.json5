@@ -9,7 +9,7 @@
   afterSign: "electron-builder-notarize",
   directories: {
     // manually increase due to issue with Windows nsis
-    output: "release/0.0.15",
+    output: "release/0.0.16",
     buildResources: "build",
   },
   files: ["dist", "dist-electron"],
