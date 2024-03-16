@@ -12,6 +12,7 @@ import Script from "next/script";
 import { Metadata } from "next";
 import { TanQueryProvider } from "@/components/TanQueryProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { LogSnagProvider } from "@logsnag/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -81,21 +82,23 @@ export default function RootLayout({
             <SpeedInsights />
             <AuthUser />
             <PostHogPageview />
-          </Suspense>
-          <Toaster position="top-right" />
-          <Analytics />
-          <script
-            defer={true}
-            data-domain="screenlink.io"
-            src="https://analytics.dermot.email/js/script.js"
-          ></script>
-          <script
-            async
-            src="https://js.stripe.com/v3/pricing-table.js"
-            defer={true}
-          ></script>
-          <Script strategy="lazyOnload">
-            {`
+            <LogSnagProvider
+              token={process.env.LOGSNAG_API_TOKEN!}
+              project={process.env.LOGSNAG_PROJECT_NAME!}
+            />
+            <Analytics />
+            <script
+              defer={true}
+              data-domain="screenlink.io"
+              src="https://analytics.dermot.email/js/script.js"
+            ></script>
+            <script
+              async
+              src="https://js.stripe.com/v3/pricing-table.js"
+              defer={true}
+            ></script>
+            <Script strategy="lazyOnload">
+              {`
           var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
           (function(){
           var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
@@ -106,20 +109,22 @@ export default function RootLayout({
           s0.parentNode.insertBefore(s1,s0);
           })();
     `}
-          </Script>
-          <Script
-            async
-            src="https://www.googletagmanager.com/gtag/js?id=AW-16448683587"
-          />
-          <Script>
-            {`
+            </Script>
+            <Script
+              async
+              src="https://www.googletagmanager.com/gtag/js?id=AW-16448683587"
+            />
+            <Script>
+              {`
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
   gtag('config', 'AW-16448683587');
   `}
-          </Script>
+            </Script>
+          </Suspense>
+          <Toaster position="top-right" />
         </body>
       </html>
     </AuthProvider>

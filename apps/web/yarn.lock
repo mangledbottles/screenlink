@@ -269,6 +269,11 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@logsnag/next@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@logsnag/next/-/next-1.0.3.tgz#ba59b601a59386fdeb02aa96ba8dc4c9fcd87527"
+  integrity sha512-HcbZx2NlWK8qVVnsnTAxrWWts/eVZFI1hvHk5FgP/qXIqY5gRyYqwe/r3x6CnHZXw27s4BXW8jFT6zXusk0eYA==
+
 "@mux/mux-node@^7.3.2":
   version "7.3.3"
   resolved "https://registry.npmjs.org/@mux/mux-node/-/mux-node-7.3.3.tgz"

@@ -4,6 +4,8 @@ import { getOS } from "@/app/utils";
 import { GithubStars } from "@/components/GithubStars";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useLogSnag } from "@logsnag/next";
 
 // Define the interface for a GitHub release asset
 interface ReleaseAsset {
@@ -47,11 +49,31 @@ const fetchReleases = async (): Promise<GitHubRelease[]> => {
 
 export const DownloadButton = () => {
   const [os, setOs] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const { track } = useLogSnag();
 
   useEffect(() => {
     const updatedOs = getOS();
     setOs(updatedOs);
   }, []);
+
+  const handleDownloadClick = (os: string) => {
+    // Check if the user is logged in and has a valid session
+    if (session && session.user && session.user.email) {
+      // Track the download event with LogSnag
+      track({
+        channel: "downloads",
+        event: "User Download",
+        // @ts-ignore
+        user_id: session.user.id,
+        tags: {
+          os: os ?? "Unknown",
+        },
+        notify: true,
+        icon: "🚀",
+      });
+    }
+  };
 
   const {
     data: releases,
@@ -92,20 +114,33 @@ export const DownloadButton = () => {
       <span className="animate-pulse inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20 w-44 h-16 cursor-pointer"></span>
     );
 
-  if (os === "macOS") return <MacDownloadButton releases={releases ?? []} />;
+  if (os === "macOS")
+    return (
+      <MacDownloadButton
+        releases={releases ?? []}
+        handleDownloadClick={handleDownloadClick}
+      />
+    );
 
   return (
     <a
       href={downloadUrl ?? "#"}
       className="inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20"
       download
+      onClick={() => handleDownloadClick(os)}
     >
       Download for {os}
     </a>
   );
 };
 
-const MacDownloadButton = ({ releases }: { releases: GitHubRelease[] }) => {
+const MacDownloadButton = ({
+  releases,
+  handleDownloadClick,
+}: {
+  releases: GitHubRelease[];
+  handleDownloadClick: (os: string) => void;
+}) => {
   const intelMacPattern = /ScreenLink-\d+\.\d+\.\d+\.dmg/;
   const armMacPattern = /ScreenLink-\d+\.\d+\.\d+-arm64\.dmg/;
 
@@ -128,6 +163,7 @@ const MacDownloadButton = ({ releases }: { releases: GitHubRelease[] }) => {
           }
           className="inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20"
           download
+          onClick={() => handleDownloadClick("mac-intel")}
         >
           Download for Intel
         </a>
@@ -141,6 +177,7 @@ const MacDownloadButton = ({ releases }: { releases: GitHubRelease[] }) => {
           }
           className="inline-flex items-center rounded-md bg-blue-400/10 px-3 py-3 text-2xl font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30 hover:bg-blue-400/20 dark:bg-blue-400/20 dark:text-blue-400 dark:ring-blue-400/20"
           download
+          onClick={() => handleDownloadClick("mac-arm")}
         >
           Download for Apple Silicon
         </a>

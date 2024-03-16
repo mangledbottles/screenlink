@@ -6,6 +6,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 import { loops, posthog_serverside } from "@/app/utils";
 import { captureException } from "@sentry/nextjs";
+import { logsnag } from "@/utils/logsnag";
 
 const prisma = new PrismaClient();
 
@@ -133,6 +134,24 @@ export const authOptions: NextAuthOptions = {
             try {
                 console.log("User sign in completed");
                 if (message.isNewUser) {
+
+                    logsnag.identify({
+                        user_id: message.user.id,
+                        properties: {
+                            name: message.user.name ?? "",
+                            email: message.user.email ?? "",
+                            image: message.user.image ?? "",
+                        },
+                    })
+
+                    logsnag.track({
+                        channel: "User",
+                        event: "Sign Up",
+                        notify: true,
+                        user_id: message.user.id,
+                        icon: "🎉"
+                    })
+
                     console.log("New user sign up")
                     const [firstName, lastName] = message?.user?.name?.split(" ") ?? ["", ""];
                     const userEmail = message?.user?.email;

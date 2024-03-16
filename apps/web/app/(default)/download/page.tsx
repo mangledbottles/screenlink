@@ -1,6 +1,5 @@
 import { constructMetadata } from "@/app/utils";
 import { DownloadButton } from "./DownloadButton";
-import Link from "next/link";
 export const metadata = constructMetadata({
   description:
     "Download for MacOS, Windows, or Linux to record your screen and share demos with ScreenLink",
