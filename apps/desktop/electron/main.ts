@@ -230,11 +230,13 @@ ipcMain.handle('set-camera-source', async (_, previousSource: MediaDeviceInfo | 
 ipcMain.handle('start-recording', async (_, applicationName?: string) => {
   try {
     if (mainWindow) mainWindow.minimize();
-    if (applicationName && platform === 'darwin') activateWindow(applicationName);
     if (webcamWindow && showCameraWindow) {
       toggleCameraWindow(true);
       webcamWindow.setAlwaysOnTop(true);
+      webcamWindow.maximize();
+      webcamWindow.focus();
     }
+    if (applicationName && platform === 'darwin') activateWindow(applicationName);
     if (floatingWindow) {
       floatingWindow.show();
       floatingWindow.webContents.send('started-recording', true);
@@ -251,10 +253,8 @@ ipcMain.handle('start-recording', async (_, applicationName?: string) => {
 ipcMain.handle('stop-recording', async (_) => {
   if (floatingWindow) floatingWindow.hide();
   if (webcamWindow) {
-    toggleCameraWindow(false);
     webcamWindow.setAlwaysOnTop(false);
-    webcamWindow.minimize();
-    webcamWindow.hide();
+    toggleCameraWindow(true);
   }
   if (mainWindow) {
     console.log("finsihed recoridng, opening mainwindow")
