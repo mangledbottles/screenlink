@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronDown, Mic, MicOff } from "lucide-react";
 
@@ -10,24 +10,33 @@ export default function AudioSources({
   setAudioSource: (device: MediaDeviceInfo | null) => void;
 }) {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const getDevices = async () => {
+    try {
+      // Get the list of audio devices
+      const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+      const audioDevices = mediaDevices.filter(
+        (device) => device.kind === "audioinput"
+      );
 
+      setDevices(audioDevices);
+      setAudioSource(audioDevices[0] || null);
+    } catch (e) {
+      alert("Please allow camera access.");
+    }
+  };
+
+  // Initial device fetch
   useMemo(() => {
-    const getDevices = async () => {
-      try {
-        // Get the list of audio devices
-        const mediaDevices = await navigator.mediaDevices.enumerateDevices();
-        const audioDevices = mediaDevices.filter(
-          (device) => device.kind === "audioinput"
-        );
-
-        setDevices(audioDevices);
-        setAudioSource(audioDevices[0] || null);
-      } catch (e) {
-        alert("Please allow camera access.");
-      }
-    };
-
     getDevices();
+  }, []);
+
+  // Periodic refresh of devices
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      getDevices();
+    }, 15000); // Refresh every 15 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, []);
 
   return (
@@ -60,7 +69,9 @@ export default function AudioSources({
                 {({ active }) => (
                   <a
                     className={`${
-                      active ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-200"
+                      active
+                        ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-200"
                     } group flex items-center px-4 py-2 text-sm cursor-pointer`}
                     onClick={() => setAudioSource(device)}
                   >
@@ -81,7 +92,9 @@ export default function AudioSources({
               {({ active }) => (
                 <a
                   className={`${
-                    active ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-200"
+                    active
+                      ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+                      : "text-gray-700 dark:text-gray-200"
                   } group flex items-center px-4 py-2 text-sm cursor-pointer`}
                   onClick={() => {
                     setAudioSource(null);

@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { Camera, CameraOff, ChevronDown } from "lucide-react";
 
@@ -11,23 +11,33 @@ export default function CameraSources({
 }) {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const getDevices = async () => {
+    try {
+      // Get the list of video devices
+      const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = mediaDevices
+        .reverse()
+        .filter((device) => device.kind === "videoinput");
+      setDevices(videoDevices);
+      setCameraSource(videoDevices[0] || null);
+    } catch (e) {
+      setPermissionDenied(true);
+      await window.electron.setPermissionsMissing(true);
+    }
+  };
 
+  // Initial device fetch
   useMemo(() => {
-    const getDevices = async () => {
-      try {
-        // Get the list of video devices
-        const mediaDevices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = mediaDevices
-          .reverse()
-          .filter((device) => device.kind === "videoinput");
-        setDevices(videoDevices);
-        setCameraSource(videoDevices[0] || null);
-      } catch (e) {
-        setPermissionDenied(true);
-        await window.electron.setPermissionsMissing(true);
-      }
-    };
     getDevices();
+  }, []);
+
+  // Periodic refresh of devices
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      getDevices();
+    }, 15000); // Refresh every 15 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, []);
 
   if (permissionDenied) {
@@ -64,7 +74,9 @@ export default function CameraSources({
                 {({ active }) => (
                   <a
                     className={`${
-                      active ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-200"
+                      active
+                        ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-200"
                     } group flex items-center px-4 py-2 text-sm cursor-pointer`}
                     onClick={() => setCameraSource(device)}
                   >
@@ -85,7 +97,9 @@ export default function CameraSources({
               {({ active }) => (
                 <a
                   className={`${
-                    active ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-200"
+                    active
+                      ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+                      : "text-gray-700 dark:text-gray-200"
                   } group flex items-center px-4 py-2 text-sm cursor-pointer`}
                   onClick={() => {
                     setCameraSource(null);
