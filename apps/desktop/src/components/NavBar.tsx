@@ -120,7 +120,7 @@ export function NavBar() {
           </DropdownMenu>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-gray-50">
                 Settings{" "}
                 <p className="text-xs leading-none text-muted-foreground mt-1">
                   Version {version}
@@ -172,7 +172,7 @@ export function NavBar() {
               <DialogClose asChild>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full text-gray-50"
                   onClick={() => {
                     window.electron.updatePreferences(preferences ?? []);
                   }}
