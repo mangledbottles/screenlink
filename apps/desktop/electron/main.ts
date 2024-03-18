@@ -930,7 +930,13 @@ const createWebcamWindow = () => {
 
 function createWindow() {
   // assign the deep link url to a variable (screenlinkDesktop://xxx)
-  app.setAsDefaultProtocolClient('screenlinkDesktop');
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient('screenlinkDesktop', process.execPath, [path.resolve(process.argv[1])])
+    }
+  } else {
+    app.setAsDefaultProtocolClient('screenlinkDesktop')
+  }
   autoUpdater.forceDevUpdateConfig = true;
   autoUpdater.checkForUpdates();
 
@@ -1129,7 +1135,7 @@ if (!gotTheLock) {
     }
 
     // Handle deep link for Windows
-    const url = commandLine.find(arg => arg.startsWith('screenlinkDesktop://'));
+    const url = commandLine.pop();
     if (url) handleDeepLink(url);
   });
 
