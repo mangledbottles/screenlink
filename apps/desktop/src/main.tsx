@@ -1,16 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App.tsx";
-import { init, BrowserTracing, showReportDialog } from "@sentry/react";
+import { init, BrowserTracing, Replay } from "@sentry/react";
 import { ThemeProvider } from "./components/theme-provider.tsx";
 import { RecordingProvider } from "./contexts/RecordingContext.tsx";
-
 // Initialize Sentry with specific configuration
 init({
   // Sentry Data Source Name (DSN)
-  dsn: "https://03f0433ebb331913be9a44008d1bc6f8@o4506405451464704.ingest.sentry.io/4506405764530176",
+  dsn: "https://03f0433ebb331913be9a44008d1bc6f8:2537ecc9c382cd0b53bb1dbe440b5dcd@o4506405451464704.ingest.sentry.io/4506405764530176",
   // Sample rate for session replays
-  replaysSessionSampleRate: 0.5,
+  replaysSessionSampleRate: 1,
   // Sample rate for error replays
   replaysOnErrorSampleRate: 1.0,
   // Sample rate for traces
@@ -23,13 +22,14 @@ init({
       // Propagate traces to these targets
       tracePropagationTargets: ["localhost", /^https:\/\/screenlink\.io/],
     }),
+    new Replay({
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
   ],
   // Function to be called before sending the event
   beforeSend(event) {
     // If the event is an exception, show a report dialog
-    if (event.exception) {
-      showReportDialog({ eventId: event.event_id });
-    }
     // Return the event to be sent
     return event;
   },
