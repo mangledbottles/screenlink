@@ -145,7 +145,7 @@ export const authOptions: NextAuthOptions = {
                     })
 
                     logsnag.track({
-                        channel: "User",
+                        channel: "onboarding",
                         event: "Sign Up",
                         notify: true,
                         user_id: message.user.id,
