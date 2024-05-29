@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider     = "postgresql"
   url          = env("DATABASE_URL")
+  directUrl    = env("DIRECT_URL")
   relationMode = "prisma"
 }
 
@@ -104,6 +105,7 @@ model Project {
   billingAdminId    String? // The user who is responsible for billing
   projectSeats      Int            @default(1) // The number of seats in the project
   invitationCode    String?        @unique @default(cuid())
+  onboardingPersona String?        @default("")
 
   @@index([id])
 }

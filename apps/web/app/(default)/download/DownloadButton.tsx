@@ -14,11 +14,11 @@ interface ReleaseAsset {
 }
 
 // Define the interface for a GitHub release
-interface GitHubRelease {
+export interface GitHubRelease {
   assets: ReleaseAsset[];
 }
 
-function getDownloadUrl(os: string, releases: GitHubRelease[]): string | null {
+export function getDownloadUrl(os: string, releases: GitHubRelease[]): string | null {
   // Define the file extension for each OS
   const fileExtensions: { [key: string]: string } = {
     macOS: ".dmg",
@@ -40,7 +40,7 @@ function getDownloadUrl(os: string, releases: GitHubRelease[]): string | null {
   return null;
 }
 
-const fetchReleases = async (): Promise<GitHubRelease[]> => {
+export const fetchReleases = async (): Promise<GitHubRelease[]> => {
   const response = await fetch(
     "https://api.github.com/repos/mangledbottles/screenlink-desktop/releases"
   );
@@ -134,7 +134,7 @@ export const DownloadButton = () => {
   );
 };
 
-const MacDownloadButton = ({
+export const MacDownloadButton = ({
   releases,
   handleDownloadClick,
 }: {
