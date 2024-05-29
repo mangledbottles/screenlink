@@ -25,7 +25,7 @@ import {
 } from "@/app/(default)/download/DownloadButton";
 import { useRouter } from "next/navigation";
 import { syncOnboarding } from "@/actions/syncOnboarding";
-import { useLogSnag } from "@logsnag/next/*";
+import { useLogSnag } from "@logsnag/next";
 
 const onboardingSchema = z.object({
   persona: z.string().min(1, { message: "Please select an option" }),
