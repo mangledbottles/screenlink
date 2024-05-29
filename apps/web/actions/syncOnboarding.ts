@@ -1,5 +1,6 @@
 'use server'
 import { getSession, prisma } from '@/app/utils';
+import { logsnag } from '@/utils/logsnag';
 
 export async function syncOnboarding({ persona, workspaceName }: { persona: string, workspaceName: string }) {
     const session = await getSession();
@@ -18,6 +19,19 @@ export async function syncOnboarding({ persona, workspaceName }: { persona: stri
             name: workspaceName,
         },
     });
+
+    if (persona?.length > 0 && workspaceName?.length > 0) {
+        logsnag.track({
+            user_id: session?.user?.id,
+            event: 'Onboarding Completed',
+            tags: {
+                persona,
+                workspace_name: workspaceName,
+            },
+            icon: '🏔️',
+            channel: 'onboarding',
+        });
+    }
 
     return project;
 }
