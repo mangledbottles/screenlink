@@ -25,6 +25,7 @@ import {
 } from "@/app/(default)/download/DownloadButton";
 import { useRouter } from "next/navigation";
 import { syncOnboarding } from "@/actions/syncOnboarding";
+import { useLogSnag } from "@logsnag/next/*";
 
 const onboardingSchema = z.object({
   persona: z.string().min(1, { message: "Please select an option" }),
@@ -57,17 +58,29 @@ export default function OnboardingPageClient({
   const watchWorkspaceName = watch("workspaceName");
 
   const onSubmit = (data: OnboardingSchema) => {
-    syncOnboarding({ persona: data.persona, workspaceName: data.workspaceName ?? "" });
+    syncOnboarding({
+      persona: data.persona,
+      workspaceName: data.workspaceName ?? "",
+    });
     router.push("/app");
   };
 
-  const syncChanges = ({ persona, workspaceName }: { persona: string, workspaceName: string }) => {
+  const syncChanges = ({
+    persona,
+    workspaceName,
+  }: {
+    persona: string;
+    workspaceName: string;
+  }) => {
     // sync changes to database everytime user clicks continue tab
     syncOnboarding({ persona, workspaceName });
   };
 
   const handleNext = () => {
-    syncChanges({ persona: watchPersona, workspaceName: watchWorkspaceName ?? "" });
+    syncChanges({
+      persona: watchPersona,
+      workspaceName: watchWorkspaceName ?? "",
+    });
     if (tabIndex < 4) {
       setTabIndex(tabIndex + 1);
       setCanContinue(false);
@@ -311,7 +324,22 @@ const TabThree_Download = ({
   const handleDesktopDownload = async () => {
     const operatingSystem = getOS();
     const releases = await fetchReleases();
+    const { track } = useLogSnag();
     const url = getDownloadUrl(operatingSystem, releases);
+
+    track({
+      channel: "downloads",
+      event: "User Download [Onboarding]",
+      // @ts-ignore
+      user_id: session.user.id,
+      tags: {
+        os: operatingSystem ?? "Unknown",
+        from: "onboarding",
+      },
+      notify: true,
+      icon: "🚀",
+    });
+
     if (operatingSystem === "macOS") {
       setReleases(releases);
       setMacOSDownloadOpen(true);

@@ -31,6 +31,8 @@ export async function syncOnboarding({ persona, workspaceName }: { persona: stri
             icon: '🏔️',
             channel: 'onboarding',
         });
+
+        // TODO: Send email to user with onboarding details
     }
 
     return project;

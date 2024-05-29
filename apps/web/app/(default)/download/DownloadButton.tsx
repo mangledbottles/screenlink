@@ -68,6 +68,7 @@ export const DownloadButton = () => {
         user_id: session.user.id,
         tags: {
           os: os ?? "Unknown",
+          from: "download-page"
         },
         notify: true,
         icon: "🚀",
