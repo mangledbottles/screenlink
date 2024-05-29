@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import { getOS } from "@/app/utils";
+import { Session, getOS } from "@/app/utils";
 import { Project } from "@prisma/client";
 import { ArrowRight } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
@@ -39,8 +39,10 @@ type OnboardingSchema = z.infer<typeof onboardingSchema>;
 
 export default function OnboardingPageClient({
   project,
+  session,
 }: {
   project: Project | null;
+  session: Session;
 }) {
   const router = useRouter();
   const [tabIndex, setTabIndex] = useState(1);
@@ -114,6 +116,7 @@ export default function OnboardingPageClient({
               methods={methods}
               handleSubmit={handleSubmit}
               onSubmit={onSubmit}
+              session={session}
             />
           )}
 
@@ -313,10 +316,12 @@ const TabThree_Download = ({
   methods,
   handleSubmit,
   onSubmit,
+  session,
 }: {
   methods: UseFormReturn<OnboardingSchema>;
   handleSubmit: (onSubmit: (data: OnboardingSchema) => void) => () => void;
   onSubmit: (data: OnboardingSchema) => void;
+  session: Session;
 }) => {
   const [isMacOSDownloadOpen, setMacOSDownloadOpen] = useState(false);
   const [releases, setReleases] = useState<GitHubRelease[]>([]);
@@ -331,7 +336,7 @@ const TabThree_Download = ({
       channel: "downloads",
       event: "User Download [Onboarding]",
       // @ts-ignore
-      user_id: session.user.id,
+      user_id: session?.user?.id,
       tags: {
         os: operatingSystem ?? "Unknown",
         from: "onboarding",

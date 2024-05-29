@@ -30,7 +30,7 @@ export default async function OnboardingPage() {
   return (
     <>
       <Suspense>
-        <OnboardingPageClient project={userProject} />
+        <OnboardingPageClient project={userProject} session={session} />
       </Suspense>
     </>
   );
