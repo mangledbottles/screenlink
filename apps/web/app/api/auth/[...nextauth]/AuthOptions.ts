@@ -192,6 +192,13 @@ export const authOptions: NextAuthOptions = {
                             ...message.profile,
                         },
                     });
+                    logsnag.identify({
+                        user_id: message.user.id,
+                        properties: {
+                            name: message.user.name ?? "",
+                            email: message.user.email ?? "",
+                        },
+                    })
                 }
             } catch (error: any) {
                 console.log(error)

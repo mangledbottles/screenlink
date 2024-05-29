@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TRANSACTIONAL_EMAIL_FIRST_UPLOAD_TEMPLATE_ID, baseUrl, loops, prisma } from '@/app/utils';
 import { getDevice, getUser } from '../utils';
 import { captureException } from '@sentry/nextjs';
+import { logsnag } from '@/utils/logsnag';
 
 const { Video } = new Mux(process.env.MUX_ACCESS_TOKEN!, process.env.MUX_SECRET_KEY!);
 
@@ -105,9 +106,34 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
                     hasMadeAnUpload: true,
                 });
                 userEmail && loops.sendEvent(userEmail, 'First Upload');
+                await logsnag.track({
+                    user_id: device.user.id,
+                    event: 'First Upload',
+                    channel: 'Uploads',
+                    description: sourceTitle,
+                    icon: '🚀',
+                    tags: {
+                        // @ts-ignore
+                        deviceType: device.type,
+                        projectId: projectId,
+                    }
+                });
             } catch (error) {
                 console.log(error)
             }
+        } else {
+            await logsnag.track({
+                user_id: device.user.id,
+                event: 'Upload',
+                channel: 'uploads',
+                description: sourceTitle,
+                icon: '💥',
+                tags: {
+                    // @ts-ignore
+                    deviceType: device.type,
+                    projectId: projectId,
+                }
+            });
         }
 
         return NextResponse.json({
