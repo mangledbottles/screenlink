@@ -109,7 +109,7 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
                 await logsnag.track({
                     user_id: device.user.id,
                     event: 'First Upload',
-                    channel: 'Uploads',
+                    channel: 'uploads',
                     description: sourceTitle,
                     icon: '🚀',
                     tags: {
