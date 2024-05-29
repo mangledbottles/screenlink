@@ -29,39 +29,40 @@ export default async function Dashboard() {
     },
   });
 
+  const isUserOwner =
+    !!(await prisma.projectUsers.findFirst({
+      where: {
+        projectId: currentProjectId,
+        userId,
+        role: Role.owner,
+      },
+    })) ?? false;
 
-  const isUserOwner = !!(await prisma.projectUsers.findFirst({
-    where: {
-      projectId: currentProjectId,
-      userId,
-      role: Role.owner,
-    },
-  })) ?? false;
-
-  const projectUsers = isUserOwner
-    ? await prisma.projectUsers
-        .findMany({
-          where: {
-            projectId: currentProjectId,
-          },
-          include: {
-            user: {
-              select: {
-                name: true,
+  const projectUsers =
+    isUserOwner && currentProjectId
+      ? await prisma.projectUsers
+          .findMany({
+            where: {
+              projectId: currentProjectId,
+            },
+            include: {
+              user: {
+                select: {
+                  name: true,
+                },
               },
             },
-          },
-        })
-        .then((users) => {
-          return users.map((user) => {
-            return {
-              id: user.userId,
-              name: user.user?.name || "",
-              role: user.role,
-            };
-          });
-        })
-    : [];
+          })
+          .then((users) => {
+            return users.map((user) => {
+              return {
+                id: user.userId,
+                name: user.user?.name || "",
+                role: user.role,
+              };
+            });
+          })
+      : [];
 
   return (
     <section className="relative">
